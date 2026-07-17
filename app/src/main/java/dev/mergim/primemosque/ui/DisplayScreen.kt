@@ -462,27 +462,32 @@ private fun PrayerCard(
 @Composable
 private fun Footer(state: UiState, strings: Strings) {
     val palette = LocalBoardPalette.current
+    // On Fridays the salawat stays pinned all day; on other days the dhikr
+    // reminders rotate every 5 minutes.
+    val reminder = if (state.now.dayOfWeek == DayOfWeek.FRIDAY) {
+        strings.fridaySalawat
+    } else {
+        strings.reminders[(state.now.toLocalTime().toSecondOfDay() / (5 * 60)) % strings.reminders.size]
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (state.now.dayOfWeek == DayOfWeek.FRIDAY) {
-            Text(
-                text = strings.fridaySalawat,
-                color = palette.accent,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                fontStyle = FontStyle.Italic,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = strings.fridaySalawatTranslation,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 6.dp),
-            )
-        }
+        Text(
+            text = reminder.text,
+            color = palette.accent,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
+            fontStyle = FontStyle.Italic,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = reminder.translation,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
         state.upcomingEvent?.let { event ->
             val name = strings.eventNames[event.key] ?: event.key
             Text(

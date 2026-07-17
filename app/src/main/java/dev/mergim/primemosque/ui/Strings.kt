@@ -6,12 +6,14 @@ import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.data.PrayerKey
 import java.util.Locale
 
+data class Reminder(val text: String, val translation: String)
+
 data class Strings(
     val locale: Locale,
     val prayerNames: Map<PrayerKey, String>,
     val fridayDhuhrName: String,
-    val fridaySalawat: String,
-    val fridaySalawatTranslation: String,
+    val fridaySalawat: Reminder,
+    val reminders: List<Reminder>,
     val nextPrayerIn: String,
     val settingsTitle: String,
     val mosqueNameLabel: String,
@@ -43,8 +45,48 @@ private val SQ = Strings(
         PrayerKey.ISHA to "Jacia",
     ),
     fridayDhuhrName = "Xhuma",
-    fridaySalawat = "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
-    fridaySalawatTranslation = "O Allahu im, mëshiroje dhe përshëndete të Dërguarin tonë, Muhammedin.",
+    fridaySalawat = Reminder(
+        "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
+        "O Allahu im, mëshiroje dhe përshëndete të Dërguarin tonë, Muhammedin.",
+    ),
+    reminders = listOf(
+        Reminder(
+            "Estagfirullahe ve etubu ilejhi",
+            "Kërkoj faljen e All-llahut dhe tek Ai pendohem",
+        ),
+        Reminder(
+            "Subhanall-llah",
+            "I Lartësuar është Allahu",
+        ),
+        Reminder(
+            "SubhanAll-llahi ve bihamdihi",
+            "I Lartësuar qoftë Allahu, Atij të Cilit i takon Lavdërimi",
+        ),
+        Reminder(
+            "SubhanAllahil Adhim",
+            "I Lartësuar është Allahu i Madhëruar",
+        ),
+        Reminder(
+            "Elhamdulilah",
+            "Falenderimi i takon Allahut",
+        ),
+        Reminder(
+            "Allahu Ekber",
+            "Allahu është më i madhi",
+        ),
+        Reminder(
+            "La ilahe il-lallah",
+            "S'ka të adhuruar të denjë përveç Allahut",
+        ),
+        Reminder(
+            "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
+            "O Allahu im, mëshiroje dhe përshëndete të Dërguarin tonë, Muhammedin.",
+        ),
+        Reminder(
+            "La havle ve la kuv-vete il-la bil-lah",
+            "Nuk ka fuqi as forcë vetëm se me Allahun",
+        ),
+    ),
     nextPrayerIn = "deri në",
     settingsTitle = "Cilësimet",
     mosqueNameLabel = "Emri i xhamisë",
@@ -94,8 +136,48 @@ private val EN = Strings(
         PrayerKey.ISHA to "Isha",
     ),
     fridayDhuhrName = "Jumu'ah",
-    fridaySalawat = "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
-    fridaySalawatTranslation = "O Allah, bestow Your mercy and peace upon our Prophet Muhammad.",
+    fridaySalawat = Reminder(
+        "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
+        "O Allah, bestow Your mercy and peace upon our Prophet Muhammad.",
+    ),
+    reminders = listOf(
+        Reminder(
+            "Estagfirullahe ve etubu ilejhi",
+            "I seek Allah's forgiveness and to Him I repent",
+        ),
+        Reminder(
+            "Subhanall-llah",
+            "Glory be to Allah",
+        ),
+        Reminder(
+            "SubhanAll-llahi ve bihamdihi",
+            "Glory be to Allah and His is all praise",
+        ),
+        Reminder(
+            "SubhanAllahil Adhim",
+            "Glory be to Allah, the Most Great",
+        ),
+        Reminder(
+            "Elhamdulilah",
+            "All praise is due to Allah",
+        ),
+        Reminder(
+            "Allahu Ekber",
+            "Allah is the Greatest",
+        ),
+        Reminder(
+            "La ilahe il-lallah",
+            "There is no god worthy of worship except Allah",
+        ),
+        Reminder(
+            "All-llahumme sal-li ve sel-lim ala nebijjina Muhammed",
+            "O Allah, bestow Your mercy and peace upon our Prophet Muhammad.",
+        ),
+        Reminder(
+            "La havle ve la kuv-vete il-la bil-lah",
+            "There is no power nor strength except with Allah",
+        ),
+    ),
     nextPrayerIn = "until",
     settingsTitle = "Settings",
     mosqueNameLabel = "Mosque name",
