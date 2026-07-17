@@ -103,6 +103,10 @@ private val SQ = Strings(
     themeLabel = "Pamja",
     themeNames = mapOf(
         AppTheme.DARK to "E errët",
+        AppTheme.BLACK to "E zezë",
+        AppTheme.EMERALD to "Smerald",
+        AppTheme.MIDNIGHT to "Blu e errët",
+        AppTheme.BURGUNDY to "Bordo",
         AppTheme.LIGHT to "E çelët",
         AppTheme.GOLD to "Ari",
         AppTheme.BLUE to "Blu",
@@ -197,6 +201,10 @@ private val EN = Strings(
     themeLabel = "Theme",
     themeNames = mapOf(
         AppTheme.DARK to "Dark",
+        AppTheme.BLACK to "Black",
+        AppTheme.EMERALD to "Emerald",
+        AppTheme.MIDNIGHT to "Midnight",
+        AppTheme.BURGUNDY to "Burgundy",
         AppTheme.LIGHT to "Light",
         AppTheme.GOLD to "Gold",
         AppTheme.BLUE to "Blue",

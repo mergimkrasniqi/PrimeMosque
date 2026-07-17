@@ -16,7 +16,7 @@ enum class DisplayOrientation(val degrees: Int) {
 
 enum class AppLanguage { SQ, EN }
 
-enum class AppTheme { DARK, LIGHT, GOLD, BLUE, GREEN }
+enum class AppTheme { DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN }
 
 data class Settings(
     val mosqueName: String = "Xhamia",

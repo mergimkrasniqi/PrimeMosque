@@ -53,6 +53,42 @@ val BluePalette = BoardPalette(
     cardHighlight = Color(0x400A3D75),
 )
 
+/** Pure black with rich gold — elegant, and easy on OLED/LED panels at night. */
+val BlackPalette = BoardPalette(
+    bgTop = Color(0xFF141414),
+    bgBottom = Color(0xFF000000),
+    accent = Color(0xFFD4AF37),
+    card = Color(0x14FFFFFF),
+    cardHighlight = Color(0xFF201B0E),
+)
+
+/** Deep mosque green with soft gold accents. */
+val EmeraldPalette = BoardPalette(
+    bgTop = Color(0xFF0F3D2F),
+    bgBottom = Color(0xFF06251C),
+    accent = Color(0xFFE4C165),
+    card = Color(0x14FFFFFF),
+    cardHighlight = Color(0xFF14503F),
+)
+
+/** Cool slate blue with ice-blue accents instead of gold. */
+val MidnightPalette = BoardPalette(
+    bgTop = Color(0xFF1C2E42),
+    bgBottom = Color(0xFF0E1C2C),
+    accent = Color(0xFF7FB8E8),
+    card = Color(0x14FFFFFF),
+    cardHighlight = Color(0xFF223A54),
+)
+
+/** Deep burgundy, like mosque carpets, with warm gold accents. */
+val BurgundyPalette = BoardPalette(
+    bgTop = Color(0xFF451A24),
+    bgBottom = Color(0xFF290D14),
+    accent = Color(0xFFE0B96B),
+    card = Color(0x14FFFFFF),
+    cardHighlight = Color(0xFF5A2733),
+)
+
 /** Soft sage green with deep teal accents. */
 val GreenPalette = BoardPalette(
     bgTop = Color(0xFFEDF1ED),
@@ -76,6 +112,62 @@ private val DarkScheme = darkColorScheme(
     surfaceVariant = NavyLight,
     onSurfaceVariant = CreamMuted,
     outline = NavyLight,
+)
+
+private val BlackScheme = darkColorScheme(
+    primary = Color(0xFFD4AF37),
+    onPrimary = Color(0xFF1B1400),
+    secondary = Color(0xFFD4AF37),
+    onSecondary = Color(0xFF1B1400),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFF2EFE6),
+    surface = Color(0xFF161616),
+    onSurface = Color(0xFFF2EFE6),
+    surfaceVariant = Color(0xFF242424),
+    onSurfaceVariant = Color(0xFF9E978A),
+    outline = Color(0xFF3A362B),
+)
+
+private val EmeraldScheme = darkColorScheme(
+    primary = Color(0xFFE4C165),
+    onPrimary = Color(0xFF231A00),
+    secondary = Color(0xFF7FD1B9),
+    onSecondary = Color(0xFF06251C),
+    background = Color(0xFF06251C),
+    onBackground = Color(0xFFF0F5EF),
+    surface = Color(0xFF0E362A),
+    onSurface = Color(0xFFF0F5EF),
+    surfaceVariant = Color(0xFF14503F),
+    onSurfaceVariant = Color(0xFFA8C4B8),
+    outline = Color(0xFF2C6450),
+)
+
+private val MidnightScheme = darkColorScheme(
+    primary = Color(0xFF7FB8E8),
+    onPrimary = Color(0xFF0A1A29),
+    secondary = Color(0xFF9CCEF5),
+    onSecondary = Color(0xFF0A1A29),
+    background = Color(0xFF0E1C2C),
+    onBackground = Color(0xFFEAF2FA),
+    surface = Color(0xFF182A3E),
+    onSurface = Color(0xFFEAF2FA),
+    surfaceVariant = Color(0xFF223A54),
+    onSurfaceVariant = Color(0xFF97ABC1),
+    outline = Color(0xFF3A567A),
+)
+
+private val BurgundyScheme = darkColorScheme(
+    primary = Color(0xFFE0B96B),
+    onPrimary = Color(0xFF231600),
+    secondary = Color(0xFFE8A88F),
+    onSecondary = Color(0xFF290D14),
+    background = Color(0xFF290D14),
+    onBackground = Color(0xFFF5EDE8),
+    surface = Color(0xFF3A141D),
+    onSurface = Color(0xFFF5EDE8),
+    surfaceVariant = Color(0xFF5A2733),
+    onSurfaceVariant = Color(0xFFC4A5A5),
+    outline = Color(0xFF7A3B4A),
 )
 
 private val LightScheme = lightColorScheme(
@@ -136,6 +228,10 @@ private val GreenScheme = lightColorScheme(
 
 private fun paletteFor(theme: AppTheme): BoardPalette = when (theme) {
     AppTheme.DARK -> DarkPalette
+    AppTheme.BLACK -> BlackPalette
+    AppTheme.EMERALD -> EmeraldPalette
+    AppTheme.MIDNIGHT -> MidnightPalette
+    AppTheme.BURGUNDY -> BurgundyPalette
     AppTheme.LIGHT -> LightPalette
     AppTheme.GOLD -> GoldPalette
     AppTheme.BLUE -> BluePalette
@@ -144,6 +240,10 @@ private fun paletteFor(theme: AppTheme): BoardPalette = when (theme) {
 
 private fun schemeFor(theme: AppTheme): ColorScheme = when (theme) {
     AppTheme.DARK -> DarkScheme
+    AppTheme.BLACK -> BlackScheme
+    AppTheme.EMERALD -> EmeraldScheme
+    AppTheme.MIDNIGHT -> MidnightScheme
+    AppTheme.BURGUNDY -> BurgundyScheme
     AppTheme.LIGHT -> LightScheme
     AppTheme.GOLD -> GoldScheme
     AppTheme.BLUE -> BlueScheme
