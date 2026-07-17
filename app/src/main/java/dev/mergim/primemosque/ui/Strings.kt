@@ -26,7 +26,6 @@ data class Strings(
     val done: String,
     val save: String,
     val cancel: String,
-    val okHint: String,
     val minutesShort: String,
     val hijriMonths: List<String>,
     val eventNames: Map<String, String>,
@@ -68,7 +67,6 @@ private val SQ = Strings(
     done = "Mbyll",
     save = "Ruaj",
     cancel = "Anulo",
-    okHint = "Shtyp OK për cilësimet",
     minutesShort = "min",
     hijriMonths = listOf(
         "Muharrem", "Safer", "Rebiul-evvel", "Rebiul-ahir",
@@ -124,7 +122,6 @@ private val EN = Strings(
     done = "Done",
     save = "Save",
     cancel = "Cancel",
-    okHint = "Press OK for settings",
     minutesShort = "min",
     hijriMonths = listOf(
         "Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani",
