@@ -41,6 +41,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.data.PrayerSlot
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
+import java.time.DayOfWeek
 import java.time.Duration
 import java.time.format.DateTimeFormatter
 
@@ -58,6 +60,11 @@ private val secondsFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("s
 
 private fun Duration.asClock(): String =
     "%02d:%02d:%02d".format(toHours(), toMinutes() % 60, seconds % 60)
+
+/** On Fridays the Dhuhr slot is the Jumu'ah prayer. */
+private fun prayerLabel(key: PrayerKey, strings: Strings, friday: Boolean): String =
+    if (friday && key == PrayerKey.DHUHR) strings.fridayDhuhrName
+    else strings.prayerNames[key] ?: key.name
 
 private fun prayerIcon(key: PrayerKey): ImageVector = when (key) {
     PrayerKey.IMSAK -> Icons.Filled.Bedtime
@@ -117,6 +124,7 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         Spacer(Modifier.height(14.dp))
         CountdownBanner(state, strings)
         Spacer(Modifier.height(14.dp))
+        val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -124,7 +132,11 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
             verticalArrangement = Arrangement.SpaceEvenly,
         ) {
             state.slots.forEach { slot ->
-                PrayerRow(slot, strings, highlighted = slot.key == state.next?.key)
+                PrayerRow(
+                    slot, strings,
+                    highlighted = slot.key == state.next?.key,
+                    friday = friday,
+                )
             }
         }
         Footer(state, strings)
@@ -171,6 +183,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                 }
             }
         }
+        val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -180,6 +193,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                     slot = slot,
                     strings = strings,
                     highlighted = slot.key == state.next?.key,
+                    friday = friday,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -264,7 +278,7 @@ private fun DateLines(state: UiState, strings: Strings, centered: Boolean) {
 private fun CountdownBanner(state: UiState, strings: Strings, compact: Boolean = false) {
     val next = state.next ?: return
     val palette = LocalBoardPalette.current
-    val name = strings.prayerNames[next.key] ?: next.key.name
+    val name = prayerLabel(next.key, strings, friday = next.at.dayOfWeek == DayOfWeek.FRIDAY)
     Row(
         modifier = Modifier
             .background(palette.cardHighlight, RoundedCornerShape(50))
@@ -290,7 +304,12 @@ private fun CountdownBanner(state: UiState, strings: Strings, compact: Boolean =
 }
 
 @Composable
-private fun PrayerRow(slot: PrayerSlot, strings: Strings, highlighted: Boolean) {
+private fun PrayerRow(
+    slot: PrayerSlot,
+    strings: Strings,
+    highlighted: Boolean,
+    friday: Boolean,
+) {
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(16.dp)
     val background = if (highlighted) palette.cardHighlight else palette.card
@@ -314,7 +333,7 @@ private fun PrayerRow(slot: PrayerSlot, strings: Strings, highlighted: Boolean) 
         )
         Spacer(Modifier.width(18.dp))
         Text(
-            text = strings.prayerNames[slot.key] ?: slot.key.name,
+            text = prayerLabel(slot.key, strings, friday),
             fontSize = 26.sp,
             color = contentColor,
             fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
@@ -334,6 +353,7 @@ private fun PrayerCard(
     slot: PrayerSlot,
     strings: Strings,
     highlighted: Boolean,
+    friday: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalBoardPalette.current
@@ -356,7 +376,7 @@ private fun PrayerCard(
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = strings.prayerNames[slot.key] ?: slot.key.name,
+            text = prayerLabel(slot.key, strings, friday),
             fontSize = 18.sp,
             color = contentColor,
             textAlign = TextAlign.Center,
@@ -373,10 +393,28 @@ private fun PrayerCard(
 
 @Composable
 private fun Footer(state: UiState, strings: Strings) {
+    val palette = LocalBoardPalette.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (state.now.dayOfWeek == DayOfWeek.FRIDAY) {
+            Text(
+                text = strings.fridaySalawat,
+                color = palette.accent,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = strings.fridaySalawatTranslation,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
+        }
         state.upcomingEvent?.let { event ->
             val name = strings.eventNames[event.key] ?: event.key
             Text(
