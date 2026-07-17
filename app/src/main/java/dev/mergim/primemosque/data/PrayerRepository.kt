@@ -4,11 +4,13 @@ import android.content.Context
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-enum class PrayerKey { IMSAK, FAJR, SUNRISE, DHUHR, ASR, MAGHRIB, ISHA }
+/** ZAWAL is the astronomical noon from the takvim, shown as a sub-time of DHUHR. */
+enum class PrayerKey { IMSAK, FAJR, SUNRISE, DHUHR, ZAWAL, ASR, MAGHRIB, ISHA }
 
 data class PrayerSlot(val key: PrayerKey, val time: LocalTime)
 
@@ -21,6 +23,8 @@ data class City(val name: String, val offsetMinutes: Int)
 class PrayerRepository(context: Context) {
 
     private val json = Json { ignoreUnknownKeys = true }
+
+    private val zone = ZoneId.of("Europe/Belgrade")
 
     val data: PrayerDataFile = context.assets
         .open("kosovo-prayer-times.json")
@@ -53,12 +57,18 @@ class PrayerRepository(context: Context) {
         val entry = month.firstOrNull { it.day == date.dayOfMonth } ?: month.last()
         val fmt = DateTimeFormatter.ofPattern("H:mm")
         fun t(raw: String) = LocalTime.parse(raw, fmt).plusMinutes(offsetMinutes.toLong())
+        // In Kosovo the congregational Dreka/Xhuma is held at a fixed clock
+        // time: 13:00 during daylight saving time, 12:00 in standard time.
+        // The astronomical noon from the takvim is kept as the ZAWAL sub-time.
+        val dst = zone.rules.isDaylightSavings(date.atTime(12, 0).atZone(zone).toInstant())
+        val dhuhrFixed = if (dst) LocalTime.of(13, 0) else LocalTime.of(12, 0)
         return listOf(
             PrayerSlot(PrayerKey.IMSAK, t(entry.imsak)),
             // In Kosovo the Sabahu prayer is held 30 minutes before sunrise.
             PrayerSlot(PrayerKey.FAJR, t(entry.sunrise).minusMinutes(30)),
             PrayerSlot(PrayerKey.SUNRISE, t(entry.sunrise)),
-            PrayerSlot(PrayerKey.DHUHR, t(entry.dhuhr)),
+            PrayerSlot(PrayerKey.DHUHR, dhuhrFixed),
+            PrayerSlot(PrayerKey.ZAWAL, t(entry.dhuhr)),
             PrayerSlot(PrayerKey.ASR, t(entry.asr)),
             PrayerSlot(PrayerKey.MAGHRIB, t(entry.maghrib)),
             PrayerSlot(PrayerKey.ISHA, t(entry.isha)),

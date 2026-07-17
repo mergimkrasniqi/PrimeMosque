@@ -72,10 +72,32 @@ private fun prayerIcon(key: PrayerKey): ImageVector = when (key) {
     PrayerKey.IMSAK -> Icons.Filled.Bedtime
     PrayerKey.FAJR -> Icons.Filled.WbTwilight
     PrayerKey.SUNRISE -> Icons.Filled.WbSunny
-    PrayerKey.DHUHR -> Icons.Filled.LightMode
+    PrayerKey.DHUHR, PrayerKey.ZAWAL -> Icons.Filled.LightMode
     PrayerKey.ASR -> Icons.Filled.Brightness5
     PrayerKey.MAGHRIB -> Icons.Filled.Brightness4
     PrayerKey.ISHA -> Icons.Filled.DarkMode
+}
+
+/** Slots rendered inside another prayer's field instead of as their own row. */
+private val subSlotKeys = setOf(PrayerKey.IMSAK, PrayerKey.SUNRISE, PrayerKey.ZAWAL)
+
+private fun subTimesFor(
+    slot: PrayerSlot,
+    slots: List<PrayerSlot>,
+    strings: Strings,
+    withLabels: Boolean,
+): List<String> {
+    fun find(key: PrayerKey) = slots.firstOrNull { it.key == key }
+    fun format(key: PrayerKey): String? = find(key)?.let {
+        val time = it.time.format(timeFormatter)
+        if (withLabels) "${strings.prayerNames[key]} $time" else time
+    }
+    return when (slot.key) {
+        PrayerKey.FAJR -> listOfNotNull(format(PrayerKey.IMSAK), format(PrayerKey.SUNRISE))
+        // The astronomical noon is shown without a label, like on MyMosq.
+        PrayerKey.DHUHR -> listOfNotNull(find(PrayerKey.ZAWAL)?.time?.format(timeFormatter))
+        else -> emptyList()
+    }
 }
 
 @Composable
@@ -127,8 +149,6 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         CountdownBanner(state, strings)
         Spacer(Modifier.height(14.dp))
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        val imsak = state.slots.firstOrNull { it.key == PrayerKey.IMSAK }
-        val sunrise = state.slots.firstOrNull { it.key == PrayerKey.SUNRISE }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -136,14 +156,12 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
             verticalArrangement = Arrangement.SpaceEvenly,
         ) {
             state.slots
-                .filter { it.key != PrayerKey.IMSAK && it.key != PrayerKey.SUNRISE }
+                .filter { it.key !in subSlotKeys }
                 .forEach { slot ->
                     PrayerRow(
                         slot, strings,
-                        highlighted = slot.key == state.next?.key,
                         friday = friday,
-                        imsak = if (slot.key == PrayerKey.FAJR) imsak else null,
-                        sunrise = if (slot.key == PrayerKey.FAJR) sunrise else null,
+                        subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
                     )
                 }
         }
@@ -192,8 +210,6 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
             }
         }
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        val imsak = state.slots.firstOrNull { it.key == PrayerKey.IMSAK }
-        val sunrise = state.slots.firstOrNull { it.key == PrayerKey.SUNRISE }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -201,15 +217,13 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             state.slots
-                .filter { it.key != PrayerKey.IMSAK && it.key != PrayerKey.SUNRISE }
+                .filter { it.key !in subSlotKeys }
                 .forEach { slot ->
                     PrayerCard(
                         slot = slot,
                         strings = strings,
-                        highlighted = slot.key == state.next?.key,
                         friday = friday,
-                        imsak = if (slot.key == PrayerKey.FAJR) imsak else null,
-                        sunrise = if (slot.key == PrayerKey.FAJR) sunrise else null,
+                        subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
@@ -325,24 +339,17 @@ private fun CountdownBanner(state: UiState, strings: Strings, compact: Boolean =
 private fun PrayerRow(
     slot: PrayerSlot,
     strings: Strings,
-    highlighted: Boolean,
     friday: Boolean,
-    imsak: PrayerSlot? = null,
-    sunrise: PrayerSlot? = null,
+    subTimes: List<String> = emptyList(),
 ) {
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(16.dp)
-    val background = if (highlighted) palette.cardHighlight else palette.card
-    val contentColor =
-        if (highlighted) palette.accent else MaterialTheme.colorScheme.onBackground
+    val contentColor = MaterialTheme.colorScheme.onBackground
     val subColor = MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(background, shape)
-            .then(
-                if (highlighted) Modifier.border(2.dp, palette.accent, shape) else Modifier
-            )
+            .background(palette.card, shape)
             .padding(horizontal = 22.dp, vertical = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -357,7 +364,7 @@ private fun PrayerRow(
                 text = prayerLabel(slot.key, strings, friday),
                 fontSize = 26.sp,
                 color = contentColor,
-                fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.weight(1f))
             Text(
@@ -367,23 +374,20 @@ private fun PrayerRow(
                 fontWeight = FontWeight.Bold,
             )
         }
-        if (imsak != null || sunrise != null) {
+        if (subTimes.isNotEmpty()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 48.dp, top = 2.dp),
+                horizontalArrangement = if (subTimes.size == 1) {
+                    Arrangement.Center
+                } else {
+                    Arrangement.SpaceBetween
+                },
             ) {
-                imsak?.let {
+                subTimes.forEach { sub ->
                     Text(
-                        text = "${strings.prayerNames[PrayerKey.IMSAK]} ${it.time.format(timeFormatter)}",
-                        fontSize = 17.sp,
-                        color = subColor,
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-                sunrise?.let {
-                    Text(
-                        text = "${strings.prayerNames[PrayerKey.SUNRISE]} ${it.time.format(timeFormatter)}",
+                        text = sub,
                         fontSize = 17.sp,
                         color = subColor,
                     )
@@ -397,21 +401,16 @@ private fun PrayerRow(
 private fun PrayerCard(
     slot: PrayerSlot,
     strings: Strings,
-    highlighted: Boolean,
     friday: Boolean,
-    imsak: PrayerSlot? = null,
-    sunrise: PrayerSlot? = null,
+    subTimes: List<String> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(16.dp)
-    val background = if (highlighted) palette.cardHighlight else palette.card
-    val contentColor =
-        if (highlighted) palette.accent else MaterialTheme.colorScheme.onBackground
+    val contentColor = MaterialTheme.colorScheme.onBackground
     Column(
         modifier = modifier
-            .background(background, shape)
-            .then(if (highlighted) Modifier.border(2.dp, palette.accent, shape) else Modifier)
+            .background(palette.card, shape)
             .padding(vertical = 16.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -436,20 +435,12 @@ private fun PrayerCard(
             fontWeight = FontWeight.Bold,
             color = contentColor,
         )
-        if (imsak != null || sunrise != null) {
+        if (subTimes.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))
-            Row {
-                imsak?.let {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                subTimes.forEach { sub ->
                     Text(
-                        text = it.time.format(timeFormatter),
-                        fontSize = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (imsak != null && sunrise != null) Spacer(Modifier.width(14.dp))
-                sunrise?.let {
-                    Text(
-                        text = it.time.format(timeFormatter),
+                        text = sub,
                         fontSize = 17.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
