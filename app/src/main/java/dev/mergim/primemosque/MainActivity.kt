@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.ui.AnnouncementScreen
 import dev.mergim.primemosque.ui.DisplayScreen
 import dev.mergim.primemosque.ui.PrayerViewModel
 import dev.mergim.primemosque.ui.RotatedLayout
@@ -43,15 +44,20 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     PrimeMosqueTheme(theme = state.settings.theme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             RotatedLayout(degrees = orientation.degrees) {
-                if (showSettings) {
-                    SettingsScreen(
+                val announce = state.announce
+                when {
+                    showSettings -> SettingsScreen(
                         state = state,
                         strings = strings,
                         viewModel = viewModel,
                         onClose = { showSettings = false },
                     )
-                } else {
-                    DisplayScreen(
+                    announce != null -> AnnouncementScreen(
+                        slot = announce,
+                        state = state,
+                        strings = strings,
+                    )
+                    else -> DisplayScreen(
                         state = state,
                         strings = strings,
                         portrait = orientation == DisplayOrientation.PORTRAIT ||

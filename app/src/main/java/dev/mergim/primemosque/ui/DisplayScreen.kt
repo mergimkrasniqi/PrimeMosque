@@ -468,6 +468,54 @@ private fun PrayerCard(
     }
 }
 
+/**
+ * Full-screen announcement shown for one minute from the moment a prayer
+ * time arrives ("Koha e Namazit të ...").
+ */
+@Composable
+fun AnnouncementScreen(slot: PrayerSlot, state: UiState, strings: Strings) {
+    val palette = LocalBoardPalette.current
+    val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
+    val name = if (friday && slot.key == PrayerKey.DHUHR) {
+        strings.fridayDhuhrAnnounceName
+    } else {
+        strings.announceNames[slot.key] ?: slot.key.name
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(palette.bgTop, palette.bgBottom))),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 32.dp),
+        ) {
+            Icon(
+                imageVector = prayerIcon(slot.key),
+                contentDescription = null,
+                tint = palette.accent,
+                modifier = Modifier.size(72.dp),
+            )
+            Spacer(Modifier.height(28.dp))
+            Text(
+                text = strings.announceTemplate.format(name),
+                color = palette.accent,
+                fontSize = 46.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = slot.time.format(timeFormatter),
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 88.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
 @Composable
 private fun Footer(state: UiState, strings: Strings) {
     val palette = LocalBoardPalette.current

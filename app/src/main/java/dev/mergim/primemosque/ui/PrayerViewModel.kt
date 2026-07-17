@@ -39,6 +39,7 @@ data class UiState(
     val slots: List<PrayerSlot> = emptyList(),
     val current: PrayerKey? = null,
     val next: NextPrayer? = null,
+    val announce: PrayerSlot? = null,
     val countdown: Duration = Duration.ZERO,
     val hijri: HijriDate? = null,
     val upcomingEvent: UpcomingEvent? = null,
@@ -100,6 +101,15 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             ?.key
             ?: PrayerKey.ISHA
 
+        // For one minute from the moment a prayer time arrives, the board
+        // shows a full-screen announcement instead of the schedule.
+        val announce = slots
+            .filter { it.key in prayerKeys }
+            .firstOrNull {
+                val at = it.time.atDate(today)
+                !now.isBefore(at) && now.isBefore(at.plusMinutes(1))
+            }
+
         val hijrah = HijrahDate.from(today)
         val hijri = HijriDate(
             day = hijrah.get(ChronoField.DAY_OF_MONTH),
@@ -125,6 +135,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             slots = slots,
             current = current,
             next = next,
+            announce = announce,
             countdown = next?.let { Duration.between(now, it.at) } ?: Duration.ZERO,
             hijri = hijri,
             upcomingEvent = upcomingEvent,
