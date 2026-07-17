@@ -104,6 +104,9 @@ private val SQ = Strings(
     themeNames = mapOf(
         AppTheme.DARK to "E errët",
         AppTheme.LIGHT to "E çelët",
+        AppTheme.GOLD to "Ari",
+        AppTheme.BLUE to "Blu",
+        AppTheme.GREEN to "Jeshile",
     ),
     languageName = "Shqip",
     done = "Mbyll",
@@ -195,6 +198,9 @@ private val EN = Strings(
     themeNames = mapOf(
         AppTheme.DARK to "Dark",
         AppTheme.LIGHT to "Light",
+        AppTheme.GOLD to "Gold",
+        AppTheme.BLUE to "Blue",
+        AppTheme.GREEN to "Green",
     ),
     languageName = "English",
     done = "Done",
