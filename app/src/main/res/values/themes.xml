@@ -1,0 +1,6 @@
+<resources>
+
+    <style name="Theme.PrimeMosque" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">#06121F</item>
+    </style>
+</resources>
