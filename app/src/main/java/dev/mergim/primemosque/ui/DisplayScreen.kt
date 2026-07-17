@@ -391,7 +391,7 @@ private fun PrayerRow(
                     .fillMaxWidth()
                     .padding(start = 48.dp, top = 2.dp),
                 horizontalArrangement = if (subTimes.size == 1) {
-                    Arrangement.Center
+                    Arrangement.End
                 } else {
                     Arrangement.SpaceBetween
                 },
