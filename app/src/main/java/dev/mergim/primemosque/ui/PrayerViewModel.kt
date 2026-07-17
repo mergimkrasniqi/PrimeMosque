@@ -53,6 +53,11 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     // Kosovo timezone, independent of (possibly wrong) device settings.
     private val zone = ZoneId.of("Europe/Belgrade")
 
+    // Minor events that should not appear on the board.
+    private val hiddenEvents = setOf(
+        "laylat_al_miraj", "laylat_al_baraat", "ashura", "mawlid",
+    )
+
     val cities: List<City> = repository.cities
 
     private val ticker = flow {
@@ -97,6 +102,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // bundled dates are only valid for the takvim's own year.
         val upcomingEvent = if (today.year == repository.data.metadata.year) {
             repository.data.metadata.islamicEvents
+                .filterKeys { it !in hiddenEvents }
                 .mapNotNull { (key, date) ->
                     runCatching { UpcomingEvent(key, LocalDate.parse(date)) }.getOrNull()
                 }

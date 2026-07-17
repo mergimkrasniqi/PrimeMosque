@@ -55,7 +55,8 @@ class PrayerRepository(context: Context) {
         fun t(raw: String) = LocalTime.parse(raw, fmt).plusMinutes(offsetMinutes.toLong())
         return listOf(
             PrayerSlot(PrayerKey.IMSAK, t(entry.imsak)),
-            PrayerSlot(PrayerKey.FAJR, t(entry.fajr)),
+            // In Kosovo the Sabahu prayer is held 30 minutes before sunrise.
+            PrayerSlot(PrayerKey.FAJR, t(entry.sunrise).minusMinutes(30)),
             PrayerSlot(PrayerKey.SUNRISE, t(entry.sunrise)),
             PrayerSlot(PrayerKey.DHUHR, t(entry.dhuhr)),
             PrayerSlot(PrayerKey.ASR, t(entry.asr)),

@@ -74,15 +74,11 @@ private val SQ = Strings(
         "Ramazan", "Shevval", "Dhul-kade", "Dhul-hixhe",
     ),
     eventNames = mapOf(
-        "laylat_al_miraj" to "Nata e Miraxhit",
-        "laylat_al_baraat" to "Nata e Beratit",
         "ramadan_start" to "Fillimi i Ramazanit",
         "laylat_al_qadr" to "Nata e Kadrit",
         "eid_al_fitr" to "Fitër Bajrami",
         "eid_al_adha" to "Kurban Bajrami",
         "islamic_new_year_1448" to "Viti i Ri Islam",
-        "ashura" to "Dita e Ashures",
-        "mawlid" to "Mevludi",
     ),
 )
 
@@ -129,15 +125,11 @@ private val EN = Strings(
         "Ramadan", "Shawwal", "Dhu al-Qa'dah", "Dhu al-Hijjah",
     ),
     eventNames = mapOf(
-        "laylat_al_miraj" to "Laylat al-Miraj",
-        "laylat_al_baraat" to "Laylat al-Baraat",
         "ramadan_start" to "Start of Ramadan",
         "laylat_al_qadr" to "Laylat al-Qadr",
         "eid_al_fitr" to "Eid al-Fitr",
         "eid_al_adha" to "Eid al-Adha",
         "islamic_new_year_1448" to "Islamic New Year",
-        "ashura" to "Ashura",
-        "mawlid" to "Mawlid",
     ),
 )
 
