@@ -37,6 +37,7 @@ data class UpcomingEvent(val key: String, val date: LocalDate)
 data class UiState(
     val now: LocalDateTime = LocalDateTime.now(),
     val slots: List<PrayerSlot> = emptyList(),
+    val current: PrayerKey? = null,
     val next: NextPrayer? = null,
     val countdown: Duration = Duration.ZERO,
     val hijri: HijriDate? = null,
@@ -91,6 +92,14 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 .firstOrNull { it.key == PrayerKey.FAJR }
                 ?.let { NextPrayer(it.key, it.time.atDate(today.plusDays(1))) }
 
+        // The prayer whose time most recently passed; before Sabahu it is
+        // still Jacia (whose period runs past midnight).
+        val current = slots
+            .filter { it.key in prayerKeys }
+            .lastOrNull { !it.time.atDate(today).isAfter(now) }
+            ?.key
+            ?: PrayerKey.ISHA
+
         val hijrah = HijrahDate.from(today)
         val hijri = HijriDate(
             day = hijrah.get(ChronoField.DAY_OF_MONTH),
@@ -114,6 +123,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         return UiState(
             now = now,
             slots = slots,
+            current = current,
             next = next,
             countdown = next?.let { Duration.between(now, it.at) } ?: Duration.ZERO,
             hijri = hijri,

@@ -161,6 +161,7 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
                     PrayerRow(
                         slot, strings,
                         friday = friday,
+                        current = slot.key == state.current,
                         subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
                     )
                 }
@@ -223,6 +224,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                         slot = slot,
                         strings = strings,
                         friday = friday,
+                        current = slot.key == state.current,
                         subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
                         modifier = Modifier
                             .weight(1f)
@@ -340,6 +342,7 @@ private fun PrayerRow(
     slot: PrayerSlot,
     strings: Strings,
     friday: Boolean,
+    current: Boolean = false,
     subTimes: List<String> = emptyList(),
 ) {
     val palette = LocalBoardPalette.current
@@ -349,7 +352,14 @@ private fun PrayerRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, shape)
+            .background(if (current) palette.cardHighlight else palette.card, shape)
+            .then(
+                if (current) {
+                    Modifier.border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+                } else {
+                    Modifier
+                }
+            )
             .padding(horizontal = 22.dp, vertical = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -402,6 +412,7 @@ private fun PrayerCard(
     slot: PrayerSlot,
     strings: Strings,
     friday: Boolean,
+    current: Boolean = false,
     subTimes: List<String> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
@@ -410,7 +421,14 @@ private fun PrayerCard(
     val contentColor = MaterialTheme.colorScheme.onBackground
     Column(
         modifier = modifier
-            .background(palette.card, shape)
+            .background(if (current) palette.cardHighlight else palette.card, shape)
+            .then(
+                if (current) {
+                    Modifier.border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+                } else {
+                    Modifier
+                }
+            )
             .padding(vertical = 16.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
