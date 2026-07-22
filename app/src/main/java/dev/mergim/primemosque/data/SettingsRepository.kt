@@ -18,6 +18,20 @@ enum class AppLanguage { SQ, EN }
 
 enum class AppTheme { DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN }
 
+/**
+ * Overnight energy saver: from Isha (plus the chosen delay, so the
+ * congregation still sees the normal board while praying) until Imsak the
+ * display switches to the black theme and dims the backlight.
+ */
+enum class NightMode(val minutesAfterIsha: Long?) {
+    OFF(null),
+    AT_ISHA(0),
+    AFTER_15(15),
+    AFTER_30(30),
+    AFTER_45(45),
+    AFTER_60(60),
+}
+
 data class Settings(
     val mosqueName: String = "Xhamia",
     val place: String = "Prizren",
@@ -25,6 +39,7 @@ data class Settings(
     val orientation: DisplayOrientation = DisplayOrientation.PORTRAIT,
     val language: AppLanguage = AppLanguage.SQ,
     val theme: AppTheme = AppTheme.DARK,
+    val nightMode: NightMode = NightMode.AFTER_30,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -38,6 +53,7 @@ class SettingsRepository(private val context: Context) {
         val ORIENTATION = stringPreferencesKey("orientation")
         val LANGUAGE = stringPreferencesKey("language")
         val THEME = stringPreferencesKey("theme")
+        val NIGHT_MODE = stringPreferencesKey("night_mode")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -55,6 +71,9 @@ class SettingsRepository(private val context: Context) {
             theme = p[Keys.THEME]
                 ?.let { runCatching { AppTheme.valueOf(it) }.getOrNull() }
                 ?: defaults.theme,
+            nightMode = p[Keys.NIGHT_MODE]
+                ?.let { runCatching { NightMode.valueOf(it) }.getOrNull() }
+                ?: defaults.nightMode,
         )
     }
 
@@ -75,4 +94,7 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setTheme(value: AppTheme) =
         context.dataStore.edit { it[Keys.THEME] = value.name }
+
+    suspend fun setNightMode(value: NightMode) =
+        context.dataStore.edit { it[Keys.NIGHT_MODE] = value.name }
 }

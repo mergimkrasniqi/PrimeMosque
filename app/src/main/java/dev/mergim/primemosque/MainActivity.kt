@@ -1,5 +1,8 @@
 package dev.mergim.primemosque
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -7,13 +10,16 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.ui.AnnouncementScreen
 import dev.mergim.primemosque.ui.DisplayScreen
@@ -34,6 +40,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Backlight level while the night energy saver is active. Black pixels only
+// save power on OLED panels; on LCD the backlight is the real consumer.
+private const val NIGHT_BRIGHTNESS = 0.1f
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
 @Composable
 fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
@@ -41,7 +57,22 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     var showSettings by remember { mutableStateOf(false) }
     val orientation = state.settings.orientation
 
-    PrimeMosqueTheme(theme = state.settings.theme) {
+    // Night energy saver: black theme + dimmed backlight between Isha and
+    // Imsak. Suspended while the settings are open, so the chosen theme
+    // stays visible while configuring.
+    val nightSaver = state.night && !showSettings
+    val view = LocalView.current
+    LaunchedEffect(nightSaver) {
+        view.context.findActivity()?.window?.let { window ->
+            val attributes = window.attributes
+            attributes.screenBrightness =
+                if (nightSaver) NIGHT_BRIGHTNESS
+                else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            window.attributes = attributes
+        }
+    }
+
+    PrimeMosqueTheme(theme = if (nightSaver) AppTheme.BLACK else state.settings.theme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             RotatedLayout(degrees = orientation.degrees) {
                 val announce = state.announce

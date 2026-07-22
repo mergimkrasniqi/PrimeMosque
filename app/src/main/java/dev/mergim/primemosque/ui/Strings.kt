@@ -3,6 +3,7 @@ package dev.mergim.primemosque.ui
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import java.util.Locale
 
@@ -27,6 +28,8 @@ data class Strings(
     val orientationNames: Map<DisplayOrientation, String>,
     val themeLabel: String,
     val themeNames: Map<AppTheme, String>,
+    val nightModeLabel: String,
+    val nightModeNames: Map<NightMode, String>,
     val languageName: String,
     val done: String,
     val save: String,
@@ -123,6 +126,15 @@ private val SQ = Strings(
         AppTheme.GOLD to "Ari",
         AppTheme.BLUE to "Blu",
         AppTheme.GREEN to "Jeshile",
+    ),
+    nightModeLabel = "Kursimi i energjisë natën (deri në Imsak)",
+    nightModeNames = mapOf(
+        NightMode.OFF to "Fikur",
+        NightMode.AT_ISHA to "Nga Jacia",
+        NightMode.AFTER_15 to "Jacia +15 min",
+        NightMode.AFTER_30 to "Jacia +30 min",
+        NightMode.AFTER_45 to "Jacia +45 min",
+        NightMode.AFTER_60 to "Jacia +1 orë",
     ),
     languageName = "Shqip",
     done = "Mbyll",
@@ -230,6 +242,15 @@ private val EN = Strings(
         AppTheme.GOLD to "Gold",
         AppTheme.BLUE to "Blue",
         AppTheme.GREEN to "Green",
+    ),
+    nightModeLabel = "Night energy saver (until Imsak)",
+    nightModeNames = mapOf(
+        NightMode.OFF to "Off",
+        NightMode.AT_ISHA to "From Isha",
+        NightMode.AFTER_15 to "Isha +15 min",
+        NightMode.AFTER_30 to "Isha +30 min",
+        NightMode.AFTER_45 to "Isha +45 min",
+        NightMode.AFTER_60 to "Isha +1 h",
     ),
     languageName = "English",
     done = "Done",

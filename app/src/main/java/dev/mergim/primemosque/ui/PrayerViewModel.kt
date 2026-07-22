@@ -7,6 +7,7 @@ import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.City
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.data.PrayerRepository
 import dev.mergim.primemosque.data.PrayerSlot
@@ -43,6 +44,7 @@ data class UiState(
     val countdown: Duration = Duration.ZERO,
     val hijri: HijriDate? = null,
     val upcomingEvent: UpcomingEvent? = null,
+    val night: Boolean = false,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
 )
@@ -110,6 +112,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 !now.isBefore(at) && now.isBefore(at.plusMinutes(1))
             }
 
+        // Overnight energy saver: the mosque is empty between Isha and Imsak,
+        // so the board drops to the black theme and dims. The delay after Isha
+        // keeps the normal board up while the congregation is still praying.
+        val night = settings.nightMode.minutesAfterIsha?.let { delayMinutes ->
+            val nightStart = slots.firstOrNull { it.key == PrayerKey.ISHA }
+                ?.time?.atDate(today)?.plusMinutes(delayMinutes)
+            val nightEnd = slots.firstOrNull { it.key == PrayerKey.IMSAK }
+                ?.time?.atDate(today)
+            nightStart != null && nightEnd != null &&
+                (!now.isBefore(nightStart) || now.isBefore(nightEnd))
+        } ?: false
+
         val hijrah = HijrahDate.from(today)
         val hijri = HijriDate(
             day = hijrah.get(ChronoField.DAY_OF_MONTH),
@@ -139,6 +153,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             countdown = next?.let { Duration.between(now, it.at) } ?: Duration.ZERO,
             hijri = hijri,
             upcomingEvent = upcomingEvent,
+            night = night,
             settings = settings,
             loaded = true,
         )
@@ -150,4 +165,5 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setOrientation(value: DisplayOrientation) = viewModelScope.launch { settingsRepository.setOrientation(value) }
     fun setLanguage(value: AppLanguage) = viewModelScope.launch { settingsRepository.setLanguage(value) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settingsRepository.setTheme(value) }
+    fun setNightMode(value: NightMode) = viewModelScope.launch { settingsRepository.setNightMode(value) }
 }

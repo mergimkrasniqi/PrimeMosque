@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
 @Composable
@@ -73,11 +74,13 @@ fun SettingsScreen(
     val languageIndex = languages.indexOf(settings.language)
     val themes = AppTheme.entries
     val themeIndex = themes.indexOf(settings.theme)
+    val nightModes = NightMode.entries
+    val nightModeIndex = nightModes.indexOf(settings.nightMode)
     val palette = LocalBoardPalette.current
 
     // Explicit focus chain: the UI is drawn rotated on portrait-mounted TVs,
     // which breaks Compose's geometric (bounds-based) D-pad focus search.
-    val focusRequesters = remember { List(7) { FocusRequester() } }
+    val focusRequesters = remember { List(8) { FocusRequester() } }
     fun rowModifier(index: Int): Modifier = Modifier
         .focusRequester(focusRequesters[index])
         .focusProperties {
@@ -171,9 +174,22 @@ fun SettingsScreen(
                     viewModel.setTheme(themes[(themeIndex + 1) % themes.size])
                 },
             )
+            CyclerRow(
+                modifier = rowModifier(6),
+                label = strings.nightModeLabel,
+                value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
+                onPrevious = {
+                    viewModel.setNightMode(
+                        nightModes[(nightModeIndex - 1 + nightModes.size) % nightModes.size]
+                    )
+                },
+                onNext = {
+                    viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
+                },
+            )
             Button(
                 onClick = onClose,
-                modifier = rowModifier(6).fillMaxWidth(),
+                modifier = rowModifier(7).fillMaxWidth(),
             ) {
                 Text(strings.done, fontSize = 18.sp)
             }
