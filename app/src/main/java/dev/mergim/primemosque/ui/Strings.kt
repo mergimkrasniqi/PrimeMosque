@@ -143,11 +143,11 @@ private val SQ = Strings(
             "Koha për dhikrin e mbrëmjes",
         ),
         NoticeKey.FAST_MONDAY to NoticeText(
-            "Agjërimi — sunet",
+            "Agjërimi sunet (vullnetar)",
             "Nesër është e hënë - agjërimi i saj është sunet.",
         ),
         NoticeKey.FAST_THURSDAY to NoticeText(
-            "Agjërimi — sunet",
+            "Agjërimi sunet (vullnetar)",
             "Nesër është e enjte - agjërimi i saj është sunet.",
         ),
         NoticeKey.FAST_WHITE_DAYS to NoticeText(

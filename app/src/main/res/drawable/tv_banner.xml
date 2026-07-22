@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android TV home-screen banner (16:9). Same mosque motif as the
+     launcher icon, centered on the navy gradient. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:startX="160"
+                android:startY="0"
+                android:endX="160"
+                android:endY="180"
+                android:type="linear">
+                <item android:offset="0" android:color="#FF14395B" />
+                <item android:offset="1" android:color="#FF06121F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group
+        android:scaleX="1.5"
+        android:scaleY="1.5"
+        android:translateX="79"
+        android:translateY="14">
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M56,21.5 A5.5,5.5 0 1 0 56,32.5 A4.4,4.4 0 1 1 56,21.5 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M54,36 C47,42 41,48 41,56 C41,62 46,66 54,66 C62,66 67,62 67,56 C67,48 61,42 54,36 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M42,62 H66 V76 H42 Z" />
+        <path
+            android:fillColor="#0D2B49"
+            android:pathData="M50,76 V70 A4,4 0 0 1 58,70 V76 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M33,48 H37 V76 H33 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M31.5,48 L38.5,48 L35,40 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M71,48 H75 V76 H71 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M69.5,48 L76.5,48 L73,40 Z" />
+        <path
+            android:fillColor="#E9C46A"
+            android:pathData="M28,76 H80 V80 H28 Z" />
+    </group>
+</vector>
