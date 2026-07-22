@@ -1,5 +1,6 @@
 package dev.mergim.primemosque.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -7,9 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,8 +23,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness5
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.NightsStay
+import androidx.compose.material.icons.filled.NoFood
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.Icon
@@ -76,6 +84,19 @@ private fun prayerIcon(key: PrayerKey): ImageVector = when (key) {
     PrayerKey.ASR -> Icons.Filled.Brightness5
     PrayerKey.MAGHRIB -> Icons.Filled.Brightness4
     PrayerKey.ISHA -> Icons.Filled.DarkMode
+}
+
+private fun noticeIcon(key: NoticeKey): ImageVector = when (key) {
+    NoticeKey.FRIDAY_KAHF -> Icons.Filled.MenuBook
+    NoticeKey.FRIDAY_SUNNAH -> Icons.Filled.Star
+    NoticeKey.FRIDAY_DUA -> Icons.Filled.Favorite
+    NoticeKey.FRIDAY_KHUTBAH -> Icons.Filled.VolumeOff
+    NoticeKey.DUHA -> Icons.Filled.WbSunny
+    NoticeKey.MORNING_DHIKR -> Icons.Filled.WbTwilight
+    NoticeKey.EVENING_DHIKR -> Icons.Filled.NightsStay
+    NoticeKey.FAST_MONDAY,
+    NoticeKey.FAST_THURSDAY,
+    NoticeKey.FAST_WHITE_DAYS -> Icons.Filled.NoFood
 }
 
 /** Slots rendered inside another prayer's field instead of as their own row. */
@@ -135,25 +156,28 @@ fun DisplayScreen(
 
 @Composable
 private fun PortraitBoard(state: UiState, strings: Strings) {
+    // When the lecture banner joins the board (the busiest layout: banner +
+    // notice card + footer), everything scales down so nothing gets clipped.
+    val scale = if (state.lecture != null) 0.85f else 1f
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 28.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Header(state, strings, centered = true)
-        Spacer(Modifier.height(10.dp))
-        BigClock(state)
-        DateLines(state, strings, centered = true)
-        Spacer(Modifier.height(14.dp))
-        CountdownBanner(state, strings)
-        Spacer(Modifier.height(14.dp))
+        Header(state, strings, centered = true, scale = scale)
+        Spacer(Modifier.height(8.dp * scale))
+        BigClock(state, mainSize = 92.sp * scale, secondsSize = 44.sp * scale)
+        DateLines(state, strings, centered = true, scale = scale)
+        Spacer(Modifier.height(12.dp * scale))
+        CountdownBanner(state, strings, scale = scale)
+        Spacer(Modifier.height(12.dp * scale))
+        LectureBanner(state, strings, modifier = Modifier.padding(bottom = 12.dp * scale), scale = scale)
+        Spacer(Modifier.weight(1f))
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp * scale),
         ) {
             state.slots
                 .filter { it.key !in subSlotKeys }
@@ -163,10 +187,13 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
                         friday = friday,
                         current = slot.key == state.current,
                         subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
+                        scale = scale,
                     )
                 }
         }
-        Footer(state, strings)
+        Spacer(Modifier.weight(1f))
+        NoticeCard(state, strings, modifier = Modifier.padding(bottom = 10.dp * scale), scale = scale)
+        Footer(state, strings, scale = scale)
     }
 }
 
@@ -192,6 +219,15 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                 .weight(1f),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Lecture banner and notice card flank the clock symmetrically.
+            if (state.lecture != null) {
+                LectureBanner(
+                    state, strings,
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .padding(end = 20.dp),
+                )
+            }
             BoxWithConstraints(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
@@ -208,6 +244,14 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                     Spacer(Modifier.height(if (compact) 6.dp else 12.dp))
                     CountdownBanner(state, strings, compact = compact)
                 }
+            }
+            if (state.notices.isNotEmpty()) {
+                NoticeCard(
+                    state, strings,
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .padding(start = 20.dp),
+                )
             }
         }
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
@@ -238,7 +282,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
 }
 
 @Composable
-private fun Header(state: UiState, strings: Strings, centered: Boolean) {
+private fun Header(state: UiState, strings: Strings, centered: Boolean, scale: Float = 1f) {
     val align = if (centered) TextAlign.Center else TextAlign.Start
     Column(
         modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
@@ -247,8 +291,8 @@ private fun Header(state: UiState, strings: Strings, centered: Boolean) {
         Text(
             text = state.settings.mosqueName,
             color = LocalBoardPalette.current.accent,
-            fontSize = 34.sp,
-            lineHeight = 42.sp,
+            fontSize = 34.sp * scale,
+            lineHeight = 42.sp * scale,
             fontWeight = FontWeight.Bold,
             textAlign = align,
         )
@@ -256,7 +300,7 @@ private fun Header(state: UiState, strings: Strings, centered: Boolean) {
             Text(
                 text = state.settings.place,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 20.sp,
+                fontSize = 20.sp * scale,
                 textAlign = align,
             )
         }
@@ -287,14 +331,14 @@ private fun BigClock(
 }
 
 @Composable
-private fun DateLines(state: UiState, strings: Strings, centered: Boolean) {
+private fun DateLines(state: UiState, strings: Strings, centered: Boolean, scale: Float = 1f) {
     val align = if (centered) TextAlign.Center else TextAlign.End
     val gregorian = state.now.toLocalDate()
         .format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", strings.locale))
         .replaceFirstChar { it.uppercase(strings.locale) }
     Text(
         text = gregorian,
-        fontSize = 22.sp,
+        fontSize = 22.sp * scale,
         color = MaterialTheme.colorScheme.onBackground,
         textAlign = align,
     )
@@ -302,7 +346,7 @@ private fun DateLines(state: UiState, strings: Strings, centered: Boolean) {
         val monthName = strings.hijriMonths.getOrNull(hijri.month - 1) ?: ""
         Text(
             text = "${hijri.day} $monthName ${hijri.year}",
-            fontSize = 18.sp,
+            fontSize = 18.sp * scale,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = align,
         )
@@ -310,7 +354,12 @@ private fun DateLines(state: UiState, strings: Strings, centered: Boolean) {
 }
 
 @Composable
-private fun CountdownBanner(state: UiState, strings: Strings, compact: Boolean = false) {
+private fun CountdownBanner(
+    state: UiState,
+    strings: Strings,
+    compact: Boolean = false,
+    scale: Float = 1f,
+) {
     val next = state.next ?: return
     val palette = LocalBoardPalette.current
     val name = prayerLabel(next.key, strings, friday = next.at.dayOfWeek == DayOfWeek.FRIDAY)
@@ -319,22 +368,127 @@ private fun CountdownBanner(state: UiState, strings: Strings, compact: Boolean =
             .background(palette.cardHighlight, RoundedCornerShape(50))
             .border(2.dp, palette.accent, RoundedCornerShape(50))
             .padding(
-                horizontal = if (compact) 18.dp else 26.dp,
-                vertical = if (compact) 6.dp else 10.dp,
+                horizontal = (if (compact) 18.dp else 26.dp) * scale,
+                vertical = (if (compact) 6.dp else 10.dp) * scale,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = state.countdown.asClock(),
             color = palette.accent,
-            fontSize = if (compact) 20.sp else 30.sp,
+            fontSize = (if (compact) 20.sp else 30.sp) * scale,
             fontWeight = FontWeight.Bold,
         )
         Text(
             text = " ${strings.nextPrayerIn} $name",
             color = MaterialTheme.colorScheme.onBackground,
-            fontSize = if (compact) 16.sp else 24.sp,
+            fontSize = (if (compact) 16.sp else 24.sp) * scale,
         )
+    }
+}
+
+/**
+ * Recurring lecture banner (e.g. "Zgjimi i Zemrave"), pinned all day on the
+ * configured weekday. Sits in its own spot on the board, separate from the
+ * rotating notice cards and the footer.
+ */
+@Composable
+private fun LectureBanner(
+    state: UiState,
+    strings: Strings,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+) {
+    val lecture = state.lecture ?: return
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(16.dp)
+    val prayerName = strings.announceNames[lecture.prayer] ?: lecture.prayer.name
+    val body = strings.lectureBody.format(
+        prayerName,
+        lecture.time?.format(timeFormatter) ?: "—",
+    )
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
+            .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Campaign,
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(38.dp * scale),
+        )
+        Spacer(Modifier.width(16.dp * scale))
+        Column {
+            Text(
+                text = lecture.title,
+                color = palette.accent,
+                fontSize = 22.sp * scale,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = body,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp * scale,
+            )
+        }
+    }
+}
+
+/**
+ * Contextual guidance card (Friday practices, Duha window, dhikr times,
+ * sunnah-fasting eves). When several notices apply at once they rotate
+ * every 30 seconds with a crossfade. Renders nothing when no notice is
+ * active, giving the space back to the schedule.
+ */
+@Composable
+private fun NoticeCard(
+    state: UiState,
+    strings: Strings,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+) {
+    val notices = state.notices
+    if (notices.isEmpty()) return
+    val notice = notices[(state.now.toLocalTime().toSecondOfDay() / 30) % notices.size]
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(16.dp)
+    Crossfade(targetState = notice, label = "notice", modifier = modifier) { active ->
+        val text = strings.noticeTexts[active.key] ?: return@Crossfade
+        val body = active.arg?.let { text.body.format(it) } ?: text.body
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(palette.cardHighlight, shape)
+                .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
+                .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = noticeIcon(active.key),
+                contentDescription = null,
+                tint = palette.accent,
+                modifier = Modifier.size(34.dp * scale),
+            )
+            Spacer(Modifier.width(16.dp * scale))
+            Column {
+                Text(
+                    text = text.title,
+                    color = palette.accent,
+                    fontSize = 20.sp * scale,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = body,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 17.sp * scale,
+                    lineHeight = 22.sp * scale,
+                )
+            }
+        }
     }
 }
 
@@ -345,6 +499,7 @@ private fun PrayerRow(
     friday: Boolean,
     current: Boolean = false,
     subTimes: List<String> = emptyList(),
+    scale: Float = 1f,
 ) {
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(16.dp)
@@ -361,49 +516,47 @@ private fun PrayerRow(
                     Modifier
                 }
             )
-            .padding(horizontal = 22.dp, vertical = 12.dp),
+            .padding(horizontal = 22.dp * scale, vertical = 10.dp * scale),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = prayerIcon(slot.key),
                 contentDescription = null,
                 tint = contentColor,
-                modifier = Modifier.size(30.dp),
+                modifier = Modifier.size(30.dp * scale),
             )
-            Spacer(Modifier.width(18.dp))
+            Spacer(Modifier.width(18.dp * scale))
             Text(
                 text = prayerLabel(slot.key, strings, friday),
-                fontSize = 26.sp,
+                fontSize = 26.sp * scale,
                 color = contentColor,
                 fontWeight = FontWeight.Medium,
             )
-            Spacer(Modifier.weight(1f))
+
+            if (subTimes.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp * scale),
+                ) {
+                    subTimes.forEach { sub ->
+                        Text(
+                            text = sub,
+                            fontSize = 17.sp * scale,
+                            color = subColor,
+                        )
+                    }
+                }
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+
             Text(
                 text = slot.time.format(timeFormatter),
-                fontSize = 34.sp,
+                fontSize = 34.sp * scale,
                 color = contentColor,
                 fontWeight = FontWeight.Bold,
             )
-        }
-        if (subTimes.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 48.dp, top = 2.dp),
-                horizontalArrangement = if (subTimes.size == 1) {
-                    Arrangement.End
-                } else {
-                    Arrangement.SpaceBetween
-                },
-            ) {
-                subTimes.forEach { sub ->
-                    Text(
-                        text = sub,
-                        fontSize = 17.sp,
-                        color = subColor,
-                    )
-                }
-            }
         }
     }
 }
@@ -520,23 +673,27 @@ fun AnnouncementScreen(slot: PrayerSlot, state: UiState, strings: Strings) {
 }
 
 @Composable
-private fun Footer(state: UiState, strings: Strings) {
+private fun Footer(state: UiState, strings: Strings, scale: Float = 1f) {
     val palette = LocalBoardPalette.current
     // On Fridays the salawat stays pinned all day; on other days the dhikr
     // reminders rotate every 5 minutes.
     val reminder = if (state.now.dayOfWeek == DayOfWeek.FRIDAY) {
         strings.fridaySalawat
     } else {
-        strings.reminders[(state.now.toLocalTime().toSecondOfDay() / (5 * 60)) % strings.reminders.size]
+        strings.reminders[(state.now.toLocalTime()
+            .toSecondOfDay() / (1 * 60)) % strings.reminders.size]
     }
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.card, RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp * scale, vertical = 8.dp * scale),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = reminder.text,
             color = palette.accent,
-            fontSize = 20.sp,
+            fontSize = 21.sp * scale,
             fontWeight = FontWeight.Medium,
             fontStyle = FontStyle.Italic,
             textAlign = TextAlign.Center,
@@ -544,16 +701,23 @@ private fun Footer(state: UiState, strings: Strings) {
         Text(
             text = reminder.translation,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 15.sp,
+            fontSize = 15.sp * scale,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 6.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
         )
         state.upcomingEvent?.let { event ->
             val name = strings.eventNames[event.key] ?: event.key
             Text(
-                text = "$name • ${event.date.format(DateTimeFormatter.ofPattern("d MMMM", strings.locale))}",
+                text = "$name • ${
+                    event.date.format(
+                        DateTimeFormatter.ofPattern(
+                            "d MMMM",
+                            strings.locale
+                        )
+                    )
+                }",
                 color = MaterialTheme.colorScheme.secondary,
-                fontSize = 18.sp,
+                fontSize = 18.sp * scale,
             )
         }
     }

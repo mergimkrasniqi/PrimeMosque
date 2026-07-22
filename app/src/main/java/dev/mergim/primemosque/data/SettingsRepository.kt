@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.DayOfWeek
 
 enum class DisplayOrientation(val degrees: Int) {
     LANDSCAPE(0),
@@ -32,6 +33,18 @@ enum class NightMode(val minutesAfterIsha: Long?) {
     AFTER_60(60),
 }
 
+/** Day of the recurring lecture; OFF hides the lecture banner entirely. */
+enum class LectureDay(val dayOfWeek: DayOfWeek?) {
+    OFF(null),
+    MONDAY(DayOfWeek.MONDAY),
+    TUESDAY(DayOfWeek.TUESDAY),
+    WEDNESDAY(DayOfWeek.WEDNESDAY),
+    THURSDAY(DayOfWeek.THURSDAY),
+    FRIDAY(DayOfWeek.FRIDAY),
+    SATURDAY(DayOfWeek.SATURDAY),
+    SUNDAY(DayOfWeek.SUNDAY),
+}
+
 data class Settings(
     val mosqueName: String = "Xhamia",
     val place: String = "Prizren",
@@ -40,6 +53,11 @@ data class Settings(
     val language: AppLanguage = AppLanguage.SQ,
     val theme: AppTheme = AppTheme.DARK,
     val nightMode: NightMode = NightMode.AFTER_30,
+    // Recurring lecture (e.g. "Zgjimi i Zemrave") pinned on the board on
+    // the chosen day, held after the chosen prayer.
+    val lectureTitle: String = "Ligjërata javore",
+    val lectureDay: LectureDay = LectureDay.OFF,
+    val lecturePrayer: PrayerKey = PrayerKey.MAGHRIB,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -54,6 +72,9 @@ class SettingsRepository(private val context: Context) {
         val LANGUAGE = stringPreferencesKey("language")
         val THEME = stringPreferencesKey("theme")
         val NIGHT_MODE = stringPreferencesKey("night_mode")
+        val LECTURE_TITLE = stringPreferencesKey("lecture_title")
+        val LECTURE_DAY = stringPreferencesKey("lecture_day")
+        val LECTURE_PRAYER = stringPreferencesKey("lecture_prayer")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -74,6 +95,13 @@ class SettingsRepository(private val context: Context) {
             nightMode = p[Keys.NIGHT_MODE]
                 ?.let { runCatching { NightMode.valueOf(it) }.getOrNull() }
                 ?: defaults.nightMode,
+            lectureTitle = p[Keys.LECTURE_TITLE] ?: defaults.lectureTitle,
+            lectureDay = p[Keys.LECTURE_DAY]
+                ?.let { runCatching { LectureDay.valueOf(it) }.getOrNull() }
+                ?: defaults.lectureDay,
+            lecturePrayer = p[Keys.LECTURE_PRAYER]
+                ?.let { runCatching { PrayerKey.valueOf(it) }.getOrNull() }
+                ?: defaults.lecturePrayer,
         )
     }
 
@@ -97,4 +125,13 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setNightMode(value: NightMode) =
         context.dataStore.edit { it[Keys.NIGHT_MODE] = value.name }
+
+    suspend fun setLectureTitle(value: String) =
+        context.dataStore.edit { it[Keys.LECTURE_TITLE] = value }
+
+    suspend fun setLectureDay(value: LectureDay) =
+        context.dataStore.edit { it[Keys.LECTURE_DAY] = value.name }
+
+    suspend fun setLecturePrayer(value: PrayerKey) =
+        context.dataStore.edit { it[Keys.LECTURE_PRAYER] = value.name }
 }

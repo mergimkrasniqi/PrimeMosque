@@ -53,7 +53,9 @@ import androidx.compose.ui.unit.sp
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.data.LectureDay
 import dev.mergim.primemosque.data.NightMode
+import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
 @Composable
@@ -63,24 +65,39 @@ fun SettingsScreen(
     viewModel: PrayerViewModel,
     onClose: () -> Unit,
 ) {
-    BackHandler(onBack = onClose)
+    var showLecture by remember { mutableStateOf(false) }
+    if (showLecture) {
+        LectureSettingsPage(
+            state = state,
+            strings = strings,
+            viewModel = viewModel,
+            onBack = { showLecture = false },
+        )
+    } else {
+        MainSettingsPage(
+            state = state,
+            strings = strings,
+            viewModel = viewModel,
+            onOpenLecture = { showLecture = true },
+            onClose = onClose,
+        )
+    }
+}
 
-    val settings = state.settings
-    val cities = viewModel.cities
-    val cityIndex = cities.indexOfFirst { it.name == settings.city }.coerceAtLeast(0)
-    val orientations = DisplayOrientation.entries
-    val orientationIndex = orientations.indexOf(settings.orientation)
-    val languages = AppLanguage.entries
-    val languageIndex = languages.indexOf(settings.language)
-    val themes = AppTheme.entries
-    val themeIndex = themes.indexOf(settings.theme)
-    val nightModes = NightMode.entries
-    val nightModeIndex = nightModes.indexOf(settings.nightMode)
+/**
+ * Shared scaffold for a settings page: gradient background, centered
+ * scrollable column, title, and an explicit D-pad focus chain (the UI is
+ * drawn rotated on portrait-mounted TVs, which breaks Compose's geometric
+ * bounds-based focus search).
+ */
+@Composable
+private fun SettingsPage(
+    title: String,
+    rowCount: Int,
+    content: @Composable (rowModifier: (Int) -> Modifier) -> Unit,
+) {
     val palette = LocalBoardPalette.current
-
-    // Explicit focus chain: the UI is drawn rotated on portrait-mounted TVs,
-    // which breaks Compose's geometric (bounds-based) D-pad focus search.
-    val focusRequesters = remember { List(8) { FocusRequester() } }
+    val focusRequesters = remember(rowCount) { List(rowCount) { FocusRequester() } }
     fun rowModifier(index: Int): Modifier = Modifier
         .focusRequester(focusRequesters[index])
         .focusProperties {
@@ -106,93 +123,195 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = strings.settingsTitle,
+                text = title,
                 color = palette.accent,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
             )
-            EditTextRow(
-                label = strings.mosqueNameLabel,
-                value = settings.mosqueName,
-                strings = strings,
-                onSave = viewModel::setMosqueName,
-                modifier = rowModifier(0),
-            )
-            EditTextRow(
-                label = strings.placeLabel,
-                value = settings.place,
-                strings = strings,
-                onSave = viewModel::setPlace,
-                modifier = rowModifier(1),
-            )
-            CyclerRow(
-                modifier = rowModifier(2),
-                label = strings.cityLabel,
-                value = cities[cityIndex].let { city ->
-                    if (city.offsetMinutes == 0) city.name
-                    else "${city.name} (%+d ${strings.minutesShort})".format(city.offsetMinutes)
-                },
-                onPrevious = {
-                    viewModel.setCity(cities[(cityIndex - 1 + cities.size) % cities.size].name)
-                },
-                onNext = {
-                    viewModel.setCity(cities[(cityIndex + 1) % cities.size].name)
-                },
-            )
-            CyclerRow(
-                modifier = rowModifier(3),
-                label = strings.orientationLabel,
-                value = strings.orientationNames[settings.orientation] ?: settings.orientation.name,
-                onPrevious = {
-                    viewModel.setOrientation(
-                        orientations[(orientationIndex - 1 + orientations.size) % orientations.size]
-                    )
-                },
-                onNext = {
-                    viewModel.setOrientation(orientations[(orientationIndex + 1) % orientations.size])
-                },
-            )
-            CyclerRow(
-                modifier = rowModifier(4),
-                label = strings.languageLabel,
-                value = strings.languageName,
-                onPrevious = {
-                    viewModel.setLanguage(languages[(languageIndex - 1 + languages.size) % languages.size])
-                },
-                onNext = {
-                    viewModel.setLanguage(languages[(languageIndex + 1) % languages.size])
-                },
-            )
-            CyclerRow(
-                modifier = rowModifier(5),
-                label = strings.themeLabel,
-                value = strings.themeNames[settings.theme] ?: settings.theme.name,
-                onPrevious = {
-                    viewModel.setTheme(themes[(themeIndex - 1 + themes.size) % themes.size])
-                },
-                onNext = {
-                    viewModel.setTheme(themes[(themeIndex + 1) % themes.size])
-                },
-            )
-            CyclerRow(
-                modifier = rowModifier(6),
-                label = strings.nightModeLabel,
-                value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
-                onPrevious = {
-                    viewModel.setNightMode(
-                        nightModes[(nightModeIndex - 1 + nightModes.size) % nightModes.size]
-                    )
-                },
-                onNext = {
-                    viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
-                },
-            )
-            Button(
-                onClick = onClose,
-                modifier = rowModifier(7).fillMaxWidth(),
-            ) {
-                Text(strings.done, fontSize = 18.sp)
-            }
+            content(::rowModifier)
+        }
+    }
+}
+
+@Composable
+private fun MainSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onOpenLecture: () -> Unit,
+    onClose: () -> Unit,
+) {
+    BackHandler(onBack = onClose)
+
+    val settings = state.settings
+    val cities = viewModel.cities
+    val cityIndex = cities.indexOfFirst { it.name == settings.city }.coerceAtLeast(0)
+    val orientations = DisplayOrientation.entries
+    val orientationIndex = orientations.indexOf(settings.orientation)
+    val languages = AppLanguage.entries
+    val languageIndex = languages.indexOf(settings.language)
+    val themes = AppTheme.entries
+    val themeIndex = themes.indexOf(settings.theme)
+    val nightModes = NightMode.entries
+    val nightModeIndex = nightModes.indexOf(settings.nightMode)
+
+    val lectureSummary = buildString {
+        append(strings.lectureDayNames[settings.lectureDay] ?: settings.lectureDay.name)
+        if (settings.lectureDay != LectureDay.OFF) {
+            append(" • ")
+            append(strings.prayerNames[settings.lecturePrayer] ?: settings.lecturePrayer.name)
+        }
+    }
+
+    SettingsPage(title = strings.settingsTitle, rowCount = 9) { rowModifier ->
+        EditTextRow(
+            label = strings.mosqueNameLabel,
+            value = settings.mosqueName,
+            strings = strings,
+            onSave = viewModel::setMosqueName,
+            modifier = rowModifier(0),
+        )
+        EditTextRow(
+            label = strings.placeLabel,
+            value = settings.place,
+            strings = strings,
+            onSave = viewModel::setPlace,
+            modifier = rowModifier(1),
+        )
+        CyclerRow(
+            modifier = rowModifier(2),
+            label = strings.cityLabel,
+            value = cities[cityIndex].let { city ->
+                if (city.offsetMinutes == 0) city.name
+                else "${city.name} (%+d ${strings.minutesShort})".format(city.offsetMinutes)
+            },
+            onPrevious = {
+                viewModel.setCity(cities[(cityIndex - 1 + cities.size) % cities.size].name)
+            },
+            onNext = {
+                viewModel.setCity(cities[(cityIndex + 1) % cities.size].name)
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(3),
+            label = strings.orientationLabel,
+            value = strings.orientationNames[settings.orientation] ?: settings.orientation.name,
+            onPrevious = {
+                viewModel.setOrientation(
+                    orientations[(orientationIndex - 1 + orientations.size) % orientations.size]
+                )
+            },
+            onNext = {
+                viewModel.setOrientation(orientations[(orientationIndex + 1) % orientations.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(4),
+            label = strings.languageLabel,
+            value = strings.languageName,
+            onPrevious = {
+                viewModel.setLanguage(languages[(languageIndex - 1 + languages.size) % languages.size])
+            },
+            onNext = {
+                viewModel.setLanguage(languages[(languageIndex + 1) % languages.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(5),
+            label = strings.themeLabel,
+            value = strings.themeNames[settings.theme] ?: settings.theme.name,
+            onPrevious = {
+                viewModel.setTheme(themes[(themeIndex - 1 + themes.size) % themes.size])
+            },
+            onNext = {
+                viewModel.setTheme(themes[(themeIndex + 1) % themes.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(6),
+            label = strings.nightModeLabel,
+            value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
+            onPrevious = {
+                viewModel.setNightMode(
+                    nightModes[(nightModeIndex - 1 + nightModes.size) % nightModes.size]
+                )
+            },
+            onNext = {
+                viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
+            },
+        )
+        NavRow(
+            modifier = rowModifier(7),
+            label = strings.lectureSectionLabel,
+            value = lectureSummary,
+            onOpen = onOpenLecture,
+        )
+        Button(
+            onClick = onClose,
+            modifier = rowModifier(8).fillMaxWidth(),
+        ) {
+            Text(strings.done, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun LectureSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    val lectureDays = LectureDay.entries
+    val lectureDayIndex = lectureDays.indexOf(settings.lectureDay)
+    val lecturePrayers = listOf(
+        PrayerKey.FAJR, PrayerKey.DHUHR, PrayerKey.ASR,
+        PrayerKey.MAGHRIB, PrayerKey.ISHA,
+    )
+    val lecturePrayerIndex = lecturePrayers.indexOf(settings.lecturePrayer).coerceAtLeast(0)
+
+    SettingsPage(title = strings.lectureSectionLabel, rowCount = 4) { rowModifier ->
+        EditTextRow(
+            label = strings.lectureTitleLabel,
+            value = settings.lectureTitle,
+            strings = strings,
+            onSave = viewModel::setLectureTitle,
+            modifier = rowModifier(0),
+        )
+        CyclerRow(
+            modifier = rowModifier(1),
+            label = strings.lectureDayLabel,
+            value = strings.lectureDayNames[settings.lectureDay] ?: settings.lectureDay.name,
+            onPrevious = {
+                viewModel.setLectureDay(
+                    lectureDays[(lectureDayIndex - 1 + lectureDays.size) % lectureDays.size]
+                )
+            },
+            onNext = {
+                viewModel.setLectureDay(lectureDays[(lectureDayIndex + 1) % lectureDays.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(2),
+            label = strings.lecturePrayerLabel,
+            value = strings.prayerNames[settings.lecturePrayer] ?: settings.lecturePrayer.name,
+            onPrevious = {
+                viewModel.setLecturePrayer(
+                    lecturePrayers[(lecturePrayerIndex - 1 + lecturePrayers.size) % lecturePrayers.size]
+                )
+            },
+            onNext = {
+                viewModel.setLecturePrayer(lecturePrayers[(lecturePrayerIndex + 1) % lecturePrayers.size])
+            },
+        )
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(3).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
         }
     }
 }
@@ -345,6 +464,63 @@ private fun CyclerRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Navigation row that opens a sub-page of settings when pressed with OK
+ * (or D-pad right).
+ */
+@Composable
+private fun NavRow(
+    label: String,
+    value: String,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var focused by remember { mutableStateOf(false) }
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .then(if (focused) Modifier.border(2.dp, palette.accent, shape) else Modifier)
+            .onFocusChanged { focused = it.isFocused }
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter ||
+                        event.key == Key.DirectionRight)
+                ) {
+                    onOpen()
+                    true
+                } else {
+                    false
+                }
+            }
+            .focusable()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = value,
+                color = if (focused) palette.accent else MaterialTheme.colorScheme.onBackground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
         Icon(
             imageVector = Icons.Filled.ChevronRight,
             contentDescription = null,
