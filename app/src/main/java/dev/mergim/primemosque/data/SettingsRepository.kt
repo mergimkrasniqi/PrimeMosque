@@ -22,7 +22,7 @@ enum class DisplayOrientation(val degrees: Int) {
     LANDSCAPE_FLIPPED(180),
 }
 
-enum class AppLanguage { SQ, EN }
+enum class AppLanguage { SQ, EN, TR, BS }
 
 enum class AppTheme { DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN }
 

@@ -403,7 +403,361 @@ private val EN = Strings(
     ),
 )
 
+private val TR = Strings(
+    locale = Locale.forLanguageTag("tr"),
+    prayerNames = mapOf(
+        PrayerKey.IMSAK to "İmsak",
+        PrayerKey.FAJR to "Sabah",
+        PrayerKey.SUNRISE to "Güneş",
+        PrayerKey.DHUHR to "Öğle",
+        PrayerKey.ASR to "İkindi",
+        PrayerKey.MAGHRIB to "Akşam",
+        PrayerKey.ISHA to "Yatsı",
+    ),
+    fridayDhuhrName = "Cuma",
+    announceTemplate = "%s Namazı Vakti",
+    announceNames = mapOf(
+        PrayerKey.FAJR to "Sabah",
+        PrayerKey.DHUHR to "Öğle",
+        PrayerKey.ASR to "İkindi",
+        PrayerKey.MAGHRIB to "Akşam",
+        PrayerKey.ISHA to "Yatsı",
+    ),
+    fridayDhuhrAnnounceName = "Cuma",
+    fridaySalawat = Reminder(
+        "Allahümme salli ve sellim alâ nebiyyinâ Muhammed",
+        "Allah'ım, Peygamberimiz Muhammed'e salât ve selam eyle.",
+    ),
+    reminders = listOf(
+        Reminder(
+            "Estağfirullahe ve etûbu ileyh",
+            "Allah'tan bağışlanma diler ve O'na tövbe ederim",
+        ),
+        Reminder(
+            "Sübhanallah",
+            "Allah her türlü eksiklikten uzaktır",
+        ),
+        Reminder(
+            "Sübhanallahi ve bihamdihi",
+            "Allah'ı hamd ile tesbih ederim",
+        ),
+        Reminder(
+            "Sübhanallahil-Azîm",
+            "Yüce Allah her türlü eksiklikten uzaktır",
+        ),
+        Reminder(
+            "Elhamdülillah",
+            "Hamd Allah'a mahsustur",
+        ),
+        Reminder(
+            "Allahu Ekber",
+            "Allah en büyüktür",
+        ),
+        Reminder(
+            "La ilahe illallah",
+            "Allah'tan başka ilah yoktur",
+        ),
+        Reminder(
+            "Allahümme salli ve sellim alâ nebiyyinâ Muhammed",
+            "Allah'ım, Peygamberimiz Muhammed'e salât ve selam eyle.",
+        ),
+        Reminder(
+            "La havle ve la kuvvete illa billah",
+            "Güç ve kuvvet ancak Allah'tandır",
+        ),
+    ),
+    nextPrayerIn = "kaldı:",
+    noticeTexts = mapOf(
+        NoticeKey.FRIDAY_KAHF to NoticeText(
+            "Kehf Suresi",
+            "Cuma günü Kehf Suresi'ni okumak sünnettir.",
+        ),
+        NoticeKey.FRIDAY_SUNNAH to NoticeText(
+            "Cuma sünnetleri",
+            "Gusül, güzel giyinmek, güzel koku ve camiye erken gitmek.",
+        ),
+        NoticeKey.FRIDAY_DUA to NoticeText(
+            "Duaların kabul anı",
+            "Cuma günü duaların kabul edildiği bir an vardır - dua ve salavatı çoğaltın.",
+        ),
+        NoticeKey.FRIDAY_KHUTBAH to NoticeText(
+            "Hutbede sessizlik",
+            "İmam hutbe okurken susup dikkatle dinleyin.",
+        ),
+        NoticeKey.DUHA to NoticeText(
+            "Kuşluk (Duha) Namazı",
+            "Şimdi kuşluk namazı vakti - en az 2 rekât.",
+        ),
+        NoticeKey.MORNING_DHIKR to NoticeText(
+            "Sabah zikirleri",
+            "Sabah zikirlerinin vakti.",
+        ),
+        NoticeKey.EVENING_DHIKR to NoticeText(
+            "Akşam zikirleri",
+            "Akşam zikirlerinin vakti.",
+        ),
+        NoticeKey.FAST_MONDAY to NoticeText(
+            "Sünnet oruç",
+            "Yarın pazartesi - orucunu tutmak sünnettir.",
+        ),
+        NoticeKey.FAST_THURSDAY to NoticeText(
+            "Sünnet oruç",
+            "Yarın perşembe - orucunu tutmak sünnettir.",
+        ),
+        NoticeKey.FAST_WHITE_DAYS to NoticeText(
+            "Beyaz Günler",
+            "Yarın hicri ayın %d. günü - oruç tutmak sünnettir.",
+        ),
+    ),
+    settingsTitle = "Ayarlar",
+    mosqueNameLabel = "Cami adı",
+    placeLabel = "Yer (alt başlık)",
+    cityLabel = "Şehir (namaz vakitleri)",
+    orientationLabel = "Ekran yönü",
+    languageLabel = "Dil",
+    orientationNames = mapOf(
+        DisplayOrientation.LANDSCAPE to "Yatay",
+        DisplayOrientation.PORTRAIT to "Dikey",
+        DisplayOrientation.PORTRAIT_REVERSED to "Dikey (ters)",
+        DisplayOrientation.LANDSCAPE_FLIPPED to "Yatay (ters)",
+    ),
+    themeLabel = "Görünüm",
+    themeNames = mapOf(
+        AppTheme.DARK to "Koyu",
+        AppTheme.BLACK to "Siyah",
+        AppTheme.EMERALD to "Zümrüt",
+        AppTheme.MIDNIGHT to "Gece mavisi",
+        AppTheme.BURGUNDY to "Bordo",
+        AppTheme.LIGHT to "Açık",
+        AppTheme.GOLD to "Altın",
+        AppTheme.BLUE to "Mavi",
+        AppTheme.GREEN to "Yeşil",
+    ),
+    nightModeLabel = "Gece enerji tasarrufu (İmsak'a kadar)",
+    nightModeNames = mapOf(
+        NightMode.OFF to "Kapalı",
+        NightMode.AT_ISHA to "Yatsı'dan itibaren",
+        NightMode.AFTER_15 to "Yatsı +15 dk",
+        NightMode.AFTER_30 to "Yatsı +30 dk",
+        NightMode.AFTER_45 to "Yatsı +45 dk",
+        NightMode.AFTER_60 to "Yatsı +1 saat",
+    ),
+    lectureSectionLabel = "Haftalık ders",
+    lectureTitleLabel = "Başlık",
+    lectureDayLabel = "Gün",
+    lecturePrayerLabel = "Hangi namazdan sonra",
+    lectureDayNames = mapOf(
+        LectureDay.OFF to "Kapalı",
+        LectureDay.MONDAY to "Pazartesi",
+        LectureDay.TUESDAY to "Salı",
+        LectureDay.WEDNESDAY to "Çarşamba",
+        LectureDay.THURSDAY to "Perşembe",
+        LectureDay.FRIDAY to "Cuma",
+        LectureDay.SATURDAY to "Cumartesi",
+        LectureDay.SUNDAY to "Pazar",
+    ),
+    lectureBody = "Bugün %s namazından sonra (%s)",
+    adjustSectionLabel = "Vakit düzeltmeleri (dk)",
+    adjustResetLabel = "Tümünü sıfırla",
+    back = "Geri",
+    languageName = "Türkçe",
+    done = "Kapat",
+    save = "Kaydet",
+    cancel = "İptal",
+    minutesShort = "dk",
+    hijriMonths = listOf(
+        "Muharrem", "Safer", "Rebiülevvel", "Rebiülahir",
+        "Cemaziyelevvel", "Cemaziyelahir", "Recep", "Şaban",
+        "Ramazan", "Şevval", "Zilkade", "Zilhicce",
+    ),
+    eventNames = mapOf(
+        "ramadan_start" to "Ramazan başlangıcı",
+        "laylat_al_qadr" to "Kadir Gecesi",
+        "eid_al_fitr" to "Ramazan Bayramı",
+        "eid_al_adha" to "Kurban Bayramı",
+        "islamic_new_year_1448" to "Hicri Yılbaşı",
+    ),
+)
+
+private val BS = Strings(
+    locale = Locale.forLanguageTag("bs"),
+    prayerNames = mapOf(
+        PrayerKey.IMSAK to "Imsak",
+        PrayerKey.FAJR to "Sabah",
+        PrayerKey.SUNRISE to "Izlazak sunca",
+        PrayerKey.DHUHR to "Podne",
+        PrayerKey.ASR to "Ikindija",
+        PrayerKey.MAGHRIB to "Akšam",
+        PrayerKey.ISHA to "Jacija",
+    ),
+    fridayDhuhrName = "Džuma",
+    announceTemplate = "Vrijeme namaza: %s",
+    announceNames = mapOf(
+        PrayerKey.FAJR to "Sabah",
+        PrayerKey.DHUHR to "Podne",
+        PrayerKey.ASR to "Ikindija",
+        PrayerKey.MAGHRIB to "Akšam",
+        PrayerKey.ISHA to "Jacija",
+    ),
+    fridayDhuhrAnnounceName = "Džuma",
+    fridaySalawat = Reminder(
+        "Allahumme salli ve sellim ala nebijjina Muhammed",
+        "Allahu moj, blagoslovi i spasi našeg Vjerovjesnika Muhammeda.",
+    ),
+    reminders = listOf(
+        Reminder(
+            "Estagfirullahe ve etubu ilejhi",
+            "Tražim oprost od Allaha i Njemu se kajem",
+        ),
+        Reminder(
+            "Subhanallah",
+            "Slavljen neka je Allah",
+        ),
+        Reminder(
+            "Subhanallahi ve bihamdihi",
+            "Slavljen je Allah i Njemu pripada hvala",
+        ),
+        Reminder(
+            "Subhanallahil-Azim",
+            "Slavljen je Allah Veličanstveni",
+        ),
+        Reminder(
+            "Elhamdulillah",
+            "Hvala pripada Allahu",
+        ),
+        Reminder(
+            "Allahu Ekber",
+            "Allah je najveći",
+        ),
+        Reminder(
+            "La ilahe illallah",
+            "Nema boga osim Allaha",
+        ),
+        Reminder(
+            "Allahumme salli ve sellim ala nebijjina Muhammed",
+            "Allahu moj, blagoslovi i spasi našeg Vjerovjesnika Muhammeda.",
+        ),
+        Reminder(
+            "La havle ve la kuvvete illa billah",
+            "Nema snage ni moći osim kod Allaha",
+        ),
+    ),
+    nextPrayerIn = "do",
+    noticeTexts = mapOf(
+        NoticeKey.FRIDAY_KAHF to NoticeText(
+            "Sura El-Kehf",
+            "Sunnet je petkom učiti suru El-Kehf.",
+        ),
+        NoticeKey.FRIDAY_SUNNAH to NoticeText(
+            "Sunneti džume",
+            "Gusul, lijepa odjeća, miris i rano odlaženje u džamiju.",
+        ),
+        NoticeKey.FRIDAY_DUA to NoticeText(
+            "Čas primanja dove",
+            "Petkom postoji čas kada se dova prima - činite više dove i salavata.",
+        ),
+        NoticeKey.FRIDAY_KHUTBAH to NoticeText(
+            "Šutnja tokom hutbe",
+            "Dok imam drži hutbu, šuti i pažljivo slušaj.",
+        ),
+        NoticeKey.DUHA to NoticeText(
+            "Duha-namaz",
+            "Sada je vrijeme duha-namaza - najmanje 2 rekata.",
+        ),
+        NoticeKey.MORNING_DHIKR to NoticeText(
+            "Jutarnji zikr",
+            "Vrijeme jutarnjeg zikra.",
+        ),
+        NoticeKey.EVENING_DHIKR to NoticeText(
+            "Večernji zikr",
+            "Vrijeme večernjeg zikra.",
+        ),
+        NoticeKey.FAST_MONDAY to NoticeText(
+            "Sunnet post",
+            "Sutra je ponedjeljak - postiti ga je sunnet.",
+        ),
+        NoticeKey.FAST_THURSDAY to NoticeText(
+            "Sunnet post",
+            "Sutra je četvrtak - postiti ga je sunnet.",
+        ),
+        NoticeKey.FAST_WHITE_DAYS to NoticeText(
+            "Bijeli dani",
+            "Sutra je %d. dan hidžretskog mjeseca - post je sunnet.",
+        ),
+    ),
+    settingsTitle = "Postavke",
+    mosqueNameLabel = "Naziv džamije",
+    placeLabel = "Mjesto (podnaslov)",
+    cityLabel = "Grad (namaska vremena)",
+    orientationLabel = "Orijentacija ekrana",
+    languageLabel = "Jezik",
+    orientationNames = mapOf(
+        DisplayOrientation.LANDSCAPE to "Horizontalno",
+        DisplayOrientation.PORTRAIT to "Vertikalno",
+        DisplayOrientation.PORTRAIT_REVERSED to "Vertikalno (obrnuto)",
+        DisplayOrientation.LANDSCAPE_FLIPPED to "Horizontalno (obrnuto)",
+    ),
+    themeLabel = "Izgled",
+    themeNames = mapOf(
+        AppTheme.DARK to "Tamna",
+        AppTheme.BLACK to "Crna",
+        AppTheme.EMERALD to "Smaragdna",
+        AppTheme.MIDNIGHT to "Tamnoplava",
+        AppTheme.BURGUNDY to "Bordo",
+        AppTheme.LIGHT to "Svijetla",
+        AppTheme.GOLD to "Zlatna",
+        AppTheme.BLUE to "Plava",
+        AppTheme.GREEN to "Zelena",
+    ),
+    nightModeLabel = "Noćna ušteda energije (do imsaka)",
+    nightModeNames = mapOf(
+        NightMode.OFF to "Isključeno",
+        NightMode.AT_ISHA to "Od jacije",
+        NightMode.AFTER_15 to "Jacija +15 min",
+        NightMode.AFTER_30 to "Jacija +30 min",
+        NightMode.AFTER_45 to "Jacija +45 min",
+        NightMode.AFTER_60 to "Jacija +1 h",
+    ),
+    lectureSectionLabel = "Sedmično predavanje",
+    lectureTitleLabel = "Naslov",
+    lectureDayLabel = "Dan",
+    lecturePrayerLabel = "Poslije namaza",
+    lectureDayNames = mapOf(
+        LectureDay.OFF to "Isključeno",
+        LectureDay.MONDAY to "Ponedjeljak",
+        LectureDay.TUESDAY to "Utorak",
+        LectureDay.WEDNESDAY to "Srijeda",
+        LectureDay.THURSDAY to "Četvrtak",
+        LectureDay.FRIDAY to "Petak",
+        LectureDay.SATURDAY to "Subota",
+        LectureDay.SUNDAY to "Nedjelja",
+    ),
+    lectureBody = "Danas poslije %s namaza (%s)",
+    adjustSectionLabel = "Korekcija vremena (min)",
+    adjustResetLabel = "Vrati sve na 0",
+    back = "Nazad",
+    languageName = "Bosanski",
+    done = "Zatvori",
+    save = "Sačuvaj",
+    cancel = "Otkaži",
+    minutesShort = "min",
+    hijriMonths = listOf(
+        "Muharrem", "Safer", "Rebiul-evvel", "Rebiul-ahir",
+        "Džumadel-ula", "Džumadel-uhra", "Redžeb", "Ša'ban",
+        "Ramazan", "Ševval", "Zul-ka'de", "Zul-hidždže",
+    ),
+    eventNames = mapOf(
+        "ramadan_start" to "Početak ramazana",
+        "laylat_al_qadr" to "Lejletul-kadr",
+        "eid_al_fitr" to "Ramazanski bajram",
+        "eid_al_adha" to "Kurban-bajram",
+        "islamic_new_year_1448" to "Nova hidžretska godina",
+    ),
+)
+
 fun stringsFor(language: AppLanguage): Strings = when (language) {
     AppLanguage.SQ -> SQ
     AppLanguage.EN -> EN
+    AppLanguage.TR -> TR
+    AppLanguage.BS -> BS
 }
