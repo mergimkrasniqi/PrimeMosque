@@ -106,10 +106,16 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
+    private fun adjusted(slots: List<PrayerSlot>, settings: Settings): List<PrayerSlot> =
+        slots.map { slot ->
+            val minutes = settings.prayerAdjustments[slot.key] ?: 0
+            if (minutes == 0) slot else slot.copy(time = slot.time.plusMinutes(minutes.toLong()))
+        }
+
     private fun buildState(now: LocalDateTime, settings: Settings): UiState {
         val offset = repository.offsetFor(settings.city)
         val today = now.toLocalDate()
-        val slots = repository.slotsFor(today, offset)
+        val slots = adjusted(repository.slotsFor(today, offset), settings)
 
         val prayerKeys = setOf(
             PrayerKey.FAJR, PrayerKey.DHUHR, PrayerKey.ASR,
@@ -119,7 +125,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             .filter { it.key in prayerKeys }
             .map { NextPrayer(it.key, it.time.atDate(today)) }
             .firstOrNull { it.at.isAfter(now) }
-            ?: repository.slotsFor(today.plusDays(1), offset)
+            ?: adjusted(repository.slotsFor(today.plusDays(1), offset), settings)
                 .firstOrNull { it.key == PrayerKey.FAJR }
                 ?.let { NextPrayer(it.key, it.time.atDate(today.plusDays(1))) }
 
@@ -283,4 +289,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setLectureTitle(value: String) = viewModelScope.launch { settingsRepository.setLectureTitle(value) }
     fun setLectureDay(value: LectureDay) = viewModelScope.launch { settingsRepository.setLectureDay(value) }
     fun setLecturePrayer(value: PrayerKey) = viewModelScope.launch { settingsRepository.setLecturePrayer(value) }
+    fun setPrayerAdjustment(key: PrayerKey, minutes: Int) =
+        viewModelScope.launch { settingsRepository.setPrayerAdjustment(key, minutes.coerceIn(-60, 60)) }
+    fun resetPrayerAdjustments() = viewModelScope.launch { settingsRepository.resetPrayerAdjustments() }
 }

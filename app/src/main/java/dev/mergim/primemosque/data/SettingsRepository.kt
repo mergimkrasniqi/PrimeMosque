@@ -2,11 +2,18 @@ package dev.mergim.primemosque.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
+
+/** Prayers whose displayed time can be corrected by a per-prayer offset. */
+val ADJUSTABLE_PRAYERS = listOf(
+    PrayerKey.FAJR, PrayerKey.SUNRISE, PrayerKey.DHUHR,
+    PrayerKey.ASR, PrayerKey.MAGHRIB, PrayerKey.ISHA,
+)
 
 enum class DisplayOrientation(val degrees: Int) {
     LANDSCAPE(0),
@@ -58,6 +65,8 @@ data class Settings(
     val lectureTitle: String = "Ligjërata javore",
     val lectureDay: LectureDay = LectureDay.OFF,
     val lecturePrayer: PrayerKey = PrayerKey.MAGHRIB,
+    // Per-prayer correction in minutes, applied on top of the takvim times.
+    val prayerAdjustments: Map<PrayerKey, Int> = emptyMap(),
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -75,6 +84,8 @@ class SettingsRepository(private val context: Context) {
         val LECTURE_TITLE = stringPreferencesKey("lecture_title")
         val LECTURE_DAY = stringPreferencesKey("lecture_day")
         val LECTURE_PRAYER = stringPreferencesKey("lecture_prayer")
+
+        fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { p ->
@@ -102,6 +113,9 @@ class SettingsRepository(private val context: Context) {
             lecturePrayer = p[Keys.LECTURE_PRAYER]
                 ?.let { runCatching { PrayerKey.valueOf(it) }.getOrNull() }
                 ?: defaults.lecturePrayer,
+            prayerAdjustments = ADJUSTABLE_PRAYERS.associateWith { key ->
+                p[Keys.adjustment(key)] ?: 0
+            },
         )
     }
 
@@ -134,4 +148,11 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setLecturePrayer(value: PrayerKey) =
         context.dataStore.edit { it[Keys.LECTURE_PRAYER] = value.name }
+
+    suspend fun setPrayerAdjustment(key: PrayerKey, minutes: Int) =
+        context.dataStore.edit { it[Keys.adjustment(key)] = minutes }
+
+    suspend fun resetPrayerAdjustments() = context.dataStore.edit { p ->
+        ADJUSTABLE_PRAYERS.forEach { p.remove(Keys.adjustment(it)) }
+    }
 }

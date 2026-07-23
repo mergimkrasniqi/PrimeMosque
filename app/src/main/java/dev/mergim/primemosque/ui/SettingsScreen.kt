@@ -50,6 +50,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.mergim.primemosque.data.ADJUSTABLE_PRAYERS
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
@@ -58,6 +59,8 @@ import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
+private enum class SettingsSubPage { MAIN, LECTURE, ADJUSTMENTS }
+
 @Composable
 fun SettingsScreen(
     state: UiState,
@@ -65,20 +68,26 @@ fun SettingsScreen(
     viewModel: PrayerViewModel,
     onClose: () -> Unit,
 ) {
-    var showLecture by remember { mutableStateOf(false) }
-    if (showLecture) {
-        LectureSettingsPage(
+    var page by remember { mutableStateOf(SettingsSubPage.MAIN) }
+    when (page) {
+        SettingsSubPage.LECTURE -> LectureSettingsPage(
             state = state,
             strings = strings,
             viewModel = viewModel,
-            onBack = { showLecture = false },
+            onBack = { page = SettingsSubPage.MAIN },
         )
-    } else {
-        MainSettingsPage(
+        SettingsSubPage.ADJUSTMENTS -> AdjustmentsSettingsPage(
             state = state,
             strings = strings,
             viewModel = viewModel,
-            onOpenLecture = { showLecture = true },
+            onBack = { page = SettingsSubPage.MAIN },
+        )
+        SettingsSubPage.MAIN -> MainSettingsPage(
+            state = state,
+            strings = strings,
+            viewModel = viewModel,
+            onOpenLecture = { page = SettingsSubPage.LECTURE },
+            onOpenAdjustments = { page = SettingsSubPage.ADJUSTMENTS },
             onClose = onClose,
         )
     }
@@ -139,6 +148,7 @@ private fun MainSettingsPage(
     strings: Strings,
     viewModel: PrayerViewModel,
     onOpenLecture: () -> Unit,
+    onOpenAdjustments: () -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -162,8 +172,15 @@ private fun MainSettingsPage(
             append(strings.prayerNames[settings.lecturePrayer] ?: settings.lecturePrayer.name)
         }
     }
+    val adjustSummary = settings.prayerAdjustments
+        .filterValues { it != 0 }
+        .entries
+        .joinToString(" • ") { (key, minutes) ->
+            "${strings.prayerNames[key] ?: key.name} %+d".format(minutes)
+        }
+        .ifEmpty { "0" }
 
-    SettingsPage(title = strings.settingsTitle, rowCount = 9) { rowModifier ->
+    SettingsPage(title = strings.settingsTitle, rowCount = 10) { rowModifier ->
         EditTextRow(
             label = strings.mosqueNameLabel,
             value = settings.mosqueName,
@@ -246,11 +263,55 @@ private fun MainSettingsPage(
             value = lectureSummary,
             onOpen = onOpenLecture,
         )
+        NavRow(
+            modifier = rowModifier(8),
+            label = strings.adjustSectionLabel,
+            value = adjustSummary,
+            onOpen = onOpenAdjustments,
+        )
         Button(
             onClick = onClose,
-            modifier = rowModifier(8).fillMaxWidth(),
+            modifier = rowModifier(9).fillMaxWidth(),
         ) {
             Text(strings.done, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun AdjustmentsSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val adjustments = state.settings.prayerAdjustments
+
+    // 6 prayer rows + reset + back.
+    SettingsPage(title = strings.adjustSectionLabel, rowCount = ADJUSTABLE_PRAYERS.size + 2) { rowModifier ->
+        ADJUSTABLE_PRAYERS.forEachIndexed { index, key ->
+            val minutes = adjustments[key] ?: 0
+            CyclerRow(
+                modifier = rowModifier(index),
+                label = strings.prayerNames[key] ?: key.name,
+                value = if (minutes == 0) "0" else "%+d ${strings.minutesShort}".format(minutes),
+                onPrevious = { viewModel.setPrayerAdjustment(key, minutes - 1) },
+                onNext = { viewModel.setPrayerAdjustment(key, minutes + 1) },
+            )
+        }
+        Button(
+            onClick = viewModel::resetPrayerAdjustments,
+            modifier = rowModifier(ADJUSTABLE_PRAYERS.size).fillMaxWidth(),
+        ) {
+            Text(strings.adjustResetLabel, fontSize = 18.sp)
+        }
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(ADJUSTABLE_PRAYERS.size + 1).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
         }
     }
 }
