@@ -34,6 +34,38 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
 - Screen is kept awake permanently (signage use).
 - Custom adaptive launcher icon and 16:9 Android TV banner (gold mosque on navy gradient).
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><b>Portrait board</b> (Gold theme)</td>
+    <td align="center"><b>Friday</b> — lecture banner, rotating notice card, pinned salawat (Green theme)</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/portrait-board.png" width="340" alt="Portrait prayer board"></td>
+    <td><img src="docs/screenshots/portrait-friday.png" width="340" alt="Portrait board on Friday with lecture banner and notice card"></td>
+  </tr>
+</table>
+
+**Landscape board on a Friday** (Midnight theme) — weekly lecture banner and notice card flanking the clock:
+
+<img src="docs/screenshots/landscape-friday.png" width="720" alt="Landscape board with lecture banner and notice card">
+
+**Night energy saver** — after Isha the board drops to pure black regardless of the selected theme, until Imsak:
+
+<img src="docs/screenshots/night-saver.png" width="720" alt="Night energy saver black theme">
+
+<table>
+  <tr>
+    <td align="center"><b>Settings</b> (D-pad driven)</td>
+    <td align="center"><b>Weekly lecture sub-page</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/settings.png" width="340" alt="Settings screen"></td>
+    <td><img src="docs/screenshots/settings-lecture.png" width="340" alt="Weekly lecture settings page"></td>
+  </tr>
+</table>
+
 ## Tech
 
 Kotlin · Jetpack Compose (Material 3) · MVVM (ViewModel + StateFlow) · DataStore Preferences · kotlinx-serialization · min SDK 26
