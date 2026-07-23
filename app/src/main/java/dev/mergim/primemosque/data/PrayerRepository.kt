@@ -64,8 +64,8 @@ class PrayerRepository(context: Context) {
         val dhuhrFixed = if (dst) LocalTime.of(13, 0) else LocalTime.of(12, 0)
         return listOf(
             PrayerSlot(PrayerKey.IMSAK, t(entry.imsak)),
-            // In Kosovo the Sabahu prayer is held 30 minutes before sunrise.
-            PrayerSlot(PrayerKey.FAJR, t(entry.sunrise).minusMinutes(30)),
+            // In Kosovo the Sabahu prayer is held 40 minutes before sunrise.
+            PrayerSlot(PrayerKey.FAJR, t(entry.sunrise).minusMinutes(40)),
             PrayerSlot(PrayerKey.SUNRISE, t(entry.sunrise)),
             PrayerSlot(PrayerKey.DHUHR, dhuhrFixed),
             PrayerSlot(PrayerKey.ZAWAL, t(entry.dhuhr)),
