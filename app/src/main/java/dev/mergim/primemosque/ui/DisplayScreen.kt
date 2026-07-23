@@ -115,7 +115,7 @@ private fun subTimesFor(
     }
     return when (slot.key) {
         PrayerKey.FAJR -> listOfNotNull(format(PrayerKey.IMSAK), format(PrayerKey.SUNRISE))
-        // The astronomical noon is shown without a label, like on MyMosq.
+        // The astronomical noon is shown without a label.
         PrayerKey.DHUHR -> listOfNotNull(find(PrayerKey.ZAWAL)?.time?.format(timeFormatter))
         else -> emptyList()
     }
