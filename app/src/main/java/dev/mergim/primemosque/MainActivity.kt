@@ -26,6 +26,7 @@ import dev.mergim.primemosque.ui.DisplayScreen
 import dev.mergim.primemosque.ui.PrayerViewModel
 import dev.mergim.primemosque.ui.RotatedLayout
 import dev.mergim.primemosque.ui.SettingsScreen
+import dev.mergim.primemosque.ui.SetupScreen
 import dev.mergim.primemosque.ui.stringsFor
 import dev.mergim.primemosque.ui.theme.PrimeMosqueTheme
 
@@ -77,6 +78,13 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
             RotatedLayout(degrees = orientation.degrees) {
                 val announce = state.announce
                 when {
+                    // First-run setup wizard, once settings have loaded.
+                    state.loaded && !state.settings.setupDone -> SetupScreen(
+                        state = state,
+                        strings = strings,
+                        viewModel = viewModel,
+                        onDone = viewModel::completeSetup,
+                    )
                     showSettings -> SettingsScreen(
                         state = state,
                         strings = strings,

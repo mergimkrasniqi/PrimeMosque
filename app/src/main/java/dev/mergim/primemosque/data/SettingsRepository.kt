@@ -1,6 +1,7 @@
 package dev.mergim.primemosque.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -67,6 +68,15 @@ data class Settings(
     val lecturePrayer: PrayerKey = PrayerKey.MAGHRIB,
     // Per-prayer correction in minutes, applied on top of the takvim times.
     val prayerAdjustments: Map<PrayerKey, Int> = emptyMap(),
+    // First-run setup wizard has been completed.
+    val setupDone: Boolean = false,
+    // Fixed Jumu'ah time as minutes of day; -1 means "same as Dhuhr".
+    val jumuahMinutes: Int = -1,
+    // Free-text mosque announcements, shown in the notice rotation while set.
+    val announcement1: String = "",
+    val announcement2: String = "",
+    // Hijri date correction in days (moon-sighting differences).
+    val hijriOffset: Int = 0,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -84,6 +94,12 @@ class SettingsRepository(private val context: Context) {
         val LECTURE_TITLE = stringPreferencesKey("lecture_title")
         val LECTURE_DAY = stringPreferencesKey("lecture_day")
         val LECTURE_PRAYER = stringPreferencesKey("lecture_prayer")
+
+        val SETUP_DONE = booleanPreferencesKey("setup_done")
+        val JUMUAH_MINUTES = intPreferencesKey("jumuah_minutes")
+        val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
+        val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
+        val HIJRI_OFFSET = intPreferencesKey("hijri_offset")
 
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
     }
@@ -116,6 +132,11 @@ class SettingsRepository(private val context: Context) {
             prayerAdjustments = ADJUSTABLE_PRAYERS.associateWith { key ->
                 p[Keys.adjustment(key)] ?: 0
             },
+            setupDone = p[Keys.SETUP_DONE] ?: defaults.setupDone,
+            jumuahMinutes = p[Keys.JUMUAH_MINUTES] ?: defaults.jumuahMinutes,
+            announcement1 = p[Keys.ANNOUNCEMENT_1] ?: defaults.announcement1,
+            announcement2 = p[Keys.ANNOUNCEMENT_2] ?: defaults.announcement2,
+            hijriOffset = p[Keys.HIJRI_OFFSET] ?: defaults.hijriOffset,
         )
     }
 
@@ -154,5 +175,21 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun resetPrayerAdjustments() = context.dataStore.edit { p ->
         ADJUSTABLE_PRAYERS.forEach { p.remove(Keys.adjustment(it)) }
+        p.remove(Keys.HIJRI_OFFSET)
     }
+
+    suspend fun setSetupDone() =
+        context.dataStore.edit { it[Keys.SETUP_DONE] = true }
+
+    suspend fun setJumuahMinutes(value: Int) =
+        context.dataStore.edit { it[Keys.JUMUAH_MINUTES] = value }
+
+    suspend fun setAnnouncement1(value: String) =
+        context.dataStore.edit { it[Keys.ANNOUNCEMENT_1] = value }
+
+    suspend fun setAnnouncement2(value: String) =
+        context.dataStore.edit { it[Keys.ANNOUNCEMENT_2] = value }
+
+    suspend fun setHijriOffset(value: Int) =
+        context.dataStore.edit { it[Keys.HIJRI_OFFSET] = value }
 }

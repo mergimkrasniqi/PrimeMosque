@@ -97,6 +97,7 @@ private fun noticeIcon(key: NoticeKey): ImageVector = when (key) {
     NoticeKey.FAST_MONDAY,
     NoticeKey.FAST_THURSDAY,
     NoticeKey.FAST_WHITE_DAYS -> Icons.Filled.NoFood
+    NoticeKey.CUSTOM -> Icons.Filled.Campaign
 }
 
 /** Slots rendered inside another prayer's field instead of as their own row. */
@@ -458,7 +459,9 @@ private fun NoticeCard(
     val shape = RoundedCornerShape(16.dp)
     Crossfade(targetState = notice, label = "notice", modifier = modifier) { active ->
         val text = strings.noticeTexts[active.key] ?: return@Crossfade
-        val body = active.arg?.let { text.body.format(it) } ?: text.body
+        val body = active.custom
+            ?: active.arg?.let { text.body.format(it) }
+            ?: text.body
         Row(
             modifier = Modifier
                 .fillMaxWidth()

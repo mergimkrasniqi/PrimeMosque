@@ -47,7 +47,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.mergim.primemosque.data.ADJUSTABLE_PRAYERS
@@ -59,7 +61,7 @@ import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
-private enum class SettingsSubPage { MAIN, LECTURE, ADJUSTMENTS }
+private enum class SettingsSubPage { MAIN, LECTURE, ADJUSTMENTS, ANNOUNCEMENTS }
 
 @Composable
 fun SettingsScreen(
@@ -82,14 +84,115 @@ fun SettingsScreen(
             viewModel = viewModel,
             onBack = { page = SettingsSubPage.MAIN },
         )
+        SettingsSubPage.ANNOUNCEMENTS -> AnnouncementsSettingsPage(
+            state = state,
+            strings = strings,
+            viewModel = viewModel,
+            onBack = { page = SettingsSubPage.MAIN },
+        )
         SettingsSubPage.MAIN -> MainSettingsPage(
             state = state,
             strings = strings,
             viewModel = viewModel,
             onOpenLecture = { page = SettingsSubPage.LECTURE },
             onOpenAdjustments = { page = SettingsSubPage.ADJUSTMENTS },
+            onOpenAnnouncements = { page = SettingsSubPage.ANNOUNCEMENTS },
             onClose = onClose,
         )
+    }
+}
+
+/**
+ * First-run setup: the essential settings presented once, so a new mosque
+ * can configure the board without discovering the settings screen.
+ */
+@Composable
+fun SetupScreen(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onDone: () -> Unit,
+) {
+    val settings = state.settings
+    val cities = viewModel.cities
+    val cityIndex = cities.indexOfFirst { it.name == settings.city }.coerceAtLeast(0)
+    val orientations = DisplayOrientation.entries
+    val orientationIndex = orientations.indexOf(settings.orientation)
+    val languages = AppLanguage.entries
+    val languageIndex = languages.indexOf(settings.language)
+    val themes = AppTheme.entries
+    val themeIndex = themes.indexOf(settings.theme)
+
+    SettingsPage(title = strings.setupTitle, rowCount = 7) { rowModifier ->
+        CyclerRow(
+            modifier = rowModifier(0),
+            label = strings.languageLabel,
+            value = strings.languageName,
+            onPrevious = {
+                viewModel.setLanguage(languages[(languageIndex - 1 + languages.size) % languages.size])
+            },
+            onNext = {
+                viewModel.setLanguage(languages[(languageIndex + 1) % languages.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(1),
+            label = strings.cityLabel,
+            value = cities[cityIndex].let { city ->
+                if (city.offsetMinutes == 0) city.name
+                else "${city.name} (%+d ${strings.minutesShort})".format(city.offsetMinutes)
+            },
+            onPrevious = {
+                viewModel.setCity(cities[(cityIndex - 1 + cities.size) % cities.size].name)
+            },
+            onNext = {
+                viewModel.setCity(cities[(cityIndex + 1) % cities.size].name)
+            },
+        )
+        EditTextRow(
+            label = strings.mosqueNameLabel,
+            value = settings.mosqueName,
+            strings = strings,
+            onSave = viewModel::setMosqueName,
+            modifier = rowModifier(2),
+        )
+        EditTextRow(
+            label = strings.placeLabel,
+            value = settings.place,
+            strings = strings,
+            onSave = viewModel::setPlace,
+            modifier = rowModifier(3),
+        )
+        CyclerRow(
+            modifier = rowModifier(4),
+            label = strings.orientationLabel,
+            value = strings.orientationNames[settings.orientation] ?: settings.orientation.name,
+            onPrevious = {
+                viewModel.setOrientation(
+                    orientations[(orientationIndex - 1 + orientations.size) % orientations.size]
+                )
+            },
+            onNext = {
+                viewModel.setOrientation(orientations[(orientationIndex + 1) % orientations.size])
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(5),
+            label = strings.themeLabel,
+            value = strings.themeNames[settings.theme] ?: settings.theme.name,
+            onPrevious = {
+                viewModel.setTheme(themes[(themeIndex - 1 + themes.size) % themes.size])
+            },
+            onNext = {
+                viewModel.setTheme(themes[(themeIndex + 1) % themes.size])
+            },
+        )
+        Button(
+            onClick = onDone,
+            modifier = rowModifier(6).fillMaxWidth(),
+        ) {
+            Text(strings.setupStart, fontSize = 18.sp)
+        }
     }
 }
 
@@ -149,6 +252,7 @@ private fun MainSettingsPage(
     viewModel: PrayerViewModel,
     onOpenLecture: () -> Unit,
     onOpenAdjustments: () -> Unit,
+    onOpenAnnouncements: () -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
@@ -179,8 +283,12 @@ private fun MainSettingsPage(
             "${strings.prayerNames[key] ?: key.name} %+d".format(minutes)
         }
         .ifEmpty { "0" }
+    val jumuah = settings.jumuahMinutes
+    val announcementsSummary = listOf(settings.announcement1, settings.announcement2)
+        .count { it.isNotBlank() }
+        .toString()
 
-    SettingsPage(title = strings.settingsTitle, rowCount = 10) { rowModifier ->
+    SettingsPage(title = strings.settingsTitle, rowCount = 12) { rowModifier ->
         EditTextRow(
             label = strings.mosqueNameLabel,
             value = settings.mosqueName,
@@ -257,23 +365,109 @@ private fun MainSettingsPage(
                 viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
             },
         )
-        NavRow(
+        CyclerRow(
             modifier = rowModifier(7),
+            label = strings.jumuahLabel,
+            value = if (jumuah < 0) {
+                strings.jumuahFollowDhuhr
+            } else {
+                "%02d:%02d".format(jumuah / 60, jumuah % 60)
+            },
+            onPrevious = {
+                viewModel.setJumuahMinutes(
+                    when {
+                        jumuah < 0 -> 15 * 60
+                        jumuah <= 12 * 60 -> -1
+                        else -> jumuah - 5
+                    }
+                )
+            },
+            onNext = {
+                viewModel.setJumuahMinutes(
+                    when {
+                        jumuah < 0 -> 12 * 60
+                        jumuah >= 15 * 60 -> -1
+                        else -> jumuah + 5
+                    }
+                )
+            },
+        )
+        NavRow(
+            modifier = rowModifier(8),
             label = strings.lectureSectionLabel,
             value = lectureSummary,
             onOpen = onOpenLecture,
         )
         NavRow(
-            modifier = rowModifier(8),
+            modifier = rowModifier(9),
+            label = strings.announcementsLabel,
+            value = announcementsSummary,
+            onOpen = onOpenAnnouncements,
+        )
+        NavRow(
+            modifier = rowModifier(10),
             label = strings.adjustSectionLabel,
             value = adjustSummary,
             onOpen = onOpenAdjustments,
         )
         Button(
             onClick = onClose,
-            modifier = rowModifier(9).fillMaxWidth(),
+            modifier = rowModifier(11).fillMaxWidth(),
         ) {
             Text(strings.done, fontSize = 18.sp)
+        }
+        AboutLine()
+    }
+}
+
+/** App name + version at the bottom of the settings, for support questions. */
+@Composable
+private fun AboutLine() {
+    val context = LocalContext.current
+    val version = remember {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull() ?: ""
+    }
+    Text(
+        text = "PrimeMosque v$version",
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = 13.sp,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun AnnouncementsSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    SettingsPage(title = strings.announcementsLabel, rowCount = 3) { rowModifier ->
+        EditTextRow(
+            label = "${strings.announcementLabel} 1",
+            value = settings.announcement1,
+            strings = strings,
+            onSave = viewModel::setAnnouncement1,
+            modifier = rowModifier(0),
+        )
+        EditTextRow(
+            label = "${strings.announcementLabel} 2",
+            value = settings.announcement2,
+            strings = strings,
+            onSave = viewModel::setAnnouncement2,
+            modifier = rowModifier(1),
+        )
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(2).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
         }
     }
 }
@@ -288,9 +482,10 @@ private fun AdjustmentsSettingsPage(
     BackHandler(onBack = onBack)
 
     val adjustments = state.settings.prayerAdjustments
+    val hijriOffset = state.settings.hijriOffset
 
-    // 6 prayer rows + reset + back.
-    SettingsPage(title = strings.adjustSectionLabel, rowCount = ADJUSTABLE_PRAYERS.size + 2) { rowModifier ->
+    // 6 prayer rows + hijri date + reset + back.
+    SettingsPage(title = strings.adjustSectionLabel, rowCount = ADJUSTABLE_PRAYERS.size + 3) { rowModifier ->
         ADJUSTABLE_PRAYERS.forEachIndexed { index, key ->
             val minutes = adjustments[key] ?: 0
             CyclerRow(
@@ -301,15 +496,22 @@ private fun AdjustmentsSettingsPage(
                 onNext = { viewModel.setPrayerAdjustment(key, minutes + 1) },
             )
         }
+        CyclerRow(
+            modifier = rowModifier(ADJUSTABLE_PRAYERS.size),
+            label = strings.hijriOffsetLabel,
+            value = if (hijriOffset == 0) "0" else "%+d".format(hijriOffset),
+            onPrevious = { viewModel.setHijriOffset(hijriOffset - 1) },
+            onNext = { viewModel.setHijriOffset(hijriOffset + 1) },
+        )
         Button(
             onClick = viewModel::resetPrayerAdjustments,
-            modifier = rowModifier(ADJUSTABLE_PRAYERS.size).fillMaxWidth(),
+            modifier = rowModifier(ADJUSTABLE_PRAYERS.size + 1).fillMaxWidth(),
         ) {
             Text(strings.adjustResetLabel, fontSize = 18.sp)
         }
         Button(
             onClick = onBack,
-            modifier = rowModifier(ADJUSTABLE_PRAYERS.size + 1).fillMaxWidth(),
+            modifier = rowModifier(ADJUSTABLE_PRAYERS.size + 2).fillMaxWidth(),
         ) {
             Text(strings.back, fontSize = 18.sp)
         }

@@ -50,9 +50,10 @@ enum class NoticeKey {
     FAST_MONDAY,
     FAST_THURSDAY,
     FAST_WHITE_DAYS,
+    CUSTOM,
 }
 
-data class Notice(val key: NoticeKey, val arg: Int? = null)
+data class Notice(val key: NoticeKey, val arg: Int? = null, val custom: String? = null)
 
 /** The recurring lecture, pinned on the board for the whole configured day. */
 data class LectureInfo(val title: String, val prayer: PrayerKey, val time: LocalTime?)
@@ -115,7 +116,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     private fun buildState(now: LocalDateTime, settings: Settings): UiState {
         val offset = repository.offsetFor(settings.city)
         val today = now.toLocalDate()
-        val slots = adjusted(repository.slotsFor(today, offset), settings)
+        val friday = today.dayOfWeek == DayOfWeek.FRIDAY
+        // On Fridays a mosque may hold Jumu'ah at its own fixed time instead
+        // of the Dhuhr time; the announcement, khutbah notice and countdown
+        // all follow it because they derive from the slot list.
+        val jumuah = settings.jumuahMinutes.takeIf { friday && it >= 0 }
+        val slots = adjusted(repository.slotsFor(today, offset), settings).map { slot ->
+            if (jumuah != null && slot.key == PrayerKey.DHUHR) {
+                slot.copy(time = LocalTime.of(jumuah / 60, jumuah % 60))
+            } else {
+                slot
+            }
+        }
 
         val prayerKeys = setOf(
             PrayerKey.FAJR, PrayerKey.DHUHR, PrayerKey.ASR,
@@ -158,14 +170,15 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 (!now.isBefore(nightStart) || now.isBefore(nightEnd))
         } ?: false
 
-        val hijrah = HijrahDate.from(today)
+        // Hijri correction for moon-sighting differences (±days).
+        val hijrah = HijrahDate.from(today.plusDays(settings.hijriOffset.toLong()))
         val hijri = HijriDate(
             day = hijrah.get(ChronoField.DAY_OF_MONTH),
             month = hijrah.get(ChronoField.MONTH_OF_YEAR),
             year = hijrah.get(ChronoField.YEAR),
         )
 
-        val notices = buildNotices(now, today, slots, hijri)
+        val notices = buildNotices(now, today, slots, hijri, settings)
 
         // Recurring lecture (e.g. "Zgjimi i Zemrave"): pinned all day on the
         // configured weekday, announcing it follows the configured prayer.
@@ -214,6 +227,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         today: LocalDate,
         slots: List<PrayerSlot>,
         hijri: HijriDate,
+        settings: Settings,
     ): List<Notice> = buildList {
         val time = now.toLocalTime()
         fun timeOf(key: PrayerKey) = slots.firstOrNull { it.key == key }?.time
@@ -229,6 +243,13 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             add(Notice(NoticeKey.FRIDAY_KHUTBAH))
             return@buildList
         }
+
+        // Custom mosque announcements rotate along with the other notices
+        // all day while they are set.
+        settings.announcement1.takeIf { it.isNotBlank() }
+            ?.let { add(Notice(NoticeKey.CUSTOM, custom = it)) }
+        settings.announcement2.takeIf { it.isNotBlank() }
+            ?.let { add(Notice(NoticeKey.CUSTOM, custom = it)) }
 
         val sunrise = timeOf(PrayerKey.SUNRISE)
         val asr = timeOf(PrayerKey.ASR)
@@ -292,4 +313,10 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setPrayerAdjustment(key: PrayerKey, minutes: Int) =
         viewModelScope.launch { settingsRepository.setPrayerAdjustment(key, minutes.coerceIn(-60, 60)) }
     fun resetPrayerAdjustments() = viewModelScope.launch { settingsRepository.resetPrayerAdjustments() }
+    fun completeSetup() = viewModelScope.launch { settingsRepository.setSetupDone() }
+    fun setJumuahMinutes(value: Int) = viewModelScope.launch { settingsRepository.setJumuahMinutes(value) }
+    fun setAnnouncement1(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement1(value) }
+    fun setAnnouncement2(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement2(value) }
+    fun setHijriOffset(value: Int) =
+        viewModelScope.launch { settingsRepository.setHijriOffset(value.coerceIn(-2, 2)) }
 }
