@@ -23,6 +23,7 @@ import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.ui.AnnouncementScreen
 import dev.mergim.primemosque.ui.DisplayScreen
+import dev.mergim.primemosque.ui.KhutbahScreen
 import dev.mergim.primemosque.ui.PrayerViewModel
 import dev.mergim.primemosque.ui.RotatedLayout
 import dev.mergim.primemosque.ui.SettingsScreen
@@ -95,6 +96,11 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
                         slot = announce,
                         state = state,
                         strings = strings,
+                    )
+                    state.khutbah -> KhutbahScreen(
+                        state = state,
+                        strings = strings,
+                        onOpenSettings = { showSettings = true },
                     )
                     else -> DisplayScreen(
                         state = state,

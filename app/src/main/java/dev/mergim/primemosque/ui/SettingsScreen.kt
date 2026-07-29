@@ -61,7 +61,7 @@ import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
-private enum class SettingsSubPage { MAIN, LECTURE, ADJUSTMENTS, ANNOUNCEMENTS }
+private enum class SettingsSubPage { MAIN, MOSQUE, DISPLAY, FRIDAY, LECTURE, ADJUSTMENTS, ANNOUNCEMENTS }
 
 @Composable
 fun SettingsScreen(
@@ -71,32 +71,19 @@ fun SettingsScreen(
     onClose: () -> Unit,
 ) {
     var page by remember { mutableStateOf(SettingsSubPage.MAIN) }
+    val backToMain = { page = SettingsSubPage.MAIN }
     when (page) {
-        SettingsSubPage.LECTURE -> LectureSettingsPage(
-            state = state,
-            strings = strings,
-            viewModel = viewModel,
-            onBack = { page = SettingsSubPage.MAIN },
-        )
-        SettingsSubPage.ADJUSTMENTS -> AdjustmentsSettingsPage(
-            state = state,
-            strings = strings,
-            viewModel = viewModel,
-            onBack = { page = SettingsSubPage.MAIN },
-        )
-        SettingsSubPage.ANNOUNCEMENTS -> AnnouncementsSettingsPage(
-            state = state,
-            strings = strings,
-            viewModel = viewModel,
-            onBack = { page = SettingsSubPage.MAIN },
-        )
+        SettingsSubPage.MOSQUE -> MosqueSettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.DISPLAY -> DisplaySettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.FRIDAY -> FridaySettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.LECTURE -> LectureSettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.ADJUSTMENTS -> AdjustmentsSettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.ANNOUNCEMENTS -> AnnouncementsSettingsPage(state, strings, viewModel, onBack = backToMain)
         SettingsSubPage.MAIN -> MainSettingsPage(
             state = state,
             strings = strings,
             viewModel = viewModel,
-            onOpenLecture = { page = SettingsSubPage.LECTURE },
-            onOpenAdjustments = { page = SettingsSubPage.ADJUSTMENTS },
-            onOpenAnnouncements = { page = SettingsSubPage.ANNOUNCEMENTS },
+            onOpenPage = { page = it },
             onClose = onClose,
         )
     }
@@ -250,25 +237,26 @@ private fun MainSettingsPage(
     state: UiState,
     strings: Strings,
     viewModel: PrayerViewModel,
-    onOpenLecture: () -> Unit,
-    onOpenAdjustments: () -> Unit,
-    onOpenAnnouncements: () -> Unit,
+    onOpenPage: (SettingsSubPage) -> Unit,
     onClose: () -> Unit,
 ) {
     BackHandler(onBack = onClose)
 
     val settings = state.settings
-    val cities = viewModel.cities
-    val cityIndex = cities.indexOfFirst { it.name == settings.city }.coerceAtLeast(0)
-    val orientations = DisplayOrientation.entries
-    val orientationIndex = orientations.indexOf(settings.orientation)
     val languages = AppLanguage.entries
     val languageIndex = languages.indexOf(settings.language)
-    val themes = AppTheme.entries
-    val themeIndex = themes.indexOf(settings.theme)
-    val nightModes = NightMode.entries
-    val nightModeIndex = nightModes.indexOf(settings.nightMode)
 
+    val displaySummary =
+        "${strings.orientationNames[settings.orientation] ?: settings.orientation.name} • " +
+            (strings.themeNames[settings.theme] ?: settings.theme.name)
+    val jumuah = settings.jumuahMinutes
+    val fridaySummary = buildString {
+        append(
+            if (jumuah < 0) strings.jumuahFollowDhuhr
+            else "%02d:%02d".format(jumuah / 60, jumuah % 60)
+        )
+        append(" • ${settings.khutbahMinutes} ${strings.minutesShort}")
+    }
     val lectureSummary = buildString {
         append(strings.lectureDayNames[settings.lectureDay] ?: settings.lectureDay.name)
         if (settings.lectureDay != LectureDay.OFF) {
@@ -283,12 +271,82 @@ private fun MainSettingsPage(
             "${strings.prayerNames[key] ?: key.name} %+d".format(minutes)
         }
         .ifEmpty { "0" }
-    val jumuah = settings.jumuahMinutes
     val announcementsSummary = listOf(settings.announcement1, settings.announcement2)
         .count { it.isNotBlank() }
         .toString()
 
-    SettingsPage(title = strings.settingsTitle, rowCount = 12) { rowModifier ->
+    SettingsPage(title = strings.settingsTitle, rowCount = 8) { rowModifier ->
+        CyclerRow(
+            modifier = rowModifier(0),
+            label = strings.languageLabel,
+            value = strings.languageName,
+            onPrevious = {
+                viewModel.setLanguage(languages[(languageIndex - 1 + languages.size) % languages.size])
+            },
+            onNext = {
+                viewModel.setLanguage(languages[(languageIndex + 1) % languages.size])
+            },
+        )
+        NavRow(
+            modifier = rowModifier(1),
+            label = strings.mosqueSectionLabel,
+            value = settings.mosqueName,
+            onOpen = { onOpenPage(SettingsSubPage.MOSQUE) },
+        )
+        NavRow(
+            modifier = rowModifier(2),
+            label = strings.displaySectionLabel,
+            value = displaySummary,
+            onOpen = { onOpenPage(SettingsSubPage.DISPLAY) },
+        )
+        NavRow(
+            modifier = rowModifier(3),
+            label = strings.fridaySectionLabel,
+            value = fridaySummary,
+            onOpen = { onOpenPage(SettingsSubPage.FRIDAY) },
+        )
+        NavRow(
+            modifier = rowModifier(4),
+            label = strings.lectureSectionLabel,
+            value = lectureSummary,
+            onOpen = { onOpenPage(SettingsSubPage.LECTURE) },
+        )
+        NavRow(
+            modifier = rowModifier(5),
+            label = strings.announcementsLabel,
+            value = announcementsSummary,
+            onOpen = { onOpenPage(SettingsSubPage.ANNOUNCEMENTS) },
+        )
+        NavRow(
+            modifier = rowModifier(6),
+            label = strings.adjustSectionLabel,
+            value = adjustSummary,
+            onOpen = { onOpenPage(SettingsSubPage.ADJUSTMENTS) },
+        )
+        Button(
+            onClick = onClose,
+            modifier = rowModifier(7).fillMaxWidth(),
+        ) {
+            Text(strings.done, fontSize = 18.sp)
+        }
+        AboutLine()
+    }
+}
+
+@Composable
+private fun MosqueSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    val cities = viewModel.cities
+    val cityIndex = cities.indexOfFirst { it.name == settings.city }.coerceAtLeast(0)
+
+    SettingsPage(title = strings.mosqueSectionLabel, rowCount = 4) { rowModifier ->
         EditTextRow(
             label = strings.mosqueNameLabel,
             value = settings.mosqueName,
@@ -317,8 +375,35 @@ private fun MainSettingsPage(
                 viewModel.setCity(cities[(cityIndex + 1) % cities.size].name)
             },
         )
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(3).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun DisplaySettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    val orientations = DisplayOrientation.entries
+    val orientationIndex = orientations.indexOf(settings.orientation)
+    val themes = AppTheme.entries
+    val themeIndex = themes.indexOf(settings.theme)
+    val nightModes = NightMode.entries
+    val nightModeIndex = nightModes.indexOf(settings.nightMode)
+
+    SettingsPage(title = strings.displaySectionLabel, rowCount = 4) { rowModifier ->
         CyclerRow(
-            modifier = rowModifier(3),
+            modifier = rowModifier(0),
             label = strings.orientationLabel,
             value = strings.orientationNames[settings.orientation] ?: settings.orientation.name,
             onPrevious = {
@@ -331,18 +416,7 @@ private fun MainSettingsPage(
             },
         )
         CyclerRow(
-            modifier = rowModifier(4),
-            label = strings.languageLabel,
-            value = strings.languageName,
-            onPrevious = {
-                viewModel.setLanguage(languages[(languageIndex - 1 + languages.size) % languages.size])
-            },
-            onNext = {
-                viewModel.setLanguage(languages[(languageIndex + 1) % languages.size])
-            },
-        )
-        CyclerRow(
-            modifier = rowModifier(5),
+            modifier = rowModifier(1),
             label = strings.themeLabel,
             value = strings.themeNames[settings.theme] ?: settings.theme.name,
             onPrevious = {
@@ -353,7 +427,7 @@ private fun MainSettingsPage(
             },
         )
         CyclerRow(
-            modifier = rowModifier(6),
+            modifier = rowModifier(2),
             label = strings.nightModeLabel,
             value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
             onPrevious = {
@@ -365,8 +439,31 @@ private fun MainSettingsPage(
                 viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
             },
         )
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(3).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun FridaySettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    val jumuah = settings.jumuahMinutes
+    val khutbahMinutes = settings.khutbahMinutes
+
+    SettingsPage(title = strings.fridaySectionLabel, rowCount = 3) { rowModifier ->
         CyclerRow(
-            modifier = rowModifier(7),
+            modifier = rowModifier(0),
             label = strings.jumuahLabel,
             value = if (jumuah < 0) {
                 strings.jumuahFollowDhuhr
@@ -392,31 +489,19 @@ private fun MainSettingsPage(
                 )
             },
         )
-        NavRow(
-            modifier = rowModifier(8),
-            label = strings.lectureSectionLabel,
-            value = lectureSummary,
-            onOpen = onOpenLecture,
-        )
-        NavRow(
-            modifier = rowModifier(9),
-            label = strings.announcementsLabel,
-            value = announcementsSummary,
-            onOpen = onOpenAnnouncements,
-        )
-        NavRow(
-            modifier = rowModifier(10),
-            label = strings.adjustSectionLabel,
-            value = adjustSummary,
-            onOpen = onOpenAdjustments,
+        CyclerRow(
+            modifier = rowModifier(1),
+            label = strings.khutbahDurationLabel,
+            value = "$khutbahMinutes ${strings.minutesShort}",
+            onPrevious = { viewModel.setKhutbahMinutes(khutbahMinutes - 5) },
+            onNext = { viewModel.setKhutbahMinutes(khutbahMinutes + 5) },
         )
         Button(
-            onClick = onClose,
-            modifier = rowModifier(11).fillMaxWidth(),
+            onClick = onBack,
+            modifier = rowModifier(2).fillMaxWidth(),
         ) {
-            Text(strings.done, fontSize = 18.sp)
+            Text(strings.back, fontSize = 18.sp)
         }
-        AboutLine()
     }
 }
 

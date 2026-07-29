@@ -61,7 +61,7 @@ data class Settings(
     val language: AppLanguage = AppLanguage.SQ,
     val theme: AppTheme = AppTheme.DARK,
     val nightMode: NightMode = NightMode.AFTER_30,
-    // Recurring lecture (e.g. "Zgjimi i Zemrave") pinned on the board on
+    // Recurring lecture pinned on the board on
     // the chosen day, held after the chosen prayer.
     val lectureTitle: String = "Ligjërata javore",
     val lectureDay: LectureDay = LectureDay.OFF,
@@ -72,6 +72,8 @@ data class Settings(
     val setupDone: Boolean = false,
     // Fixed Jumu'ah time as minutes of day; -1 means "same as Dhuhr".
     val jumuahMinutes: Int = -1,
+    // How long the full-screen khutbah takeover stays after Jumu'ah time.
+    val khutbahMinutes: Int = 20,
     // Free-text mosque announcements, shown in the notice rotation while set.
     val announcement1: String = "",
     val announcement2: String = "",
@@ -97,6 +99,7 @@ class SettingsRepository(private val context: Context) {
 
         val SETUP_DONE = booleanPreferencesKey("setup_done")
         val JUMUAH_MINUTES = intPreferencesKey("jumuah_minutes")
+        val KHUTBAH_MINUTES = intPreferencesKey("khutbah_minutes")
         val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
         val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
         val HIJRI_OFFSET = intPreferencesKey("hijri_offset")
@@ -134,6 +137,7 @@ class SettingsRepository(private val context: Context) {
             },
             setupDone = p[Keys.SETUP_DONE] ?: defaults.setupDone,
             jumuahMinutes = p[Keys.JUMUAH_MINUTES] ?: defaults.jumuahMinutes,
+            khutbahMinutes = p[Keys.KHUTBAH_MINUTES] ?: defaults.khutbahMinutes,
             announcement1 = p[Keys.ANNOUNCEMENT_1] ?: defaults.announcement1,
             announcement2 = p[Keys.ANNOUNCEMENT_2] ?: defaults.announcement2,
             hijriOffset = p[Keys.HIJRI_OFFSET] ?: defaults.hijriOffset,
@@ -183,6 +187,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setJumuahMinutes(value: Int) =
         context.dataStore.edit { it[Keys.JUMUAH_MINUTES] = value }
+
+    suspend fun setKhutbahMinutes(value: Int) =
+        context.dataStore.edit { it[Keys.KHUTBAH_MINUTES] = value }
 
     suspend fun setAnnouncement1(value: String) =
         context.dataStore.edit { it[Keys.ANNOUNCEMENT_1] = value }

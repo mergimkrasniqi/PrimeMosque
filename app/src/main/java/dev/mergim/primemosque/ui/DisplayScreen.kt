@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
@@ -45,15 +46,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,6 +103,7 @@ private fun noticeIcon(key: NoticeKey): ImageVector = when (key) {
     NoticeKey.FAST_MONDAY,
     NoticeKey.FAST_THURSDAY,
     NoticeKey.FAST_WHITE_DAYS -> Icons.Filled.NoFood
+
     NoticeKey.CUSTOM -> Icons.Filled.Campaign
 }
 
@@ -173,7 +180,12 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         Spacer(Modifier.height(12.dp * scale))
         CountdownBanner(state, strings, scale = scale)
         Spacer(Modifier.height(12.dp * scale))
-        LectureBanner(state, strings, modifier = Modifier.padding(bottom = 12.dp * scale), scale = scale)
+        LectureBanner(
+            state,
+            strings,
+            modifier = Modifier.padding(bottom = 12.dp * scale),
+            scale = scale
+        )
         Spacer(Modifier.weight(1f))
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
         Column(
@@ -193,7 +205,12 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
                 }
         }
         Spacer(Modifier.weight(1f))
-        NoticeCard(state, strings, modifier = Modifier.padding(bottom = 10.dp * scale), scale = scale)
+        NoticeCard(
+            state,
+            strings,
+            modifier = Modifier.padding(bottom = 10.dp * scale),
+            scale = scale
+        )
         Footer(state, strings, scale = scale)
     }
 }
@@ -389,7 +406,7 @@ private fun CountdownBanner(
 }
 
 /**
- * Recurring lecture banner (e.g. "Zgjimi i Zemrave"), pinned all day on the
+ * Recurring lecture banner, pinned all day on the
  * configured weekday. Sits in its own spot on the board, separate from the
  * rotating notice cards and the footer.
  */
@@ -671,6 +688,137 @@ fun AnnouncementScreen(slot: PrayerSlot, state: UiState, strings: Strings) {
                 lineHeight = 96.sp,
                 fontWeight = FontWeight.Bold,
             )
+        }
+    }
+}
+
+/**
+ * Renders `**bold**` markers in quote texts as accent-coloured bold spans,
+ * so translators can highlight the key phrase of each hadith/verse inline.
+ */
+private fun boldMarkup(text: String, accent: Color): AnnotatedString = buildAnnotatedString {
+    text.split("**").forEachIndexed { index, part ->
+        if (index % 2 == 1) {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = accent)) { append(part) }
+        } else {
+            append(part)
+        }
+    }
+}
+
+/**
+ * Full-screen khutbah takeover: from Jumu'ah time for the configured
+ * duration the whole board is replaced by rotating Jumu'ah hadiths and
+ * verses (Arabic + translation), with key phrases highlighted.
+ */
+@Composable
+fun KhutbahScreen(state: UiState, strings: Strings, onOpenSettings: () -> Unit) {
+    val palette = LocalBoardPalette.current
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(palette.bgTop, palette.bgBottom)))
+            .focusRequester(focusRequester)
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.Menu)
+                ) {
+                    onOpenSettings()
+                    true
+                } else {
+                    false
+                }
+            }
+            .focusable(),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 40.dp, vertical = 24.dp),
+        ) {
+            // Mosque header, clock and date pinned at the top, like on the
+            // main board (with a more modest clock).
+            Header(state, strings, centered = true)
+            Spacer(Modifier.height(8.dp))
+            BigClock(state, mainSize = 44.sp, secondsSize = 20.sp)
+            DateLines(state, strings, centered = true)
+            // The khutbah content stays centered in the remaining space.
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.widthIn(max = 880.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.VolumeOff,
+                            contentDescription = null,
+                            tint = palette.accent,
+                            modifier = Modifier.size(40.dp),
+                        )
+                        Spacer(Modifier.width(14.dp))
+                        Text(
+                            text = strings.khutbahTitle,
+                            color = palette.accent,
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    val quotes = strings.khutbahQuotes
+                    if (quotes.isNotEmpty()) {
+                        // A slow rotation: long narrations need reading time.
+                        val quote =
+                            quotes[(state.now.toLocalTime().toSecondOfDay() / 30) % quotes.size]
+                        Crossfade(targetState = quote, label = "khutbahQuote") { q ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(palette.cardHighlight, RoundedCornerShape(24.dp))
+                                    .border(
+                                        1.dp,
+                                        palette.accent.copy(alpha = 0.4f),
+                                        RoundedCornerShape(24.dp)
+                                    )
+                                    .padding(horizontal = 32.dp, vertical = 24.dp),
+                            ) {
+                                q.arabic?.let { arabic ->
+                                    Text(
+                                        text = arabic,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        fontSize = 28.sp,
+                                        lineHeight = 46.sp,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    Spacer(Modifier.height(14.dp))
+                                }
+                                Text(
+                                    text = boldMarkup(q.text, palette.accent),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 22.sp,
+                                    lineHeight = 32.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    text = q.source,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 15.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

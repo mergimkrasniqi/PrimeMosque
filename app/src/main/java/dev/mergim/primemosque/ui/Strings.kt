@@ -11,6 +11,13 @@ import java.util.Locale
 data class Reminder(val text: String, val translation: String)
 
 data class NoticeText(val title: String, val body: String)
+
+/**
+ * Quote for the khutbah screen. [text] is the full narration (narrator +
+ * saying) and may mark key phrases with `**bold**`; [arabic] carries the
+ * original Qur'anic text when the quote is a verse.
+ */
+data class KhutbahQuote(val text: String, val source: String, val arabic: String? = null)
 data class Strings(
     val locale: Locale,
     val prayerNames: Map<PrayerKey, String>,
@@ -33,6 +40,9 @@ data class Strings(
     val themeNames: Map<AppTheme, String>,
     val nightModeLabel: String,
     val nightModeNames: Map<NightMode, String>,
+    val mosqueSectionLabel: String,
+    val displaySectionLabel: String,
+    val fridaySectionLabel: String,
     val lectureSectionLabel: String,
     val lectureTitleLabel: String,
     val lectureDayLabel: String,
@@ -44,6 +54,9 @@ data class Strings(
     val hijriOffsetLabel: String,
     val jumuahLabel: String,
     val jumuahFollowDhuhr: String,
+    val khutbahDurationLabel: String,
+    val khutbahTitle: String,
+    val khutbahQuotes: List<KhutbahQuote>,
     val announcementsLabel: String,
     val announcementLabel: String,
     val setupTitle: String,
@@ -198,6 +211,9 @@ private val SQ = Strings(
         NightMode.AFTER_45 to "Jacia +45 min",
         NightMode.AFTER_60 to "Jacia +1 orë",
     ),
+    mosqueSectionLabel = "Xhamia",
+    displaySectionLabel = "Ekrani",
+    fridaySectionLabel = "Xhumaja",
     lectureSectionLabel = "Ligjërata javore",
     lectureTitleLabel = "Titulli",
     lectureDayLabel = "Dita",
@@ -218,6 +234,53 @@ private val SQ = Strings(
     hijriOffsetLabel = "Data hixhri (ditë)",
     jumuahLabel = "Koha e Xhumasë",
     jumuahFollowDhuhr = "Sipas Drekës",
+    khutbahDurationLabel = "Kohëzgjatja e hutbes (min)",
+    khutbahTitle = "Koha e Hutbes",
+    khutbahQuotes = listOf(
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Nëse i thua shokut tënd **'hesht'** ditën e xhuma, ndërsa imami mban hutben, **ke folur kotë**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "O ju që besuat, kur bëhet thirrja për namaz ditën e xhuma, **nxitoni drejt përmendjes së Allahut dhe lëreni tregtinë**! Kjo është më mirë për ju, nëse e dini.",
+            "Kur'ani, El-Xhumua 9",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَى ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَلِكُمْ خَيْرٌ لَكُمْ إِن كُنتُمْ تَعْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «**Dita më e mirë në të cilën ka lindur dielli është dita e xhuma**: atë ditë u krijua Ademi, atë ditë hyri në Xhenet dhe atë ditë doli prej tij.»",
+            "Muslimi",
+        ),
+        KhutbahQuote(
+            "Evs ibn Evsi r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Dita juaj më e vlefshme është dita e xhuma, andaj **shtoni salavatet për mua** në të, sepse salavatet tuaja më paraqiten mua.»",
+            "Ebu Davudi",
+        ),
+        KhutbahQuote(
+            "Selman el-Farisiu r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Kush pastrohet ditën e xhuma, vishet bukur, shkon herët në xhami dhe **dëgjon me heshtje**, i **falen mëkatet** deri në xhumanë tjetër.»",
+            "Buhariu",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Në ditën e xhuma ka **një çast** kur robi musliman, që qëndron në namaz dhe e lut Allahun për diçka, **Ai ia jep atë**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Vërtet, Allahu dhe engjëjt e Tij dërgojnë salavate mbi Pejgamberin. **O besimtarë, dërgoni salavate dhe përshëndetje mbi të!**",
+            "Kur'ani, El-Ahzab 56",
+            arabic = "إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ ۚ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا",
+        ),
+        KhutbahQuote(
+            "E kur të përfundojë namazi, **shpërndahuni nëpër tokë dhe kërkoni nga mirësitë e Allahut**, dhe **përmendeni Allahun shumë**, që të shpëtoni!",
+            "Kur'ani, El-Xhumua 10",
+            arabic = "فَإِذَا قُضِيَتِ الصَّلَاةُ فَانتَشِرُوا فِي الْأَرْضِ وَابْتَغُوا مِن فَضْلِ اللَّهِ وَاذْكُرُوا اللَّهَ كَثِيرًا لَعَلَّكُمْ تُفْلِحُونَ",
+        ),
+        KhutbahQuote(
+            "Ebu Seid el-Hudriu r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Kush e lexon **suren El-Kehf** ditën e xhuma, **i ndriçohet drita** mes dy xhumave.»",
+            "Hakimi & Bejhekiu",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Pesë namazet, xhumaja deri në xhuma dhe ramazani deri në ramazan **i shlyejnë mëkatet** mes tyre, nëse u shmangesh mëkateve të mëdha.»",
+            "Muslimi",
+        ),
+    ),
     announcementsLabel = "Njoftimet",
     announcementLabel = "Njoftimi",
     setupTitle = "Mirë se vini",
@@ -382,6 +445,9 @@ private val EN = Strings(
         NightMode.AFTER_45 to "Isha +45 min",
         NightMode.AFTER_60 to "Isha +1 h",
     ),
+    mosqueSectionLabel = "Mosque",
+    displaySectionLabel = "Display",
+    fridaySectionLabel = "Friday",
     lectureSectionLabel = "Weekly lecture",
     lectureTitleLabel = "Title",
     lectureDayLabel = "Day",
@@ -402,6 +468,53 @@ private val EN = Strings(
     hijriOffsetLabel = "Hijri date (days)",
     jumuahLabel = "Jumu'ah time",
     jumuahFollowDhuhr = "Same as Dhuhr",
+    khutbahDurationLabel = "Khutbah duration (min)",
+    khutbahTitle = "Khutbah Time",
+    khutbahQuotes = listOf(
+        KhutbahQuote(
+            "Abu Hurairah (r.a.) narrated that the Prophet ﷺ said: \"If you say to your companion **'be quiet'** on Friday while the imam is delivering the khutbah, **you have spoken in vain**.\"",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "O you who believe! When the call to prayer is made on Friday, **hasten to the remembrance of Allah and leave off trade**. That is better for you, if only you knew.",
+            "Qur'an, Al-Jumu'ah 9",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَى ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَلِكُمْ خَيْرٌ لَكُمْ إِن كُنتُمْ تَعْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Abu Hurairah (r.a.) narrated that the Prophet ﷺ said: \"**The best day on which the sun has risen is Friday**: on it Adam was created, on it he entered Paradise, and on it he was expelled from it.\"",
+            "Muslim",
+        ),
+        KhutbahQuote(
+            "Aws ibn Aws (r.a.) narrated that the Prophet ﷺ said: \"The most excellent of your days is Friday, so **increase your salawat upon me** on it, for your salawat are presented to me.\"",
+            "Abu Dawud",
+        ),
+        KhutbahQuote(
+            "Salman al-Farisi (r.a.) narrated that the Prophet ﷺ said: \"Whoever performs ghusl on Friday, dresses well, goes early to the mosque and **listens in silence**, is **forgiven** what is until the next Friday.\"",
+            "Bukhari",
+        ),
+        KhutbahQuote(
+            "Abu Hurairah (r.a.) narrated that the Prophet ﷺ said: \"On Friday there is **an hour** when no Muslim servant stands in prayer asking Allah for something but **He grants it to him**.\"",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Indeed, Allah and His angels send blessings upon the Prophet. **O you who believe, send blessings upon him and greet him with peace!**",
+            "Qur'an, Al-Ahzab 56",
+            arabic = "إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ ۚ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا",
+        ),
+        KhutbahQuote(
+            "And when the prayer has ended, **disperse throughout the land and seek from the bounty of Allah**, and **remember Allah much**, that you may succeed.",
+            "Qur'an, Al-Jumu'ah 10",
+            arabic = "فَإِذَا قُضِيَتِ الصَّلَاةُ فَانتَشِرُوا فِي الْأَرْضِ وَابْتَغُوا مِن فَضْلِ اللَّهِ وَاذْكُرُوا اللَّهَ كَثِيرًا لَعَلَّكُمْ تُفْلِحُونَ",
+        ),
+        KhutbahQuote(
+            "Abu Sa'id al-Khudri (r.a.) narrated that the Prophet ﷺ said: \"Whoever recites **Surah Al-Kahf** on Friday, **a light will shine for him** between the two Fridays.\"",
+            "Hakim & Bayhaqi",
+        ),
+        KhutbahQuote(
+            "Abu Hurairah (r.a.) narrated that the Prophet ﷺ said: \"The five prayers, Friday to Friday, and Ramadan to Ramadan **expiate the sins** between them, as long as major sins are avoided.\"",
+            "Muslim",
+        ),
+    ),
     announcementsLabel = "Announcements",
     announcementLabel = "Announcement",
     setupTitle = "Welcome",
@@ -566,6 +679,9 @@ private val TR = Strings(
         NightMode.AFTER_45 to "Yatsı +45 dk",
         NightMode.AFTER_60 to "Yatsı +1 saat",
     ),
+    mosqueSectionLabel = "Cami",
+    displaySectionLabel = "Ekran",
+    fridaySectionLabel = "Cuma",
     lectureSectionLabel = "Haftalık ders",
     lectureTitleLabel = "Başlık",
     lectureDayLabel = "Gün",
@@ -586,6 +702,53 @@ private val TR = Strings(
     hijriOffsetLabel = "Hicri tarih (gün)",
     jumuahLabel = "Cuma vakti",
     jumuahFollowDhuhr = "Öğle ile aynı",
+    khutbahDurationLabel = "Hutbe süresi (dk)",
+    khutbahTitle = "Hutbe Vakti",
+    khutbahQuotes = listOf(
+        KhutbahQuote(
+            "Ebû Hüreyre (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Cuma günü imam hutbe okurken arkadaşına **'sus'** desen bile **boş söz söylemiş olursun**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Ey iman edenler! Cuma günü namaz için çağrı yapıldığında **Allah'ı anmaya koşun ve alışverişi bırakın**. Eğer bilirseniz bu sizin için daha hayırlıdır.",
+            "Kur'an, Cum'a 9",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَى ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَلِكُمْ خَيْرٌ لَكُمْ إِن كُنتُمْ تَعْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «**Üzerine güneş doğan en hayırlı gün cuma günüdür**: Âdem o gün yaratıldı, o gün cennete girdi ve o gün oradan çıkarıldı.»",
+            "Müslim",
+        ),
+        KhutbahQuote(
+            "Evs bin Evs (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Günlerinizin en faziletlisi cuma günüdür; o gün **bana çokça salavat getirin**, çünkü salavatlarınız bana arz edilir.»",
+            "Ebû Dâvûd",
+        ),
+        KhutbahQuote(
+            "Selmân-ı Fârisî (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Kim cuma günü gusleder, güzelce giyinir, erkenden camiye gider ve **hutbeyi sessizce dinlerse**, iki cuma arasındaki günahları **bağışlanır**.»",
+            "Buhârî",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Cuma gününde **öyle bir an** vardır ki, namazda olan Müslüman bir kul o anda Allah'tan ne isterse **Allah ona verir**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Şüphesiz Allah ve melekleri Peygamber'e salât ederler. **Ey iman edenler, siz de ona salât edin ve tam bir teslimiyetle selam verin!**",
+            "Kur'an, Ahzâb 56",
+            arabic = "إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ ۚ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا",
+        ),
+        KhutbahQuote(
+            "Namaz kılınınca **yeryüzüne dağılın ve Allah'ın lütfundan arayın**; **Allah'ı çokça anın** ki kurtuluşa eresiniz.",
+            "Kur'an, Cum'a 10",
+            arabic = "فَإِذَا قُضِيَتِ الصَّلَاةُ فَانتَشِرُوا فِي الْأَرْضِ وَابْتَغُوا مِن فَضْلِ اللَّهِ وَاذْكُرُوا اللَّهَ كَثِيرًا لَعَلَّكُمْ تُفْلِحُونَ",
+        ),
+        KhutbahQuote(
+            "Ebû Saîd el-Hudrî (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Kim cuma günü **Kehf Sûresi'ni** okursa, iki cuma arasında onun için **bir nur parlar**.»",
+            "Hâkim & Beyhakî",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre (r.a.) rivayet ediyor; Peygamber (s.a.v.) şöyle buyurdu: «Beş vakit namaz, cumadan cumaya ve ramazandan ramazana, büyük günahlardan kaçınıldığı sürece **aralarındaki günahlara kefarettir**.»",
+            "Müslim",
+        ),
+    ),
     announcementsLabel = "Duyurular",
     announcementLabel = "Duyuru",
     setupTitle = "Hoş geldiniz",
@@ -750,6 +913,9 @@ private val BS = Strings(
         NightMode.AFTER_45 to "Jacija +45 min",
         NightMode.AFTER_60 to "Jacija +1 h",
     ),
+    mosqueSectionLabel = "Džamija",
+    displaySectionLabel = "Ekran",
+    fridaySectionLabel = "Džuma",
     lectureSectionLabel = "Sedmično predavanje",
     lectureTitleLabel = "Naslov",
     lectureDayLabel = "Dan",
@@ -770,6 +936,53 @@ private val BS = Strings(
     hijriOffsetLabel = "Hidžretski datum (dana)",
     jumuahLabel = "Vrijeme džume",
     jumuahFollowDhuhr = "Kao podne",
+    khutbahDurationLabel = "Trajanje hutbe (min)",
+    khutbahTitle = "Vrijeme hutbe",
+    khutbahQuotes = listOf(
+        KhutbahQuote(
+            "Ebu Hurejre, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Ako u petak, dok imam drži hutbu, kažeš svome drugu **'šuti'**, **rekao si suvišan govor**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "O vjernici, kada se u petak na molitvu pozove, **požurite ka spominjanju Allaha i ostavite trgovinu**! To vam je bolje, ako znate.",
+            "Kur'an, El-Džumu'a 9",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَى ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَلِكُمْ خَيْرٌ لَكُمْ إِن كُنتُمْ تَعْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «**Najbolji dan u kojem je sunce izašlo jest petak**: u njemu je Adem stvoren, u njemu je uveden u Džennet i u njemu je iz njega izveden.»",
+            "Muslim",
+        ),
+        KhutbahQuote(
+            "Evs ibn Evs, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Najvredniji vaš dan jest petak, pa **donosite što više salavata na mene** u njemu, jer se vaši salavati meni predočavaju.»",
+            "Ebu Davud",
+        ),
+        KhutbahQuote(
+            "Selman el-Farisi, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Ko se petkom okupa, lijepo obuče, porani u džamiju i **sluša u tišini**, **oprošteno mu je** do sljedeće džume.»",
+            "Buharija",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Petkom postoji **jedan čas** u kojem musliman, koji stoji u namazu i moli Allaha za nešto, **to i dobije**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Zaista Allah i Njegovi meleki donose salavate na Vjerovjesnika. **O vjernici, i vi donosite salavate na njega i šaljite mu selam!**",
+            "Kur'an, El-Ahzab 56",
+            arabic = "إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ ۚ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا",
+        ),
+        KhutbahQuote(
+            "A kada se namaz obavi, **raziđite se po zemlji i tražite Allahovu blagodat**, i **mnogo Allaha spominjite** da biste uspjeli.",
+            "Kur'an, El-Džumu'a 10",
+            arabic = "فَإِذَا قُضِيَتِ الصَّلَاةُ فَانتَشِرُوا فِي الْأَرْضِ وَابْتَغُوا مِن فَضْلِ اللَّهِ وَاذْكُرُوا اللَّهَ كَثِيرًا لَعَلَّكُمْ تُفْلِحُونَ",
+        ),
+        KhutbahQuote(
+            "Ebu Seid el-Hudri, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Ko petkom prouči **suru El-Kehf**, **obasja ga svjetlo** između dvije džume.»",
+            "Hakim & Bejheki",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre, r.a., prenosi da je Poslanik, s.a.v.s., rekao: «Pet namaza, džuma do džume i ramazan do ramazana **brišu grijehe** između njih, ako se izbjegavaju veliki grijesi.»",
+            "Muslim",
+        ),
+    ),
     announcementsLabel = "Obavještenja",
     announcementLabel = "Obavještenje",
     setupTitle = "Dobrodošli",

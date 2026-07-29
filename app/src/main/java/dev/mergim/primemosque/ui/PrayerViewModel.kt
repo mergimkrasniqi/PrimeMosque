@@ -73,6 +73,7 @@ data class UiState(
     val upcomingEvent: UpcomingEvent? = null,
     val notices: List<Notice> = emptyList(),
     val lecture: LectureInfo? = null,
+    val khutbah: Boolean = false,
     val night: Boolean = false,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
@@ -180,7 +181,16 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
 
         val notices = buildNotices(now, today, slots, hijri, settings)
 
-        // Recurring lecture (e.g. "Zgjimi i Zemrave"): pinned all day on the
+        // Full-screen khutbah takeover: from Jumu'ah time (after the 1-minute
+        // announcement) for the configured duration, the board is replaced by
+        // the silence reminder and rotating Jumu'ah quotes.
+        val khutbah = friday && slots.firstOrNull { it.key == PrayerKey.DHUHR }
+            ?.time?.atDate(today)
+            ?.let { at ->
+                !now.isBefore(at) && now.isBefore(at.plusMinutes(settings.khutbahMinutes.toLong()))
+            } == true
+
+        // Recurring lecture: pinned all day on the
         // configured weekday, announcing it follows the configured prayer.
         val lecture = settings.lectureDay.dayOfWeek
             ?.takeIf { it == today.dayOfWeek && settings.lectureTitle.isNotBlank() }
@@ -216,6 +226,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             upcomingEvent = upcomingEvent,
             notices = notices,
             lecture = lecture,
+            khutbah = khutbah,
             night = night,
             settings = settings,
             loaded = true,
@@ -315,6 +326,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun resetPrayerAdjustments() = viewModelScope.launch { settingsRepository.resetPrayerAdjustments() }
     fun completeSetup() = viewModelScope.launch { settingsRepository.setSetupDone() }
     fun setJumuahMinutes(value: Int) = viewModelScope.launch { settingsRepository.setJumuahMinutes(value) }
+    fun setKhutbahMinutes(value: Int) =
+        viewModelScope.launch { settingsRepository.setKhutbahMinutes(value.coerceIn(5, 45)) }
     fun setAnnouncement1(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement1(value) }
     fun setAnnouncement2(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement2(value) }
     fun setHijriOffset(value: Int) =
