@@ -341,7 +341,7 @@ private fun BigClock(
         Text(
             text = state.now.format(secondsFormatter),
             fontSize = secondsSize,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 8.dp, bottom = 14.dp),
         )

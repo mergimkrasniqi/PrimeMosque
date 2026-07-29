@@ -25,7 +25,10 @@ enum class DisplayOrientation(val degrees: Int) {
 
 enum class AppLanguage { SQ, EN, TR, BS }
 
-enum class AppTheme { DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN }
+enum class AppTheme {
+    DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN,
+    MUSHAF, MUSHAF_DARK, ZAYTUN, ZAYTUN_DARK, NILA, NILA_DARK, HIBR, HIBR_DARK,
+}
 
 /**
  * Overnight energy saver: from Isha (plus the chosen delay, so the
