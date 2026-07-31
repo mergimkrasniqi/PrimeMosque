@@ -48,8 +48,8 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
 
 <table>
   <tr>
-    <td align="center"><b>Portrait board</b> (Gold theme)</td>
-    <td align="center"><b>Friday</b> — lecture banner, rotating notice card, pinned salawat (Green theme)</td>
+    <td align="center"><b>Portrait board</b> (Mushaf theme)</td>
+    <td align="center"><b>Friday</b> — lecture banner, rotating notice card, pinned salawat (Zaytun theme)</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/portrait-board.png" width="340" alt="Portrait prayer board"></td>
@@ -57,24 +57,24 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
   </tr>
 </table>
 
-**Landscape board on a Friday** (Midnight theme) — weekly lecture banner and notice card flanking the clock:
+**Landscape board on a Friday** (Nila dark theme) — weekly lecture banner and notice card flanking the clock:
 
 <img src="docs/screenshots/landscape-friday.png" width="720" alt="Landscape board with lecture banner and notice card">
 
-**Khutbah mode** — during the khutbah the board is replaced by rotating Jumu'ah hadiths and verses (Qur'anic Arabic + translation, key phrases highlighted):
+**Khutbah mode** (Hibr dark theme) — during the khutbah the board is replaced by rotating Jumu'ah hadiths and verses (Qur'anic Arabic + translation, key phrases highlighted):
 
 <img src="docs/screenshots/khutbah-verse.png" width="720" alt="Khutbah mode showing a Qur'an verse with Arabic and translation">
 
 <table>
   <tr>
-    <td align="center"><b>Khutbah mode</b> in portrait — full hadith narration with the key phrase highlighted</td>
+    <td align="center"><b>Khutbah mode</b> in portrait (Mushaf dark theme) — full hadith narration with the key phrase highlighted</td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/khutbah-portrait.png" width="340" alt="Khutbah mode in portrait with a hadith"></td>
   </tr>
 </table>
 
-**Night energy saver** — after Isha the board switches to the selected theme's dark variant, until Imsak:
+**Night energy saver** — after Isha the board switches to the selected theme's dark variant (here Zaytun → Zaytun dark), until Imsak:
 
 <img src="docs/screenshots/night-saver.png" width="720" alt="Night energy saver black theme">
 
