@@ -34,12 +34,12 @@ A card on the board shows guidance only while it applies, rotating every 30 s wh
 A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears next to the clock showing "Sot pas namazit të Akshamit (19:25)". When the banner is visible, the portrait board scales itself down slightly so everything still fits.
 
 ### Night energy saver
-Between Jacia (plus a configurable delay, so the congregation still sees the normal board) and Imsaku the display switches to the pure-black theme and dims the backlight — the mosque is empty, no reason to burn power. The selected theme returns automatically at Imsak. Note: app-level backlight dimming is ignored by most TV firmwares; the biggest savings come from the TV's own on/off timer (the app resumes from standby right where it was).
+Between Jacia (plus a configurable delay, so the congregation still sees the normal board) and Imsaku the display switches to the dark variant of the selected theme and dims the backlight — the mosque is empty, no reason to burn power. The daytime theme returns automatically at Imsak. Note: app-level backlight dimming is ignored by most TV firmwares; the biggest savings come from the TV's own on/off timer (the app resumes from standby right where it was).
 
 ### Setup & customisation
 - **First-run setup wizard** — on first launch the essential settings (language, city, mosque name, place, orientation, theme) are presented once, so a new mosque can configure the board without discovering the settings screen.
 - **Categorised settings** (press OK on the remote): a compact main page with the language plus sub-pages — Xhamia (name, place, city with official minute offsets), Ekrani (orientation, theme, night saver), Xhumaja (Jumu'ah time, khutbah duration), Ligjërata javore, Njoftimet, and Përshtatja e kohëve (per-prayer ±min, Hijri date). Every category row shows a live summary of its values.
-- **9 themes**: Dark, Black, Emerald, Midnight, Burgundy, Light, Gold, Blue, Green.
+- **4 theme families, each light + dark**: Mushaf (cream/red), Zaytun (olive), Nila (indigo), Hibr (paper & ink). Optional **weekly automatic rotation** switches to the next family every Monday — keeping your light/dark preference — so the board never gets monotonous.
 - **4 languages**: Shqip, English, Türkçe, Bosanski — including prayer names, notices, dhikr translations, khutbah quotes, Hijri month spellings and date locales.
 - Screen is kept awake permanently (signage use), and a boot receiver relaunches the board after a power cut on firmwares that allow it (elsewhere, set the app as home or open it manually).
 - Custom adaptive launcher icon and 16:9 Android TV banner (gold mosque on navy gradient); app version shown at the bottom of settings for support.
@@ -74,7 +74,7 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
   </tr>
 </table>
 
-**Night energy saver** — after Isha the board drops to pure black regardless of the selected theme, until Imsak:
+**Night energy saver** — after Isha the board switches to the selected theme's dark variant, until Imsak:
 
 <img src="docs/screenshots/night-saver.png" width="720" alt="Night energy saver black theme">
 

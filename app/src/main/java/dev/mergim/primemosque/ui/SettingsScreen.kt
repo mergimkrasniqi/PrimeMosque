@@ -401,7 +401,7 @@ private fun DisplaySettingsPage(
     val nightModes = NightMode.entries
     val nightModeIndex = nightModes.indexOf(settings.nightMode)
 
-    SettingsPage(title = strings.displaySectionLabel, rowCount = 4) { rowModifier ->
+    SettingsPage(title = strings.displaySectionLabel, rowCount = 5) { rowModifier ->
         CyclerRow(
             modifier = rowModifier(0),
             label = strings.orientationLabel,
@@ -428,6 +428,14 @@ private fun DisplaySettingsPage(
         )
         CyclerRow(
             modifier = rowModifier(2),
+            label = strings.themeRotationLabel,
+            value = if (settings.themeRotation) strings.themeRotationWeekly
+            else strings.themeRotationOff,
+            onPrevious = { viewModel.setThemeRotation(!settings.themeRotation) },
+            onNext = { viewModel.setThemeRotation(!settings.themeRotation) },
+        )
+        CyclerRow(
+            modifier = rowModifier(3),
             label = strings.nightModeLabel,
             value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
             onPrevious = {
@@ -441,7 +449,7 @@ private fun DisplaySettingsPage(
         )
         Button(
             onClick = onBack,
-            modifier = rowModifier(3).fillMaxWidth(),
+            modifier = rowModifier(4).fillMaxWidth(),
         ) {
             Text(strings.back, fontSize = 18.sp)
         }

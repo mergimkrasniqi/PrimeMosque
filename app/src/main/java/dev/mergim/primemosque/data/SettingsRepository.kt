@@ -26,10 +26,18 @@ enum class DisplayOrientation(val degrees: Int) {
 
 enum class AppLanguage { SQ, EN, TR, BS }
 
+/** Four theme families, each in a light (day) and dark (night) variant. */
 enum class AppTheme {
-    DARK, BLACK, EMERALD, MIDNIGHT, BURGUNDY, LIGHT, GOLD, BLUE, GREEN,
-    MUSHAF, MUSHAF_DARK, ZAYTUN, ZAYTUN_DARK, NILA, NILA_DARK, HIBR, HIBR_DARK,
+    MUSHAF, MUSHAF_DARK, ZAYTUN, ZAYTUN_DARK, NILA, NILA_DARK, HIBR, HIBR_DARK;
+
+    val isDark: Boolean get() = name.endsWith("_DARK")
+
+    /** The night-time twin of this theme (itself when already dark). */
+    val darkVariant: AppTheme get() = if (isDark) this else valueOf("${name}_DARK")
 }
+
+/** The families the weekly rotation cycles through (light variants). */
+val THEME_FAMILIES = listOf(AppTheme.MUSHAF, AppTheme.ZAYTUN, AppTheme.NILA, AppTheme.HIBR)
 
 /**
  * Overnight energy saver: from Isha (plus the chosen delay, so the
@@ -63,7 +71,9 @@ data class Settings(
     val city: String = "Prizren",
     val orientation: DisplayOrientation = DisplayOrientation.PORTRAIT,
     val language: AppLanguage = AppLanguage.SQ,
-    val theme: AppTheme = AppTheme.DARK,
+    val theme: AppTheme = AppTheme.MUSHAF,
+    // Rotate to the next theme family every week (keeping light/dark).
+    val themeRotation: Boolean = false,
     val nightMode: NightMode = NightMode.AFTER_30,
     // Recurring lecture pinned on the board on
     // the chosen day, held after the chosen prayer.
@@ -96,6 +106,7 @@ class SettingsRepository(private val context: Context) {
         val ORIENTATION = stringPreferencesKey("orientation")
         val LANGUAGE = stringPreferencesKey("language")
         val THEME = stringPreferencesKey("theme")
+        val THEME_ROTATION = booleanPreferencesKey("theme_rotation")
         val NIGHT_MODE = stringPreferencesKey("night_mode")
         val LECTURE_TITLE = stringPreferencesKey("lecture_title")
         val LECTURE_DAY = stringPreferencesKey("lecture_day")
@@ -124,9 +135,11 @@ class SettingsRepository(private val context: Context) {
             language = p[Keys.LANGUAGE]
                 ?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
                 ?: defaults.language,
+            // Themes removed in an update fall back to the default.
             theme = p[Keys.THEME]
                 ?.let { runCatching { AppTheme.valueOf(it) }.getOrNull() }
                 ?: defaults.theme,
+            themeRotation = p[Keys.THEME_ROTATION] ?: defaults.themeRotation,
             nightMode = p[Keys.NIGHT_MODE]
                 ?.let { runCatching { NightMode.valueOf(it) }.getOrNull() }
                 ?: defaults.nightMode,
@@ -166,6 +179,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setTheme(value: AppTheme) =
         context.dataStore.edit { it[Keys.THEME] = value.name }
+
+    suspend fun setThemeRotation(value: Boolean) =
+        context.dataStore.edit { it[Keys.THEME_ROTATION] = value }
 
     suspend fun setNightMode(value: NightMode) =
         context.dataStore.edit { it[Keys.NIGHT_MODE] = value.name }

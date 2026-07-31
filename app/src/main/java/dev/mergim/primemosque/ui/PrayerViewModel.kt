@@ -17,6 +17,7 @@ import dev.mergim.primemosque.data.PrayerRepository
 import dev.mergim.primemosque.data.PrayerSlot
 import dev.mergim.primemosque.data.Settings
 import dev.mergim.primemosque.data.SettingsRepository
+import dev.mergim.primemosque.data.THEME_FAMILIES
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,6 +86,9 @@ data class UiState(
     // The clock reads earlier than a time the app has already lived through
     // and NTP has not synced: the TV clock is provably wrong (power cut).
     val clockSuspect: Boolean = false,
+    // Theme the board should render with right now: the chosen theme, or —
+    // with weekly rotation on — this week's family in the chosen variant.
+    val theme: AppTheme = AppTheme.MUSHAF,
 )
 
 class PrayerViewModel(app: Application) : AndroidViewModel(app) {
@@ -218,8 +222,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             }
 
         // Overnight energy saver: the mosque is empty between Isha and Imsak,
-        // so the board drops to the black theme and dims. The delay after Isha
-        // keeps the normal board up while the congregation is still praying.
+        // so the board drops to the theme's dark variant and dims. The delay
+        // after Isha keeps the normal board up while the congregation is
+        // still praying.
         val night = settings.nightMode.minutesAfterIsha?.let { delayMinutes ->
             val nightStart = slots.firstOrNull { it.key == PrayerKey.ISHA }
                 ?.time?.atDate(today)?.plusMinutes(delayMinutes)
@@ -289,7 +294,21 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             settings = settings,
             loaded = true,
             clockSuspect = clockSuspect,
+            theme = themeFor(today, settings),
         )
+    }
+
+    /**
+     * Weekly rotation: each Monday the board moves to the next theme family,
+     * keeping the light/dark character of the theme the user chose. Off, the
+     * chosen theme is used as-is.
+     */
+    private fun themeFor(today: LocalDate, settings: Settings): AppTheme {
+        if (!settings.themeRotation) return settings.theme
+        // Epoch day -3 was a Monday, so this index increments on Mondays.
+        val week = (today.toEpochDay() + 3).floorDiv(7)
+        val family = THEME_FAMILIES[week.mod(THEME_FAMILIES.size)]
+        return if (settings.theme.isDark) family.darkVariant else family
     }
 
     private fun buildNotices(
@@ -376,6 +395,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setOrientation(value: DisplayOrientation) = viewModelScope.launch { settingsRepository.setOrientation(value) }
     fun setLanguage(value: AppLanguage) = viewModelScope.launch { settingsRepository.setLanguage(value) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settingsRepository.setTheme(value) }
+    fun setThemeRotation(value: Boolean) =
+        viewModelScope.launch { settingsRepository.setThemeRotation(value) }
     fun setNightMode(value: NightMode) = viewModelScope.launch { settingsRepository.setNightMode(value) }
     fun setLectureTitle(value: String) = viewModelScope.launch { settingsRepository.setLectureTitle(value) }
     fun setLectureDay(value: LectureDay) = viewModelScope.launch { settingsRepository.setLectureDay(value) }

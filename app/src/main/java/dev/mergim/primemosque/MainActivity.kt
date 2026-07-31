@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.ui.AnnouncementScreen
 import dev.mergim.primemosque.ui.DisplayScreen
@@ -59,9 +58,9 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     var showSettings by remember { mutableStateOf(false) }
     val orientation = state.settings.orientation
 
-    // Night energy saver: black theme + dimmed backlight between Isha and
-    // Imsak. Suspended while the settings are open, so the chosen theme
-    // stays visible while configuring.
+    // Night energy saver: the chosen theme's dark variant + dimmed backlight
+    // between Isha and Imsak. Suspended while the settings are open, so the
+    // chosen theme stays visible while configuring.
     val nightSaver = state.night && !showSettings
     val view = LocalView.current
     LaunchedEffect(nightSaver) {
@@ -74,7 +73,7 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
         }
     }
 
-    PrimeMosqueTheme(theme = if (nightSaver) AppTheme.BLACK else state.settings.theme) {
+    PrimeMosqueTheme(theme = if (nightSaver) state.theme.darkVariant else state.theme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             RotatedLayout(degrees = orientation.degrees) {
                 val announce = state.announce
