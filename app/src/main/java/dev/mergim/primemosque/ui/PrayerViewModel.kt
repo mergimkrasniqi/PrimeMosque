@@ -1,6 +1,8 @@
 package dev.mergim.primemosque.ui
 
 import android.app.Application
+import android.net.ConnectivityManager
+import android.net.Network
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.mergim.primemosque.data.AppLanguage
@@ -9,6 +11,7 @@ import dev.mergim.primemosque.data.City
 import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.data.LectureDay
 import dev.mergim.primemosque.data.NightMode
+import dev.mergim.primemosque.data.NtpClock
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.data.PrayerRepository
 import dev.mergim.primemosque.data.PrayerSlot
@@ -16,9 +19,11 @@ import dev.mergim.primemosque.data.Settings
 import dev.mergim.primemosque.data.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -77,6 +82,9 @@ data class UiState(
     val night: Boolean = false,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
+    // The clock reads earlier than a time the app has already lived through
+    // and NTP has not synced: the TV clock is provably wrong (power cut).
+    val clockSuspect: Boolean = false,
 )
 
 class PrayerViewModel(app: Application) : AndroidViewModel(app) {
@@ -94,16 +102,60 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
 
     val cities: List<City> = repository.cities
 
+    // TVs lose the clock on every power cut (no RTC battery), so the board
+    // runs on NTP time whenever it can get it. Sync attempts are gated on
+    // connectivity: with no network the loop stays suspended at no cost, and
+    // NtpClock falls back to the TV clock. The moment any network appears
+    // (Wi-Fi returning after a power cut, a phone hotspot), the time heals.
+    private val connectivity = app.getSystemService(ConnectivityManager::class.java)
+    private val networkUp = MutableStateFlow(false)
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) { networkUp.value = true }
+        override fun onLost(network: Network) { networkUp.value = false }
+    }
+
+    init {
+        connectivity?.registerDefaultNetworkCallback(networkCallback)
+        viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                networkUp.first { it } // suspends until a network is up
+                delay(if (NtpClock.sync()) RESYNC_INTERVAL_MS else RETRY_INTERVAL_MS)
+            }
+        }
+        // Remember the latest credible time so a clock that boots up in the
+        // past can be recognised. Never lowered: while the clock is wrong
+        // (behind), the last credible value must survive to keep the warning
+        // up; it resumes advancing once the clock is corrected or overtakes.
+        viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                val epoch = NtpClock.epochMs()
+                if (epoch > settingsRepository.lastSeenEpochMs.first()) {
+                    settingsRepository.setLastSeenEpochMs(epoch)
+                }
+                delay(LAST_SEEN_INTERVAL_MS)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        connectivity?.unregisterNetworkCallback(networkCallback)
+        super.onCleared()
+    }
+
     private val ticker = flow {
         while (true) {
-            emit(LocalDateTime.now(zone))
+            emit(NtpClock.now(zone))
             delay(1_000L - (System.currentTimeMillis() % 1_000L))
         }
     }
 
     val uiState: StateFlow<UiState> =
-        combine(ticker, settingsRepository.settings) { now, settings ->
-            buildState(now, settings)
+        combine(
+            ticker,
+            settingsRepository.settings,
+            settingsRepository.lastSeenEpochMs,
+        ) { now, settings, lastSeen ->
+            buildState(now, settings, lastSeen)
         }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
@@ -114,7 +166,13 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             if (minutes == 0) slot else slot.copy(time = slot.time.plusMinutes(minutes.toLong()))
         }
 
-    private fun buildState(now: LocalDateTime, settings: Settings): UiState {
+    private fun buildState(now: LocalDateTime, settings: Settings, lastSeenEpochMs: Long): UiState {
+        // Clock sanity: time cannot flow backwards. If the current reading is
+        // clearly before a moment the app has already lived through, the TV
+        // clock was reset (power cut) — warn until NTP or a manual fix.
+        val clockSuspect = !NtpClock.synced &&
+            NtpClock.epochMs() + CLOCK_SLACK_MS < lastSeenEpochMs
+
         val offset = repository.offsetFor(settings.city)
         val today = now.toLocalDate()
         val friday = today.dayOfWeek == DayOfWeek.FRIDAY
@@ -230,6 +288,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             night = night,
             settings = settings,
             loaded = true,
+            clockSuspect = clockSuspect,
         )
     }
 
@@ -332,4 +391,14 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setAnnouncement2(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement2(value) }
     fun setHijriOffset(value: Int) =
         viewModelScope.launch { settingsRepository.setHijriOffset(value.coerceIn(-2, 2)) }
+
+    private companion object {
+        const val RESYNC_INTERVAL_MS = 60 * 60_000L
+        // Network is up but the sync failed (DNS, captive portal, firewall).
+        const val RETRY_INTERVAL_MS = 30_000L
+        const val LAST_SEEN_INTERVAL_MS = 5 * 60_000L
+        // Tolerance before declaring the clock wrong, so small manual
+        // corrections or minor drift never trigger the warning.
+        const val CLOCK_SLACK_MS = 10 * 60_000L
+    }
 }

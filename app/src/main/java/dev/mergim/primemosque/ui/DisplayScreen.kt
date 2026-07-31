@@ -1,5 +1,7 @@
 package dev.mergim.primemosque.ui
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,8 +35,11 @@ import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.NoFood
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,6 +58,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -137,7 +143,12 @@ fun DisplayScreen(
     onOpenSettings: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    // While the clock warning is up, its button holds the focus instead
+    // (OK opens the network settings; Menu still opens the app settings,
+    // because unconsumed keys bubble up to this root handler).
+    LaunchedEffect(state.clockSuspect) {
+        if (!state.clockSuspect) focusRequester.requestFocus()
+    }
 
     val palette = LocalBoardPalette.current
     Box(
@@ -159,14 +170,87 @@ fun DisplayScreen(
     ) {
         if (!state.loaded) return@Box
         if (portrait) PortraitBoard(state, strings) else LandscapeBoard(state, strings)
+        if (state.clockSuspect) {
+            ClockWarningBanner(strings, Modifier.align(Alignment.TopCenter))
+        }
+    }
+}
+
+/**
+ * Shown over the board while the TV clock is provably wrong (it reads
+ * earlier than a time the app has already lived through and NTP has not
+ * synced). The button jumps straight to the TV's network settings so the
+ * imam can connect Wi-Fi and let the clock heal itself.
+ */
+@Composable
+private fun ClockWarningBanner(strings: Strings, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val buttonFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { buttonFocus.requestFocus() }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF8B1A1A))
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        Icon(
+            Icons.Filled.Warning,
+            contentDescription = null,
+            tint = Color(0xFFFFD54F),
+            modifier = Modifier.size(36.dp),
+        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                strings.clockWarningTitle,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                strings.clockWarningBody,
+                color = Color(0xFFFFE0E0),
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+            )
+        }
+        Button(
+            onClick = { openNetworkSettings(context) },
+            modifier = Modifier.focusRequester(buttonFocus),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color(0xFF8B1A1A),
+            ),
+        ) {
+            Text(strings.clockWarningButton, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+private fun openNetworkSettings(context: Context) {
+    // Not every TV firmware ships every settings screen; fall back broader.
+    val actions = listOf(
+        android.provider.Settings.ACTION_WIFI_SETTINGS,
+        android.provider.Settings.ACTION_WIRELESS_SETTINGS,
+        android.provider.Settings.ACTION_SETTINGS,
+    )
+    for (action in actions) {
+        if (runCatching { context.startActivity(Intent(action)) }.isSuccess) return
     }
 }
 
 @Composable
 private fun PortraitBoard(state: UiState, strings: Strings) {
-    // When the lecture banner joins the board (the busiest layout: banner +
-    // notice card + footer), everything scales down so nothing gets clipped.
-    val scale = if (state.lecture != null) 0.85f else 1f
+    // The board scales down when extra cargo joins it, so nothing gets
+    // clipped: hardest with the lecture banner (banner + notice card +
+    // footer), and slightly whenever the notice card alone is on board
+    // (Fridays, Duha/dhikr windows, custom announcements).
+    val scale = when {
+        state.lecture != null -> 0.85f
+        state.notices.isNotEmpty() -> 0.9f
+        else -> 1f
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -338,13 +422,13 @@ private fun BigClock(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Text(
-            text = state.now.format(secondsFormatter),
-            fontSize = secondsSize,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 8.dp, bottom = 14.dp),
-        )
+//        Text(
+//            text = state.now.format(secondsFormatter),
+//            fontSize = secondsSize,
+//            fontWeight = FontWeight.Normal,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant,
+//            modifier = Modifier.padding(start = 8.dp, bottom = 14.dp),
+//        )
     }
 }
 
@@ -562,7 +646,7 @@ private fun PrayerRow(
                     subTimes.forEach { sub ->
                         Text(
                             text = sub,
-                            fontSize = 17.sp * scale,
+                            fontSize = 15.sp * scale,
                             color = subColor,
                         )
                     }

@@ -67,6 +67,11 @@ data class Strings(
     val save: String,
     val cancel: String,
     val minutesShort: String,
+
+    // Warning shown when the TV clock is provably wrong after a power cut.
+    val clockWarningTitle: String,
+    val clockWarningBody: String,
+    val clockWarningButton: String,
     val hijriMonths: List<String>,
     val eventNames: Map<String, String>,
 )
@@ -299,6 +304,11 @@ private val SQ = Strings(
     save = "Ruaj",
     cancel = "Anulo",
     minutesShort = "min",
+    clockWarningTitle = "Kujdes: ora e TV-së mund të jetë gabim!",
+    clockWarningBody = "Pas ndërprerjes së rrymës ora e TV-së ka mbetur prapa — " +
+        "kohët e namazit mund të shfaqen gabim. Lidhe TV-në me internet dhe ora " +
+        "rregullohet vetë, ose rregulloje manualisht te cilësimet e TV-së.",
+    clockWarningButton = "Hap cilësimet e rrjetit",
     hijriMonths = listOf(
         "Muharrem", "Safer", "Rebiul-evvel", "Rebiul-ahir",
         "Xhumadel-ula", "Xhumadel-uhra", "Rexheb", "Shaban",
@@ -541,6 +551,11 @@ private val EN = Strings(
     save = "Save",
     cancel = "Cancel",
     minutesShort = "min",
+    clockWarningTitle = "Warning: the TV clock may be wrong!",
+    clockWarningBody = "After a power cut the TV clock falls behind — prayer " +
+        "times may be shown incorrectly. Connect the TV to the internet and the " +
+        "clock fixes itself, or set it manually in the TV settings.",
+    clockWarningButton = "Open network settings",
     hijriMonths = listOf(
         "Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani",
         "Jumada al-ula", "Jumada al-akhirah", "Rajab", "Sha'ban",
@@ -783,6 +798,11 @@ private val TR = Strings(
     save = "Kaydet",
     cancel = "İptal",
     minutesShort = "dk",
+    clockWarningTitle = "Dikkat: TV saati yanlış olabilir!",
+    clockWarningBody = "Elektrik kesintisinden sonra TV saati geride kalır — " +
+        "namaz vakitleri yanlış görünebilir. TV'yi internete bağlayın, saat " +
+        "kendini düzeltir; ya da TV ayarlarından elle ayarlayın.",
+    clockWarningButton = "Ağ ayarlarını aç",
     hijriMonths = listOf(
         "Muharrem", "Safer", "Rebiülevvel", "Rebiülahir",
         "Cemaziyelevvel", "Cemaziyelahir", "Recep", "Şaban",
@@ -1025,6 +1045,11 @@ private val BS = Strings(
     save = "Sačuvaj",
     cancel = "Otkaži",
     minutesShort = "min",
+    clockWarningTitle = "Pažnja: sat televizora je možda pogrešan!",
+    clockWarningBody = "Nakon nestanka struje sat televizora kasni — namaska " +
+        "vremena mogu biti pogrešno prikazana. Povežite televizor na internet i " +
+        "sat će se sam ispraviti, ili ga podesite ručno u postavkama televizora.",
+    clockWarningButton = "Otvori mrežne postavke",
     hijriMonths = listOf(
         "Muharrem", "Safer", "Rebiul-evvel", "Rebiul-ahir",
         "Džumadel-ula", "Džumadel-uhra", "Redžeb", "Ša'ban",

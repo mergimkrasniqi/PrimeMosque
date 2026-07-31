@@ -7,7 +7,9 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 ## Features
 
 ### Prayer times board
-- **Fully offline** — the yearly BIK Kosovo takvim (from [kohet-e-namazit-kosove-json](https://github.com/drilonjaha/kohet-e-namazit-kosove-json)) is bundled as an asset. The takvim repeats every year, so lookups use month + day only. No network needed, ever.
+- **Fully offline data** — the yearly BIK Kosovo takvim (from [kohet-e-namazit-kosove-json](https://github.com/drilonjaha/kohet-e-namazit-kosove-json)) is bundled as an asset. The takvim repeats every year, so lookups use month + day only. No network is ever needed for the prayer times themselves.
+- **Self-healing clock (NTP)** — TVs have no battery-backed clock, so after a power cut the TV's time is wrong until something re-syncs it. The board doesn't trust the TV clock: the moment *any* network is available it fetches the true time from NTP servers (Google/Cloudflare/pool.ntp.org) and runs on that, re-syncing hourly. Without network it falls back to the TV clock — so either keep the TV on Wi-Fi, or after a power cut briefly share a phone hotspot (or set the TV clock manually).
+- **Wrong-clock warning** — the app remembers the latest credible time it has seen; if the TV boots up with its clock *behind* that moment (the tell-tale sign of a power cut) and NTP can't sync, a red banner warns that the prayer times may be wrong, with a button that jumps straight to the TV's network settings. Connect Wi-Fi, press back, and the board fixes itself within seconds.
 - All 7 daily times (Imsaku, Sabahu, Lindja e Diellit, Dreka, Ikindia, Akshami, Jacia) with the current prayer highlighted and a live countdown to the next one.
 - Live clock, Gregorian + Hijri date, upcoming Islamic events.
 - **Full-screen announcement** for one minute at the moment each prayer time arrives ("Koha e Namazit të ...", Xhuma-aware on Fridays).

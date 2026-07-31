@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -106,6 +107,7 @@ class SettingsRepository(private val context: Context) {
         val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
         val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
         val HIJRI_OFFSET = intPreferencesKey("hijri_offset")
+        val LAST_SEEN_EPOCH_MS = longPreferencesKey("last_seen_epoch_ms")
 
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
     }
@@ -202,4 +204,13 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setHijriOffset(value: Int) =
         context.dataStore.edit { it[Keys.HIJRI_OFFSET] = value }
+
+    // Most recent credible wall-clock time the app has seen, persisted so
+    // that after a power cut a clock that boots up *behind* it can be
+    // recognised as wrong (TVs have no RTC battery).
+    val lastSeenEpochMs: Flow<Long> =
+        context.dataStore.data.map { it[Keys.LAST_SEEN_EPOCH_MS] ?: 0L }
+
+    suspend fun setLastSeenEpochMs(value: Long) =
+        context.dataStore.edit { it[Keys.LAST_SEEN_EPOCH_MS] = value }
 }

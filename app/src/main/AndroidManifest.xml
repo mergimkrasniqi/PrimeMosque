@@ -10,6 +10,11 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- NTP time sync: the board must not trust the TV clock, which resets
+         on every power cut (no RTC battery). Network state is watched so
+         sync is only attempted while a network actually exists. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
