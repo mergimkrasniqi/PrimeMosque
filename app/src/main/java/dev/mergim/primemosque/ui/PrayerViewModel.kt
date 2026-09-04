@@ -431,9 +431,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // Network is up but the sync failed (DNS, captive portal, firewall).
         const val RETRY_INTERVAL_MS = 30_000L
         const val LAST_SEEN_INTERVAL_MS = 5 * 60_000L
-        // Daily wisdom cycle: 5 min of the prayer table, then 90 s of
+        // Daily wisdom cycle: 4 min of the prayer table, then 90 s of
         // verses/hadiths (three quotes at the 30 s rotation).
-        const val QUOTES_TABLE_SECONDS = 5 * 60
+        const val QUOTES_TABLE_SECONDS = 4 * 60
         const val QUOTES_CYCLE_SECONDS = QUOTES_TABLE_SECONDS + 90
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
