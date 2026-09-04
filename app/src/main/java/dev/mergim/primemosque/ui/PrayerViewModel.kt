@@ -135,9 +135,13 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // up; it resumes advancing once the clock is corrected or overtakes.
         viewModelScope.launch(Dispatchers.IO) {
             while (true) {
-                val epoch = NtpClock.epochMs()
-                if (epoch > settingsRepository.lastSeenEpochMs.first()) {
-                    settingsRepository.setLastSeenEpochMs(epoch)
+                // A failed write (full/failing flash) must never kill the
+                // board; the next attempt comes in a few minutes anyway.
+                runCatching {
+                    val epoch = NtpClock.epochMs()
+                    if (epoch > settingsRepository.lastSeenEpochMs.first()) {
+                        settingsRepository.setLastSeenEpochMs(epoch)
+                    }
                 }
                 delay(LAST_SEEN_INTERVAL_MS)
             }

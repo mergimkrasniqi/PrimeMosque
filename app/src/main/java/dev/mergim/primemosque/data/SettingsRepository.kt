@@ -1,14 +1,19 @@
 package dev.mergim.primemosque.data
 
 import android.content.Context
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import java.time.DayOfWeek
 
 /** Prayers whose displayed time can be corrected by a per-prayer offset. */
@@ -98,7 +103,24 @@ data class Settings(
     val showDailyQuotes: Boolean = true,
 )
 
-private val Context.dataStore by preferencesDataStore(name = "settings")
+// A power cut can kill the TV mid-write and corrupt a preferences file;
+// without a corruption handler DataStore then throws on every read and the
+// app dies at startup until its data is cleared. Corrupt files are instead
+// replaced with defaults, and the frequently-written runtime state lives in
+// its own file so it can never take the mosque's configuration with it.
+private val Context.dataStore by preferencesDataStore(
+    name = "settings",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+)
+
+private val Context.runtimeDataStore by preferencesDataStore(
+    name = "runtime",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+)
+
+/** Reads that survive a broken file: better defaults than a dead board. */
+private fun Flow<Preferences>.orDefaults(): Flow<Preferences> =
+    catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
 
 class SettingsRepository(private val context: Context) {
 
@@ -127,7 +149,7 @@ class SettingsRepository(private val context: Context) {
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
     }
 
-    val settings: Flow<Settings> = context.dataStore.data.map { p ->
+    val settings: Flow<Settings> = context.dataStore.data.orDefaults().map { p ->
         val defaults = Settings()
         Settings(
             mosqueName = p[Keys.MOSQUE_NAME] ?: defaults.mosqueName,
@@ -231,10 +253,11 @@ class SettingsRepository(private val context: Context) {
 
     // Most recent credible wall-clock time the app has seen, persisted so
     // that after a power cut a clock that boots up *behind* it can be
-    // recognised as wrong (TVs have no RTC battery).
+    // recognised as wrong (TVs have no RTC battery). Written every few
+    // minutes, hence kept in the separate runtime file.
     val lastSeenEpochMs: Flow<Long> =
-        context.dataStore.data.map { it[Keys.LAST_SEEN_EPOCH_MS] ?: 0L }
+        context.runtimeDataStore.data.orDefaults().map { it[Keys.LAST_SEEN_EPOCH_MS] ?: 0L }
 
     suspend fun setLastSeenEpochMs(value: Long) =
-        context.dataStore.edit { it[Keys.LAST_SEEN_EPOCH_MS] = value }
+        context.runtimeDataStore.edit { it[Keys.LAST_SEEN_EPOCH_MS] = value }
 }

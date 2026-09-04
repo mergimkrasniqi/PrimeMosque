@@ -45,6 +45,7 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
 - **4 theme families, each light + dark**: Mushaf (cream/red), Zaytun (olive), Nila (indigo), Hibr (paper & ink). Optional **weekly automatic rotation** switches to the next family every Monday — keeping your light/dark preference — so the board never gets monotonous.
 - **4 languages**: Shqip, English, Türkçe, Bosanski — including prayer names, notices, dhikr translations, khutbah quotes, Hijri month spellings and date locales.
 - Screen is kept awake permanently (signage use), and a boot receiver relaunches the board after a power cut on firmwares that allow it (elsewhere, set the app as home or open it manually).
+- **Corruption-proof storage** — a power cut can kill the TV mid-write; a corrupted settings file no longer bricks the app at startup (it used to require clearing app data). Broken files are replaced with defaults, and the frequently-written runtime state lives in a separate file so the mosque's configuration can't be lost with it.
 - Custom adaptive launcher icon and 16:9 Android TV banner (gold mosque on navy gradient); app version shown at the bottom of settings for support.
 
 ## Screenshots
