@@ -61,6 +61,14 @@ data class Strings(
     val khutbahDurationLabel: String,
     val khutbahTitle: String,
     val khutbahQuotes: List<KhutbahQuote>,
+    // Daily wisdom breaks: verses and hadiths that briefly replace the
+    // prayer table on a fixed cycle during the day.
+    val dailyQuotesTitle: String,
+    val dailyQuotesLabel: String,
+    val dailyQuotes: List<KhutbahQuote>,
+    // Generic toggle values for boolean settings.
+    val switchOn: String,
+    val switchOff: String,
     val announcementsLabel: String,
     val announcementLabel: String,
     val setupTitle: String,
@@ -253,8 +261,8 @@ private val SQ = Strings(
             "Buhariu & Muslimi",
         ),
         KhutbahQuote(
-            "O ju që besuat, kur bëhet thirrja për namaz ditën e xhuma, **nxitoni drejt përmendjes së Allahut dhe lëreni tregtinë**! Kjo është më mirë për ju, nëse e dini.",
-            "Kur'ani, El-Xhumua 9",
+            "O besimtarë, kur të thirreni për (të falur) namazin (e xhumasë) në ditën e premte, **nxitoni për ta përmendur Allahun dhe pezulloni tregtinë**! Kjo, që ta dini, është më mirë për ju!",
+            "Kur'an, El-Xhumua 9",
             arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَى ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَلِكُمْ خَيْرٌ لَكُمْ إِن كُنتُمْ تَعْلَمُونَ",
         ),
         KhutbahQuote(
@@ -274,13 +282,13 @@ private val SQ = Strings(
             "Buhariu & Muslimi",
         ),
         KhutbahQuote(
-            "Vërtet, Allahu dhe engjëjt e Tij dërgojnë salavate mbi Pejgamberin. **O besimtarë, dërgoni salavate dhe përshëndetje mbi të!**",
-            "Kur'ani, El-Ahzab 56",
+            "Vërtet, Allahu e bekon të Dërguarin dhe engjëjt e Tij luten për atë. **O besimtarë, lutuni për atë dhe përshëndeteni me \"selam\"!**",
+            "Kur'an, El-Ahzab 56",
             arabic = "إِنَّ اللَّهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ ۚ يَا أَيُّهَا الَّذِينَ آمَنُوا صَلُّوا عَلَيْهِ وَسَلِّمُوا تَسْلِيمًا",
         ),
         KhutbahQuote(
-            "E kur të përfundojë namazi, **shpërndahuni nëpër tokë dhe kërkoni nga mirësitë e Allahut**, dhe **përmendeni Allahun shumë**, që të shpëtoni!",
-            "Kur'ani, El-Xhumua 10",
+            "Dhe, kur të përfundojë namazi, atëherë **shpërndahuni nëpër tokë, kërkoni nga mirësitë e Allahut** dhe **përmendeni shumë Allahun**, në mënyrë që të shpëtoni.",
+            "Kur'an, El-Xhumua 10",
             arabic = "فَإِذَا قُضِيَتِ الصَّلَاةُ فَانتَشِرُوا فِي الْأَرْضِ وَابْتَغُوا مِن فَضْلِ اللَّهِ وَاذْكُرُوا اللَّهَ كَثِيرًا لَعَلَّكُمْ تُفْلِحُونَ",
         ),
         KhutbahQuote(
@@ -292,6 +300,111 @@ private val SQ = Strings(
             "Muslimi",
         ),
     ),
+    dailyQuotesTitle = "Nga Kur'ani dhe Sunneti",
+    dailyQuotesLabel = "Ajete dhe hadithe gjatë ditës",
+    dailyQuotes = listOf(
+        KhutbahQuote(
+            "**Namazi është detyrë për besimtarët në kohë të caktuar.**",
+            "Kur'an, En-Nisa 103",
+            arabic = "إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Mes'udi r.a. tregon: E pyeta Pejgamberin s.a.v.s.: " +
+                "\"Cila vepër është më e dashur tek Allahu?\" Tha: «**Namazi në kohën e vet**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Fale namazin! **Vërtet që namazi të ruan nga shthurja dhe nga çdo vepër " +
+                "e shëmtuar** dhe vërtet që përmendja e Allahut është më e madhe!",
+            "Kur'an, El-Ankebut 45",
+            arabic = "وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Amri r.a. tregon se Pejgamberi s.a.v.s. ka thënë: " +
+                "«**Më të mirët prej jush janë ata që kanë moralin më të mirë**.»",
+            "Buhariu",
+        ),
+        KhutbahQuote(
+            "**Kush ka bërë ndonjë të mirë, qoftë sa një thërrmijë, do ta shohë atë**; " +
+                "e kush ka bërë ndonjë të keqe, qoftë sa një thërrmijë, do ta shohë atë.",
+            "Kur'an, Ez-Zelzele 7-8",
+            arabic = "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ ۝ وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",
+        ),
+        KhutbahQuote(
+            "Enesi r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Askush prej jush nuk " +
+                "beson vërtet, derisa **t'ia dojë vëllait të vet atë që ia do vetes**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Të cilët japin lëmoshë edhe kur janë në mirëqenie, edhe kur janë në " +
+                "vështirësi, **e mposhtin zemërimin dhe ua falin fajet njerëzve**. " +
+                "Allahu i do bamirësit.",
+            "Kur'an, Ali Imran 134",
+            arabic = "الَّذِينَ يُنفِقُونَ فِي السَّرَّاءِ وَالضَّرَّاءِ وَالْكَاظِمِينَ الْغَيْظَ وَالْعَافِينَ عَنِ النَّاسِ ۗ وَاللَّهُ يُحِبُّ الْمُحْسِنِينَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «I fortë nuk është " +
+                "ai që i mund të tjerët, por **ai që e përmban veten në zemërim**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Fale namazin në mëngjes e mbrëmje dhe në një kohë të natës, sepse " +
+                "**veprat e mira i shlyejnë veprat e këqija**.",
+            "Kur'an, Hud 114",
+            arabic = "وَأَقِمِ الصَّلَاةَ طَرَفَيِ النَّهَارِ وَزُلَفًا مِّنَ اللَّيْلِ ۚ إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+        ),
+        KhutbahQuote(
+            "Ebu Musa r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Kush i fal **dy " +
+                "namazet e freskëta** (Sabahun dhe Ikindinë), **do të hyjë në Xhenet**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "**Vërtet, zemrat qetësohen me përmendjen e Allahut!**",
+            "Kur'an, Er-Ra'd 28",
+            arabic = "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Kush beson në " +
+                "Allahun dhe në Ditën e Fundit, **le të flasë mirë ose le të heshtë**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "O besimtarë! **Kërkoni ndihmë për veten nëpërmjet durimit dhe namazit!** " +
+                "Në të vërtetë, Allahu është me të duruarit.",
+            "Kur'an, El-Bekare 153",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «Kush ia largon " +
+                "besimtarit një brengë të kësaj bote, **Allahu ia largon atij një brengë " +
+                "të Ditës së Kijametit**.»",
+            "Muslimi",
+        ),
+        KhutbahQuote(
+            "Për kohën! Me të vërtetë, njeriu është në humbje, **përveç atyre që besojnë " +
+                "dhe bëjnë vepra të mira**, i këshillojnë njëri-tjetrin të vërtetën e i " +
+                "këshillojnë njëri-tjetrin durimin.",
+            "Kur'an, El-Asr 1-3",
+            arabic = "وَالْعَصْرِ ۝ إِنَّ الْإِنسَانَ لَفِي خُسْرٍ ۝ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: " +
+                "«**Fjala e mirë është sadaka**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Xheriri r.a. tregon se Pejgamberi s.a.v.s. ka thënë: " +
+                "«**Kush nuk i mëshiron njerëzit, Allahu nuk e mëshiron atë**.»",
+            "Buhariu & Muslimi",
+        ),
+        KhutbahQuote(
+            "Enesi r.a. tregon se Pejgamberi s.a.v.s. ka thënë: " +
+                "«**Lehtësoni e mos vështirësoni, përgëzoni e mos largoni**.»",
+            "Buhariu & Muslimi",
+        ),
+    ),
+    switchOn = "Ndezur",
+    switchOff = "Fikur",
     announcementsLabel = "Njoftimet",
     announcementLabel = "Njoftimi",
     setupTitle = "Mirë se vini",
@@ -533,6 +646,111 @@ private val EN = Strings(
             "Muslim",
         ),
     ),
+    dailyQuotesTitle = "From the Qur'an and Sunnah",
+    dailyQuotesLabel = "Verses & hadiths during the day",
+    dailyQuotes = listOf(
+        KhutbahQuote(
+            "Indeed, **prayer has been decreed upon the believers at appointed times**.",
+            "Qur'an, An-Nisa 103",
+            arabic = "إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Mas'ud r.a. narrates: I asked the Prophet s.a.w.s.: " +
+                "\"Which deed is most beloved to Allah?\" He said: «**Prayer at its proper time**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Establish prayer! Indeed, **prayer restrains from immorality and wrongdoing**, " +
+                "and the remembrance of Allah is greater.",
+            "Qur'an, Al-Ankabut 45",
+            arabic = "وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Amr r.a. narrates that the Prophet s.a.w.s. said: " +
+                "«**The best among you are those with the best character**.»",
+            "Bukhari",
+        ),
+        KhutbahQuote(
+            "Whoever does **an atom's weight of good will see it**, " +
+                "and whoever does an atom's weight of evil will see it.",
+            "Qur'an, Az-Zalzalah 7-8",
+            arabic = "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ ۝ وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",
+        ),
+        KhutbahQuote(
+            "Anas r.a. narrates that the Prophet s.a.w.s. said: «None of you truly " +
+                "believes until **he loves for his brother what he loves for himself**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Those who spend in ease and in hardship, **who restrain their anger and " +
+                "pardon people** — Allah loves the doers of good.",
+            "Qur'an, Al-Imran 134",
+            arabic = "الَّذِينَ يُنفِقُونَ فِي السَّرَّاءِ وَالضَّرَّاءِ وَالْكَاظِمِينَ الْغَيْظَ وَالْعَافِينَ عَنِ النَّاسِ ۗ وَاللَّهُ يُحِبُّ الْمُحْسِنِينَ",
+        ),
+        KhutbahQuote(
+            "Abu Hurayra r.a. narrates that the Prophet s.a.w.s. said: «The strong one " +
+                "is not the one who overcomes others; the strong one is **he who controls " +
+                "himself when angry**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Establish prayer at the two ends of the day and in the early night! " +
+                "Indeed, **good deeds wipe away misdeeds**.",
+            "Qur'an, Hud 114",
+            arabic = "وَأَقِمِ الصَّلَاةَ طَرَفَيِ النَّهَارِ وَزُلَفًا مِّنَ اللَّيْلِ ۚ إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+        ),
+        KhutbahQuote(
+            "Abu Musa r.a. narrates that the Prophet s.a.w.s. said: «Whoever prays " +
+                "**the two cool prayers** (Fajr and Asr) **will enter Paradise**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Verily, **in the remembrance of Allah do hearts find rest**.",
+            "Qur'an, Ar-Ra'd 28",
+            arabic = "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        ),
+        KhutbahQuote(
+            "Abu Hurayra r.a. narrates that the Prophet s.a.w.s. said: «Whoever believes " +
+                "in Allah and the Last Day, **let him speak good or remain silent**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "O you who believe, **seek help through patience and prayer**! " +
+                "Indeed, Allah is with the patient.",
+            "Qur'an, Al-Baqarah 153",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+        ),
+        KhutbahQuote(
+            "Abu Hurayra r.a. narrates that the Prophet s.a.w.s. said: «Whoever relieves " +
+                "a believer of a hardship of this world, **Allah will relieve him of a " +
+                "hardship on the Day of Resurrection**.»",
+            "Muslim",
+        ),
+        KhutbahQuote(
+            "By time! Indeed, mankind is in loss, **except those who believe and do " +
+                "righteous deeds**, and advise each other to truth and to patience.",
+            "Qur'an, Al-Asr 1-3",
+            arabic = "وَالْعَصْرِ ۝ إِنَّ الْإِنسَانَ لَفِي خُسْرٍ ۝ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",
+        ),
+        KhutbahQuote(
+            "Abu Hurayra r.a. narrates that the Prophet s.a.w.s. said: " +
+                "«**A kind word is charity**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Jarir r.a. narrates that the Prophet s.a.w.s. said: " +
+                "«**He who shows no mercy to people, Allah shows no mercy to him**.»",
+            "Bukhari & Muslim",
+        ),
+        KhutbahQuote(
+            "Anas r.a. narrates that the Prophet s.a.w.s. said: " +
+                "«**Make things easy and do not make them hard; give glad tidings and do " +
+                "not drive people away**.»",
+            "Bukhari & Muslim",
+        ),
+    ),
+    switchOn = "On",
+    switchOff = "Off",
     announcementsLabel = "Announcements",
     announcementLabel = "Announcement",
     setupTitle = "Welcome",
@@ -774,6 +992,109 @@ private val TR = Strings(
             "Müslim",
         ),
     ),
+    dailyQuotesTitle = "Kur'an ve Sünnet'ten",
+    dailyQuotesLabel = "Gün içinde ayet ve hadisler",
+    dailyQuotes = listOf(
+        KhutbahQuote(
+            "Şüphesiz **namaz, müminlere vakitleri belirlenmiş bir farzdır**.",
+            "Kur'an, Nisâ 103",
+            arabic = "إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Mes'ud r.a. anlatır: Peygamber s.a.v.'e \"Allah katında en " +
+                "sevimli amel hangisidir?\" diye sordum. «**Vaktinde kılınan namazdır**» buyurdu.",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Namazı dosdoğru kıl! Çünkü **namaz, hayasızlıktan ve kötülükten alıkoyar**; " +
+                "Allah'ı anmak elbette en büyüktür.",
+            "Kur'an, Ankebût 45",
+            arabic = "وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Amr r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: " +
+                "«**Sizin en hayırlınız, ahlâkı en güzel olanınızdır**.»",
+            "Buhârî",
+        ),
+        KhutbahQuote(
+            "Kim **zerre kadar hayır işlerse onu görür**; " +
+                "kim zerre kadar kötülük işlerse onu görür.",
+            "Kur'an, Zilzâl 7-8",
+            arabic = "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ ۝ وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",
+        ),
+        KhutbahQuote(
+            "Enes r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «Sizden biriniz, " +
+                "**kendisi için istediğini kardeşi için de istemedikçe** gerçek mümin olamaz.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Onlar bollukta da darlıkta da infak ederler, **öfkelerini yutar ve " +
+                "insanları affederler** — Allah iyilik edenleri sever.",
+            "Kur'an, Âl-i İmrân 134",
+            arabic = "الَّذِينَ يُنفِقُونَ فِي السَّرَّاءِ وَالضَّرَّاءِ وَالْكَاظِمِينَ الْغَيْظَ وَالْعَافِينَ عَنِ النَّاسِ ۗ وَاللَّهُ يُحِبُّ الْمُحْسِنِينَ",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «Güçlü olan, " +
+                "insanları yenen değil; **öfkelendiğinde kendine hâkim olandır**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Gündüzün iki ucunda ve gecenin ilk saatlerinde namazı kıl! " +
+                "Şüphesiz **iyilikler kötülükleri giderir**.",
+            "Kur'an, Hûd 114",
+            arabic = "وَأَقِمِ الصَّلَاةَ طَرَفَيِ النَّهَارِ وَزُلَفًا مِّنَ اللَّيْلِ ۚ إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+        ),
+        KhutbahQuote(
+            "Ebû Mûsâ r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «**İki serin namazı** " +
+                "(sabah ve ikindiyi) **kılan cennete girer**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Bilesiniz ki **kalpler ancak Allah'ı anmakla huzur bulur**.",
+            "Kur'an, Ra'd 28",
+            arabic = "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «Allah'a ve ahiret " +
+                "gününe iman eden, **ya hayır söylesin ya da sussun**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Ey iman edenler, **sabır ve namazla yardım isteyin**! " +
+                "Şüphesiz Allah sabredenlerle beraberdir.",
+            "Kur'an, Bakara 153",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «Kim bir müminin " +
+                "dünya sıkıntılarından birini giderirse, **Allah da onun kıyamet günü " +
+                "sıkıntılarından birini giderir**.»",
+            "Müslim",
+        ),
+        KhutbahQuote(
+            "Asra yemin olsun! İnsan gerçekten ziyandadır; **ancak iman edip salih amel " +
+                "işleyenler**, birbirine hakkı ve sabrı tavsiye edenler müstesna.",
+            "Kur'an, Asr 1-3",
+            arabic = "وَالْعَصْرِ ۝ إِنَّ الْإِنسَانَ لَفِي خُسْرٍ ۝ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",
+        ),
+        KhutbahQuote(
+            "Ebû Hüreyre r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: " +
+                "«**Güzel söz sadakadır**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Cerîr r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: " +
+                "«**İnsanlara merhamet etmeyene Allah da merhamet etmez**.»",
+            "Buhârî & Müslim",
+        ),
+        KhutbahQuote(
+            "Enes r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: " +
+                "«**Kolaylaştırın, zorlaştırmayın; müjdeleyin, nefret ettirmeyin**.»",
+            "Buhârî & Müslim",
+        ),
+    ),
+    switchOn = "Açık",
+    switchOff = "Kapalı",
     announcementsLabel = "Duyurular",
     announcementLabel = "Duyuru",
     setupTitle = "Hoş geldiniz",
@@ -1015,6 +1336,109 @@ private val BS = Strings(
             "Muslim",
         ),
     ),
+    dailyQuotesTitle = "Iz Kur'ana i sunneta",
+    dailyQuotesLabel = "Ajeti i hadisi tokom dana",
+    dailyQuotes = listOf(
+        KhutbahQuote(
+            "Zaista je **namaz vjernicima propisan u određenim vremenima**.",
+            "Kur'an, En-Nisa 103",
+            arabic = "إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Mes'ud r.a. prenosi: Upitao sam Vjerovjesnika s.a.v.s.: " +
+                "\"Koje je djelo Allahu najdraže?\" Reče: «**Namaz u njegovo vrijeme**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Obavljaj namaz! Zaista **namaz odvraća od razvrata i svega ružnog**, " +
+                "a spominjanje Allaha je najveće.",
+            "Kur'an, El-Ankebut 45",
+            arabic = "وَأَقِمِ الصَّلَاةَ ۖ إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ ۗ وَلَذِكْرُ اللَّهِ أَكْبَرُ",
+        ),
+        KhutbahQuote(
+            "Abdullah ibn Amr r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: " +
+                "«**Najbolji među vama su oni najljepšeg ahlaka**.»",
+            "Buharija",
+        ),
+        KhutbahQuote(
+            "Ko uradi **koliko trun dobra — vidjeće ga**; " +
+                "a ko uradi koliko trun zla — vidjeće ga.",
+            "Kur'an, Ez-Zilzal 7-8",
+            arabic = "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ ۝ وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",
+        ),
+        KhutbahQuote(
+            "Enes r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «Niko od vas neće " +
+                "istinski vjerovati dok **ne bude želio bratu svome ono što želi sebi**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Oni koji udjeljuju i u obilju i u oskudici, **koji srdžbu savlađuju i " +
+                "ljudima praštaju** — a Allah voli dobročinitelje.",
+            "Kur'an, Ali Imran 134",
+            arabic = "الَّذِينَ يُنفِقُونَ فِي السَّرَّاءِ وَالضَّرَّاءِ وَالْكَاظِمِينَ الْغَيْظَ وَالْعَافِينَ عَنِ النَّاسِ ۗ وَاللَّهُ يُحِبُّ الْمُحْسِنِينَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «Nije snažan " +
+                "onaj ko druge savladava, nego **onaj ko sebe savlada u srdžbi**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Obavljaj namaz na oba kraja dana i u prvim časovima noći! " +
+                "Zaista **dobra djela brišu loša**.",
+            "Kur'an, Hud 114",
+            arabic = "وَأَقِمِ الصَّلَاةَ طَرَفَيِ النَّهَارِ وَزُلَفًا مِّنَ اللَّيْلِ ۚ إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+        ),
+        KhutbahQuote(
+            "Ebu Musa r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «Ko klanja " +
+                "**dva svježa namaza** (sabah i ikindiju), **ući će u Džennet**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Zaista se **spominjanjem Allaha srca smiruju**.",
+            "Kur'an, Er-Ra'd 28",
+            arabic = "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «Ko vjeruje u " +
+                "Allaha i Sudnji dan, **neka govori dobro ili neka šuti**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "O vjernici, **tražite pomoć u strpljivosti i namazu**! " +
+                "Zaista je Allah sa strpljivima.",
+            "Kur'an, El-Bekare 153",
+            arabic = "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «Ko vjerniku " +
+                "otkloni jednu dunjalučku nevolju, **Allah će njemu otkloniti jednu " +
+                "nevolju na Sudnjem danu**.»",
+            "Muslim",
+        ),
+        KhutbahQuote(
+            "Tako mi vremena! Čovjek je doista na gubitku, **osim onih koji vjeruju i " +
+                "čine dobra djela**, i koji jedni drugima istinu i strpljenje preporučuju.",
+            "Kur'an, El-Asr 1-3",
+            arabic = "وَالْعَصْرِ ۝ إِنَّ الْإِنسَانَ لَفِي خُسْرٍ ۝ إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",
+        ),
+        KhutbahQuote(
+            "Ebu Hurejre r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: " +
+                "«**Lijepa riječ je sadaka**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Džerir r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: " +
+                "«**Ko nije milostiv prema ljudima, ni Allah neće biti milostiv prema njemu**.»",
+            "Buharija & Muslim",
+        ),
+        KhutbahQuote(
+            "Enes r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: " +
+                "«**Olakšavajte, a ne otežavajte; obradujte, a ne odbijajte**.»",
+            "Buharija & Muslim",
+        ),
+    ),
+    switchOn = "Uključeno",
+    switchOff = "Isključeno",
     announcementsLabel = "Obavještenja",
     announcementLabel = "Obavještenje",
     setupTitle = "Dobrodošli",

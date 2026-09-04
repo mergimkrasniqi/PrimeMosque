@@ -81,6 +81,9 @@ data class UiState(
     val lecture: LectureInfo? = null,
     val khutbah: Boolean = false,
     val night: Boolean = false,
+    // Daily wisdom break: the prayer table briefly gives way to rotating
+    // Qur'an verses and hadiths (khutbah-style card).
+    val quotesBreak: Boolean = false,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
     // The clock reads earlier than a time the app has already lived through
@@ -278,6 +281,13 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 ?.takeIf { Duration.between(today.atStartOfDay(), it.date.atStartOfDay()).toDays() <= 30 }
         } else null
 
+        // Daily wisdom breaks: on a fixed clock-driven cycle the prayer table
+        // is replaced by rotating verses/hadiths, then comes back. Suppressed
+        // whenever something more important owns the screen (announcement,
+        // khutbah) and during the night saver.
+        val quotesBreak = settings.showDailyQuotes && announce == null && !khutbah && !night &&
+            now.toLocalTime().toSecondOfDay() % QUOTES_CYCLE_SECONDS >= QUOTES_TABLE_SECONDS
+
         return UiState(
             now = now,
             slots = slots,
@@ -291,6 +301,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             lecture = lecture,
             khutbah = khutbah,
             night = night,
+            quotesBreak = quotesBreak,
             settings = settings,
             loaded = true,
             clockSuspect = clockSuspect,
@@ -412,12 +423,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setAnnouncement2(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement2(value) }
     fun setHijriOffset(value: Int) =
         viewModelScope.launch { settingsRepository.setHijriOffset(value.coerceIn(-2, 2)) }
+    fun setShowDailyQuotes(value: Boolean) =
+        viewModelScope.launch { settingsRepository.setShowDailyQuotes(value) }
 
     private companion object {
         const val RESYNC_INTERVAL_MS = 60 * 60_000L
         // Network is up but the sync failed (DNS, captive portal, firewall).
         const val RETRY_INTERVAL_MS = 30_000L
         const val LAST_SEEN_INTERVAL_MS = 5 * 60_000L
+        // Daily wisdom cycle: 5 min of the prayer table, then 90 s of
+        // verses/hadiths (three quotes at the 30 s rotation).
+        const val QUOTES_TABLE_SECONDS = 5 * 60
+        const val QUOTES_CYCLE_SECONDS = QUOTES_TABLE_SECONDS + 90
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
         const val CLOCK_SLACK_MS = 10 * 60_000L

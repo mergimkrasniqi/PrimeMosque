@@ -20,6 +20,9 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 - **Custom Jumu'ah time** — each mosque can hold Xhuma at its own fixed time (12:00–15:00 in 5-minute steps) or simply follow Dhuhr; the board, announcement, countdown and notices all shift together.
 - **Full-screen khutbah mode** — from the Jumu'ah time, for a configurable duration (default 20 min), the whole board is replaced: mosque name, clock and date on top, and in the center a rotating collection of **10 Jumu'ah hadiths and Qur'an verses**. Hadiths are given in full narration form ("Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «…»"), verses include the **original Arabic** above the translation, and the key phrase of each quote is highlighted in the theme accent. A calm crossfade rotates them every 30 seconds.
 
+### Daily wisdom breaks
+Every 5 minutes the prayer table steps aside for 90 seconds and the board shows rotating **Qur'an verses and hadiths from Bukhari & Muslim** (khutbah-style card: original Arabic for verses, translation with the key phrase highlighted, source) — 18 texts about praying on time, good character, patience, mercy and good deeds, in all 4 languages. The table then returns automatically. Suppressed during announcements, the khutbah and the night saver, and can be turned off entirely in the Display settings ("Verses & hadiths during the day").
+
 ### Custom announcements
 Two free-text slots ("Njoftimet") for the mosque's own messages — janaza notices, Ramadan programs, fundraisers. While set, they rotate in the notice card all day alongside the contextual notices.
 

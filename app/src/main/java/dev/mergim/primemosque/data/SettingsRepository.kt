@@ -93,6 +93,9 @@ data class Settings(
     val announcement2: String = "",
     // Hijri date correction in days (moon-sighting differences).
     val hijriOffset: Int = 0,
+    // Daily wisdom breaks: every few minutes the prayer table gives way
+    // briefly to rotating Qur'an verses and hadiths.
+    val showDailyQuotes: Boolean = true,
 )
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
@@ -118,6 +121,7 @@ class SettingsRepository(private val context: Context) {
         val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
         val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
         val HIJRI_OFFSET = intPreferencesKey("hijri_offset")
+        val DAILY_QUOTES = booleanPreferencesKey("daily_quotes")
         val LAST_SEEN_EPOCH_MS = longPreferencesKey("last_seen_epoch_ms")
 
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
@@ -159,6 +163,7 @@ class SettingsRepository(private val context: Context) {
             announcement1 = p[Keys.ANNOUNCEMENT_1] ?: defaults.announcement1,
             announcement2 = p[Keys.ANNOUNCEMENT_2] ?: defaults.announcement2,
             hijriOffset = p[Keys.HIJRI_OFFSET] ?: defaults.hijriOffset,
+            showDailyQuotes = p[Keys.DAILY_QUOTES] ?: defaults.showDailyQuotes,
         )
     }
 
@@ -220,6 +225,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setHijriOffset(value: Int) =
         context.dataStore.edit { it[Keys.HIJRI_OFFSET] = value }
+
+    suspend fun setShowDailyQuotes(value: Boolean) =
+        context.dataStore.edit { it[Keys.DAILY_QUOTES] = value }
 
     // Most recent credible wall-clock time the app has seen, persisted so
     // that after a power cut a clock that boots up *behind* it can be

@@ -272,21 +272,26 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         )
         Spacer(Modifier.weight(1f))
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp * scale),
-        ) {
-            state.slots
-                .filter { it.key !in subSlotKeys }
-                .forEach { slot ->
-                    PrayerRow(
-                        slot, strings,
-                        friday = friday,
-                        current = slot.key == state.current,
-                        subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
-                        scale = scale,
-                    )
-                }
+        // Daily wisdom break: the table steps aside for the rotating quotes.
+        if (state.quotesBreak) {
+            DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = scale)
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp * scale),
+            ) {
+                state.slots
+                    .filter { it.key !in subSlotKeys }
+                    .forEach { slot ->
+                        PrayerRow(
+                            slot, strings,
+                            friday = friday,
+                            current = slot.key == state.current,
+                            subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
+                            scale = scale,
+                        )
+                    }
+            }
         }
         Spacer(Modifier.weight(1f))
         NoticeCard(
@@ -357,26 +362,31 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
             }
         }
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            state.slots
-                .filter { it.key !in subSlotKeys }
-                .forEach { slot ->
-                    PrayerCard(
-                        slot = slot,
-                        strings = strings,
-                        friday = friday,
-                        current = slot.key == state.current,
-                        subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                    )
-                }
+        // Daily wisdom break: the table steps aside for the rotating quotes.
+        if (state.quotesBreak) {
+            DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = 0.85f)
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                state.slots
+                    .filter { it.key !in subSlotKeys }
+                    .forEach { slot ->
+                        PrayerCard(
+                            slot = slot,
+                            strings = strings,
+                            friday = friday,
+                            current = slot.key == state.current,
+                            subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                        )
+                    }
+            }
         }
         Spacer(Modifier.height(12.dp))
         Footer(state, strings)
@@ -861,49 +871,93 @@ fun KhutbahScreen(state: UiState, strings: Strings, onOpenSettings: () -> Unit) 
                         // A slow rotation: long narrations need reading time.
                         val quote =
                             quotes[(state.now.toLocalTime().toSecondOfDay() / 30) % quotes.size]
-                        Crossfade(targetState = quote, label = "khutbahQuote") { q ->
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(palette.cardHighlight, RoundedCornerShape(24.dp))
-                                    .border(
-                                        1.dp,
-                                        palette.accent.copy(alpha = 0.4f),
-                                        RoundedCornerShape(24.dp)
-                                    )
-                                    .padding(horizontal = 32.dp, vertical = 24.dp),
-                            ) {
-                                q.arabic?.let { arabic ->
-                                    Text(
-                                        text = arabic,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        fontSize = 28.sp,
-                                        lineHeight = 46.sp,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Spacer(Modifier.height(14.dp))
-                                }
-                                Text(
-                                    text = boldMarkup(q.text, palette.accent),
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 22.sp,
-                                    lineHeight = 32.sp,
-                                    textAlign = TextAlign.Center,
-                                )
-                                Spacer(Modifier.height(10.dp))
-                                Text(
-                                    text = q.source,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 15.sp,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                        }
+                        QuoteCard(quote)
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Verse/hadith card shared by the khutbah screen and the daily wisdom
+ * breaks: original Arabic (for verses), translation with the key phrase
+ * highlighted in the theme accent, and the source.
+ */
+@Composable
+private fun QuoteCard(quote: KhutbahQuote, modifier: Modifier = Modifier, scale: Float = 1f) {
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(24.dp)
+    Crossfade(targetState = quote, label = "quote", modifier = modifier) { q ->
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(palette.cardHighlight, shape)
+                .border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+                .padding(horizontal = 32.dp * scale, vertical = 24.dp * scale),
+        ) {
+            q.arabic?.let { arabic ->
+                Text(
+                    text = arabic,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 28.sp * scale,
+                    lineHeight = 46.sp * scale,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(14.dp * scale))
+            }
+            Text(
+                text = boldMarkup(q.text, palette.accent),
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 22.sp * scale,
+                lineHeight = 32.sp * scale,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(10.dp * scale))
+            Text(
+                text = q.source,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 15.sp * scale,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+/**
+ * Daily wisdom break: replaces the prayer table for a short window on a
+ * fixed cycle, rotating through the bundled verses and hadiths.
+ */
+@Composable
+private fun DailyQuoteBlock(
+    state: UiState,
+    strings: Strings,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+) {
+    val quotes = strings.dailyQuotes
+    if (quotes.isEmpty()) return
+    val palette = LocalBoardPalette.current
+    val quote = quotes[(state.now.toLocalTime().toSecondOfDay() / 30) % quotes.size]
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.MenuBook,
+                contentDescription = null,
+                tint = palette.accent,
+                modifier = Modifier.size(26.dp * scale),
+            )
+            Spacer(Modifier.width(10.dp * scale))
+            Text(
+                text = strings.dailyQuotesTitle,
+                color = palette.accent,
+                fontSize = 22.sp * scale,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.height(14.dp * scale))
+        QuoteCard(quote, scale = scale)
     }
 }
 
