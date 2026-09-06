@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "public": "webportal",
+    "ignore": ["firebase.json", "**/.*", "**/firestore.rules"]
+  },
+  "firestore": {
+    "rules": "webportal/firestore.rules"
+  }
+}

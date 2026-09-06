@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrimeMosque — Portali i Imamit</title>
+<style>
+  :root {
+    --bg: #FFF0DB;
+    --card: #F6E5CD;
+    --card2: #F0DBBB;
+    --accent: #9C1717;
+    --text: #33302C;
+    --muted: #62594D;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 64px;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  h1 { color: var(--accent); font-size: 28px; margin: 8px 0 2px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  .card {
+    background: var(--card); border-radius: 16px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; color: var(--accent); margin: 0 0 4px; }
+  .hint { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input, textarea, select {
+    width: 100%; padding: 10px 12px; font-size: 15px;
+    border: 1px solid var(--card2); border-radius: 10px;
+    background: #FFF8EC; color: var(--text); font-family: inherit;
+  }
+  textarea { min-height: 56px; resize: vertical; }
+  textarea.arabic { direction: rtl; font-size: 17px; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); }
+  button {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 600;
+    color: #FFF0DB; background: var(--accent);
+    border: none; border-radius: 12px; cursor: pointer; margin-top: 8px;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.small {
+    width: auto; padding: 8px 14px; font-size: 13.5px; margin-top: 10px;
+  }
+  button.ghost {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .quote {
+    background: #FBF0DE; border: 1px solid var(--card2);
+    border-radius: 12px; padding: 12px; margin-top: 12px;
+  }
+  .quote label { margin-top: 8px; }
+  #status { text-align: center; font-size: 14px; margin-top: 12px; min-height: 20px; }
+  #status.ok { color: #2E6B2E; }
+  #status.err { color: var(--accent); }
+  #editor { display: none; }
+  #dashboard { display: none; }
+  .code-hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  #boardName { font-weight: 600; }
+  .divider { text-align: center; color: var(--muted); font-size: 12.5px; margin: 16px 0 4px; }
+  .board-row {
+    display: flex; align-items: center; gap: 12px;
+    background: #FBF0DE; border: 1px solid var(--card2);
+    border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+  }
+  .board-row .dot {
+    width: 12px; height: 12px; border-radius: 50%; flex: none;
+    background: #B8B0A3;
+  }
+  .board-row .dot.online { background: #3B9E3B; }
+  .board-row .info { flex: 1; min-width: 0; }
+  .board-row .name { font-weight: 600; font-size: 15px; }
+  .board-row .meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .board-row .warn { color: var(--accent); font-weight: 600; }
+  .board-row button { width: auto; margin: 0; padding: 9px 14px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PrimeMosque</h1>
+  <p class="sub">Portali i Imamit — menaxho tabelën e xhamisë nga telefoni</p>
+
+  <div class="card" id="connect">
+    <h2>Lidhu me tabelën</h2>
+    <label for="code">Kodi i portalit (te cilësimet e TV-së, në fund)</label>
+    <input id="code" placeholder="p.sh. K7M3PZ2A" autocapitalize="characters"
+           autocomplete="off" spellcheck="false" maxlength="8">
+    <button id="connectBtn">Lidhu</button>
+    <p class="code-hint">Kodi shfaqet në TV: shtyp OK në telekomandë →
+      në fund të faqes "Cilësimet".</p>
+    <div class="divider">— administratori —</div>
+    <button class="ghost" id="adminBtn">Paneli i xhamive (Kyçu me Google)</button>
+  </div>
+
+  <div id="dashboard">
+    <div class="card">
+      <h2>Paneli i xhamive</h2>
+      <p class="hint" id="adminWho"></p>
+      <div id="boardsList"></div>
+      <button class="small ghost" id="signOutBtn">Dil</button>
+    </div>
+  </div>
+
+  <div id="editor">
+    <button class="small ghost" id="backBtn" style="display:none">← Kthehu te paneli</button>
+    <div class="card">
+      <h2>Xhamia: <span id="boardName"></span></h2>
+      <label for="mosqueName">Emri i xhamisë</label>
+      <input id="mosqueName">
+      <div class="row">
+        <div>
+          <label for="place">Vendi (nëntitulli)</label>
+          <input id="place">
+        </div>
+        <div>
+          <label for="city">Qyteti (koha e namazit)</label>
+          <select id="city"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ekrani</h2>
+      <div class="row">
+        <div>
+          <label for="language">Gjuha</label>
+          <select id="language"></select>
+        </div>
+        <div>
+          <label for="secondaryLanguage">Gjuha e dytë (alternohet çdo 2 min)</label>
+          <select id="secondaryLanguage"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="orientation">Orientimi</label>
+          <select id="orientation"></select>
+        </div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="theme">Pamja</label>
+          <select id="theme"></select>
+        </div>
+        <div>
+          <label for="themeRotation">Ndërrimi automatik i pamjes</label>
+          <select id="themeRotation">
+            <option value="false">Fikur</option>
+            <option value="true">Çdo javë</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="showDailyQuotes">Ajete dhe hadithe gjatë ditës</label>
+          <select id="showDailyQuotes">
+            <option value="true">Ndezur</option>
+            <option value="false">Fikur</option>
+          </select>
+        </div>
+        <div>
+          <label for="nightMode">Kursimi i energjisë natën</label>
+          <select id="nightMode"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="ramadanMode">Modaliteti i Ramazanit (vetëm gjatë Ramazanit)</label>
+          <select id="ramadanMode">
+            <option value="true">Ndezur</option>
+            <option value="false">Fikur</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Njoftimet</h2>
+      <label for="announcement1">Njoftimi 1 (bosh = fshihet)</label>
+      <textarea id="announcement1"></textarea>
+      <label for="announcement1Until">Shfaqet deri më (bosh = pa afat)</label>
+      <input id="announcement1Until" type="date">
+      <label for="announcement2">Njoftimi 2 (bosh = fshihet)</label>
+      <textarea id="announcement2"></textarea>
+      <label for="announcement2Until">Shfaqet deri më (bosh = pa afat)</label>
+      <input id="announcement2Until" type="date">
+    </div>
+
+    <div class="card">
+      <h2>Ligjërata javore</h2>
+      <label for="lectureTitle">Titulli</label>
+      <input id="lectureTitle">
+      <div class="row">
+        <div>
+          <label for="lectureDay">Dita</label>
+          <select id="lectureDay"></select>
+        </div>
+        <div>
+          <label for="lecturePrayer">Pas namazit</label>
+          <select id="lecturePrayer"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Xhumaja</h2>
+      <div class="row">
+        <div>
+          <label for="jumuahMinutes">Koha e Xhumasë</label>
+          <select id="jumuahMinutes"></select>
+        </div>
+        <div>
+          <label for="khutbahMinutes">Hutbja (minuta)</label>
+          <select id="khutbahMinutes"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Përshtatja e kohëve (± minuta)</h2>
+      <p class="hint">Korrigjim mbi kohët e takvimit, −60 deri +60 minuta.</p>
+      <div class="grid3" id="adjustments"></div>
+      <label for="hijriOffset">Data hixhri (± ditë, dallimet e hënës)</label>
+      <select id="hijriOffset">
+        <option value="-2">−2 ditë</option>
+        <option value="-1">−1 ditë</option>
+        <option value="0">0</option>
+        <option value="1">+1 ditë</option>
+        <option value="2">+2 ditë</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Ajetet dhe hadithet gjatë ditës</h2>
+      <p class="hint">Tekstet që rrotullohen në tabelë gjatë ditës. Lëri bosh që të
+        përdoren tekstet e integruara të aplikacionit. Shkruaj **tekst** për ta
+        theksuar pjesën kryesore me ngjyrën e temës.</p>
+      <div id="dailyQuotesList"></div>
+      <button class="small ghost" id="addDailyQuote">+ Shto citat</button>
+    </div>
+
+    <div class="card">
+      <h2>Citatet e hutbes (e premte)</h2>
+      <p class="hint">Tekstet që shfaqen gjatë hutbes së Xhumasë. Lëri bosh që të
+        përdoren tekstet e integruara.</p>
+      <div id="khutbahQuotesList"></div>
+      <button class="small ghost" id="addKhutbahQuote">+ Shto citat</button>
+    </div>
+
+    <button id="saveBtn">Ruaj ndryshimet</button>
+  </div>
+
+  <p id="status"></p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+// Values from the Firebase console; must match the app's RemoteControl.kt.
+const firebaseConfig = {
+  apiKey: "AIzaSyBRZx_Rtv2FMJksMwbCQTqPJ3JDgNuvn8k",
+  authDomain: "prime---prayer-times.firebaseapp.com",
+  projectId: "prime---prayer-times",
+  appId: "1:1053505395140:web:e7227b9b597a3a13e26c91",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const $ = (id) => document.getElementById(id);
+
+// Must mirror the app's enums and city list.
+const CITIES = ["Prizren", "Prishtina", "Peja", "Gjakova", "Mitrovica", "Ferizaj",
+  "Gjilan", "Podujeva", "Vushtrri", "Deçan", "Rahovec", "Suhareka", "Malisheva",
+  "Drenas", "Skenderaj", "Klina", "Istog", "Lipjan", "Fushë Kosova", "Obiliq",
+  "Shtime", "Kaçanik", "Kamenica", "Viti", "Dragash (Sharri)", "Presheva"];
+const LANGUAGES = { SQ: "Shqip", EN: "English", TR: "Türkçe", BS: "Bosanski" };
+const ORIENTATIONS = {
+  PORTRAIT: "Vertikal", PORTRAIT_REVERSED: "Vertikal (i kthyer)",
+  LANDSCAPE: "Horizontal", LANDSCAPE_FLIPPED: "Horizontal (i kthyer)",
+};
+const THEMES = {
+  MUSHAF: "Mushaf", MUSHAF_DARK: "Mushaf (e errët)",
+  ZAYTUN: "Ulli", ZAYTUN_DARK: "Ulli (e errët)",
+  NILA: "Indigo", NILA_DARK: "Indigo (e errët)",
+  HIBR: "Bojë", HIBR_DARK: "Bojë (e errët)",
+};
+const NIGHT_MODES = {
+  OFF: "Fikur", AT_ISHA: "Nga Jacia", AFTER_15: "Jacia +15 min",
+  AFTER_30: "Jacia +30 min", AFTER_45: "Jacia +45 min", AFTER_60: "Jacia +1 orë",
+};
+const LECTURE_DAYS = {
+  OFF: "Fikur", MONDAY: "E hënë", TUESDAY: "E martë", WEDNESDAY: "E mërkurë",
+  THURSDAY: "E enjte", FRIDAY: "E premte", SATURDAY: "E shtunë", SUNDAY: "E diel",
+};
+const PRAYERS = {
+  FAJR: "Sabahut", DHUHR: "Drekës", ASR: "Ikindisë",
+  MAGHRIB: "Akshamit", ISHA: "Jacisë",
+};
+const ADJUST_PRAYERS = {
+  FAJR: "Sabahu", SUNRISE: "Lindja e Diellit", DHUHR: "Dreka",
+  ASR: "Ikindia", MAGHRIB: "Akshami", ISHA: "Jacia",
+};
+const SIMPLE_FIELDS = ["mosqueName", "place", "city", "language",
+  "secondaryLanguage", "orientation",
+  "theme", "themeRotation", "nightMode", "showDailyQuotes", "ramadanMode",
+  "announcement1", "announcement2", "announcement1Until", "announcement2Until",
+  "lectureTitle", "lectureDay", "lecturePrayer",
+  "jumuahMinutes", "khutbahMinutes", "hijriOffset"];
+
+// The app's own defaults, used when a board document (created by an older
+// app version) is missing a field — never fall back to the first <option>.
+const DEFAULTS = {
+  mosqueName: "Xhamia", place: "Prizren", city: "Prizren", language: "SQ",
+  secondaryLanguage: "OFF",
+  orientation: "PORTRAIT", theme: "MUSHAF", themeRotation: "false",
+  nightMode: "AFTER_30", showDailyQuotes: "true", ramadanMode: "true",
+  announcement1: "", announcement2: "",
+  announcement1Until: "", announcement2Until: "",
+  lectureTitle: "Ligjërata javore", lectureDay: "OFF", lecturePrayer: "MAGHRIB",
+  jumuahMinutes: "-1", khutbahMinutes: "20", hijriOffset: "0",
+};
+
+function fillSelect(id, options) {
+  const select = $(id);
+  for (const [value, label] of Object.entries(options)) {
+    select.add(new Option(label, value));
+  }
+}
+fillSelect("city", Object.fromEntries(CITIES.map((c) => [c, c])));
+fillSelect("language", LANGUAGES);
+fillSelect("secondaryLanguage", { OFF: "Fikur", ...LANGUAGES });
+fillSelect("orientation", ORIENTATIONS);
+fillSelect("theme", THEMES);
+fillSelect("nightMode", NIGHT_MODES);
+fillSelect("lectureDay", LECTURE_DAYS);
+fillSelect("lecturePrayer", PRAYERS);
+
+const jumuah = $("jumuahMinutes");
+jumuah.add(new Option("Sipas Drekës", "-1"));
+for (let m = 12 * 60; m <= 15 * 60; m += 5) {
+  const hh = String(Math.floor(m / 60)).padStart(2, "0");
+  const mm = String(m % 60).padStart(2, "0");
+  jumuah.add(new Option(`${hh}:${mm}`, String(m)));
+}
+const khutbah = $("khutbahMinutes");
+for (let m = 5; m <= 45; m += 5) khutbah.add(new Option(`${m} min`, String(m)));
+
+// Per-prayer adjustment inputs.
+const adjBox = $("adjustments");
+for (const [key, label] of Object.entries(ADJUST_PRAYERS)) {
+  const cell = document.createElement("div");
+  cell.innerHTML = `<label for="adj_${key}">${label}</label>
+    <input id="adj_${key}" type="number" min="-60" max="60" step="1" value="0">`;
+  adjBox.appendChild(cell);
+}
+
+// Editable quote lists (empty = the app's built-in texts are used).
+let dailyQuotes = [];
+let khutbahQuotes = [];
+let dirty = false;
+
+function renderQuotes(list, containerId) {
+  const box = $(containerId);
+  box.innerHTML = "";
+  list.forEach((quote, index) => {
+    const item = document.createElement("div");
+    item.className = "quote";
+    item.innerHTML = `
+      <label>Teksti (${index + 1})</label>
+      <textarea data-field="text"></textarea>
+      <label>Burimi (p.sh. "Buhariu & Muslimi" ose "Kur'an, El-Bekare 153")</label>
+      <input data-field="source">
+      <label>Arabisht (vetëm për ajete, opsionale)</label>
+      <textarea class="arabic" data-field="arabic"></textarea>
+      <button class="small ghost" data-remove="1">Fshije citatin</button>`;
+    item.querySelector('[data-field="text"]').value = quote.text || "";
+    item.querySelector('[data-field="source"]').value = quote.source || "";
+    item.querySelector('[data-field="arabic"]').value = quote.arabic || "";
+    item.querySelectorAll("[data-field]").forEach((el) => {
+      el.addEventListener("input", () => {
+        quote[el.dataset.field] = el.value;
+        dirty = true;
+      });
+    });
+    item.querySelector("[data-remove]").addEventListener("click", () => {
+      list.splice(index, 1);
+      dirty = true;
+      renderQuotes(list, containerId);
+    });
+    box.appendChild(item);
+  });
+}
+
+$("addDailyQuote").addEventListener("click", () => {
+  dailyQuotes.push({ text: "", source: "", arabic: "" });
+  dirty = true;
+  renderQuotes(dailyQuotes, "dailyQuotesList");
+});
+$("addKhutbahQuote").addEventListener("click", () => {
+  khutbahQuotes.push({ text: "", source: "", arabic: "" });
+  dirty = true;
+  renderQuotes(khutbahQuotes, "khutbahQuotesList");
+});
+
+let boardRef = null;
+SIMPLE_FIELDS.forEach((f) => $(f).addEventListener("input", () => { dirty = true; }));
+Object.keys(ADJUST_PRAYERS).forEach((k) =>
+  $("adj_" + k).addEventListener("input", () => { dirty = true; }));
+
+function status(message, cls) {
+  const el = $("status");
+  el.textContent = message;
+  el.className = cls || "";
+}
+
+function fillForm(data) {
+  $("boardName").textContent = data.mosqueName ?? "";
+  for (const f of SIMPLE_FIELDS) {
+    $(f).value = data[f] !== undefined ? String(data[f]) : DEFAULTS[f];
+  }
+  const adjustments = data.adjustments || {};
+  for (const key of Object.keys(ADJUST_PRAYERS)) {
+    $("adj_" + key).value = String(adjustments[key] ?? 0);
+  }
+  dailyQuotes = (data.dailyQuotes || []).map((q) => ({
+    text: q.text || "", source: q.source || "", arabic: q.arabic || "",
+  }));
+  khutbahQuotes = (data.khutbahQuotes || []).map((q) => ({
+    text: q.text || "", source: q.source || "", arabic: q.arabic || "",
+  }));
+  renderQuotes(dailyQuotes, "dailyQuotesList");
+  renderQuotes(khutbahQuotes, "khutbahQuotesList");
+}
+
+async function connect() {
+  const code = $("code").value.trim().toUpperCase();
+  if (code.length < 6) { status("Shkruaj kodin e plotë.", "err"); return; }
+  status("Duke u lidhur…");
+  const ref = doc(db, "boards", code);
+  let snap;
+  try { snap = await getDoc(ref); }
+  catch (e) { status("Gabim lidhjeje — kontrollo internetin.", "err"); return; }
+  if (!snap.exists()) {
+    status("Kodi nuk u gjet. Sigurohu që TV-ja është ndezur dhe e lidhur me internet.", "err");
+    return;
+  }
+  boardRef = ref;
+  localStorage.setItem("primemosque_code", code);
+  show("editor");
+  fillForm(snap.data());
+  dirty = false;
+  status("I lidhur ✓", "ok");
+  // Live updates from the board / other sessions, unless mid-edit.
+  onSnapshot(ref, (s) => { if (s.exists() && !dirty) fillForm(s.data()); });
+}
+
+function cleanQuotes(list) {
+  return list
+    .filter((q) => (q.text || "").trim().length > 0)
+    .map((q) => ({
+      text: q.text.trim(),
+      source: (q.source || "").trim(),
+      arabic: (q.arabic || "").trim(),
+    }));
+}
+
+async function save() {
+  if (!boardRef) return;
+  $("saveBtn").disabled = true;
+  status("Duke ruajtur…");
+  const adjustments = {};
+  for (const key of Object.keys(ADJUST_PRAYERS)) {
+    const value = parseInt($("adj_" + key).value, 10);
+    adjustments[key] = Number.isFinite(value) ? Math.max(-60, Math.min(60, value)) : 0;
+  }
+  try {
+    await setDoc(boardRef, {
+      mosqueName: $("mosqueName").value.trim(),
+      place: $("place").value.trim(),
+      city: $("city").value,
+      language: $("language").value,
+      secondaryLanguage: $("secondaryLanguage").value,
+      orientation: $("orientation").value,
+      theme: $("theme").value,
+      themeRotation: $("themeRotation").value === "true",
+      nightMode: $("nightMode").value,
+      showDailyQuotes: $("showDailyQuotes").value === "true",
+      ramadanMode: $("ramadanMode").value === "true",
+      announcement1: $("announcement1").value.trim(),
+      announcement2: $("announcement2").value.trim(),
+      announcement1Until: $("announcement1Until").value,
+      announcement2Until: $("announcement2Until").value,
+      lectureTitle: $("lectureTitle").value.trim(),
+      lectureDay: $("lectureDay").value,
+      lecturePrayer: $("lecturePrayer").value,
+      jumuahMinutes: parseInt($("jumuahMinutes").value, 10),
+      khutbahMinutes: parseInt($("khutbahMinutes").value, 10),
+      hijriOffset: parseInt($("hijriOffset").value, 10),
+      adjustments,
+      dailyQuotes: cleanQuotes(dailyQuotes),
+      khutbahQuotes: cleanQuotes(khutbahQuotes),
+    }, { merge: true });
+    dirty = false;
+    status("U ruajt ✓ — tabela përditësohet brenda sekondash.", "ok");
+  } catch (e) {
+    status("Nuk u ruajt — provo përsëri.", "err");
+  }
+  $("saveBtn").disabled = false;
+}
+
+// ---- Admin dashboard: list every board with live online status. ----
+let isAdminMode = false;
+let stopBoardsListener = null;
+
+function show(view) {
+  $("connect").style.display = view === "connect" ? "block" : "none";
+  $("dashboard").style.display = view === "dashboard" ? "block" : "none";
+  $("editor").style.display = view === "editor" ? "block" : "none";
+  $("backBtn").style.display = isAdminMode && view === "editor" ? "block" : "none";
+}
+
+function lastSeenText(heartbeat) {
+  if (!heartbeat || !heartbeat.toMillis) return "asnjëherë e lidhur";
+  const ms = Date.now() - heartbeat.toMillis();
+  if (ms < 12 * 60 * 1000) return "online";
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 60) return `parë para ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `parë para ${hours} orësh`;
+  return "parë më " + heartbeat.toDate().toLocaleString("sq-AL");
+}
+
+function renderBoards(snapshot) {
+  const box = $("boardsList");
+  box.innerHTML = "";
+  if (snapshot.empty) {
+    box.innerHTML = '<p class="hint">Ende asnjë tabelë e regjistruar.</p>';
+    return;
+  }
+  const rows = snapshot.docs
+    .map((d) => ({ code: d.id, ...d.data() }))
+    .sort((a, b) => (a.mosqueName || "").localeCompare(b.mosqueName || ""));
+  for (const board of rows) {
+    const online = board.heartbeat && board.heartbeat.toMillis
+      && (Date.now() - board.heartbeat.toMillis()) < 12 * 60 * 1000;
+    const row = document.createElement("div");
+    row.className = "board-row";
+    row.innerHTML = `
+      <div class="dot${online ? " online" : ""}"></div>
+      <div class="info">
+        <div class="name"></div>
+        <div class="meta"></div>
+      </div>
+      <button>Menaxho</button>`;
+    row.querySelector(".name").textContent =
+      (board.mosqueName || "(pa emër)") + (board.place ? " — " + board.place : "");
+    const meta = row.querySelector(".meta");
+    meta.textContent =
+      `${board.city || "?"} • kodi ${board.code}` +
+      (board.appVersion ? ` • v${board.appVersion}` : "") +
+      ` • ${lastSeenText(board.heartbeat)}`;
+    // Clock check: the board reports its own clock reading with each
+    // heartbeat; compared against the server timestamp of the same write,
+    // any real drift means the TV shows wrong prayer times.
+    if (online && typeof board.boardTimeEpochMs === "number") {
+      const driftMin = Math.round(
+        (board.heartbeat.toMillis() - board.boardTimeEpochMs) / 60000);
+      if (Math.abs(driftMin) <= 2) {
+        meta.textContent += board.clockSynced === false
+          ? " • ora ✓ (pa NTP)" : " • ora ✓";
+      } else {
+        const warn = document.createElement("span");
+        warn.className = "warn";
+        warn.textContent =
+          ` • ⚠ ora e tabelës gabon ~${Math.abs(driftMin)} min` +
+          (driftMin > 0 ? " (prapa)" : " (përpara)") +
+          (board.clockSynced === false ? " — pa NTP" : "");
+        meta.appendChild(warn);
+      }
+    }
+    row.querySelector("button").addEventListener("click", () => openBoard(board.code));
+    box.appendChild(row);
+  }
+}
+
+async function openDashboard() {
+  status("");
+  $("adminWho").textContent = auth.currentUser
+    ? "Kyçur si " + (auth.currentUser.email || "") : "";
+  show("dashboard");
+  if (stopBoardsListener) stopBoardsListener();
+  stopBoardsListener = onSnapshot(
+    collection(db, "boards"),
+    renderBoards,
+    () => status("S'ke qasje administratori me këtë llogari.", "err"),
+  );
+}
+
+function openBoard(code) {
+  $("code").value = code;
+  connect();
+}
+
+$("adminBtn").addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+    isAdminMode = true;
+    openDashboard();
+  } catch (e) {
+    status("Kyçja dështoi ose u anulua (" + (e.code || e.message || "?") + ").", "err");
+  }
+});
+$("signOutBtn").addEventListener("click", async () => {
+  if (stopBoardsListener) stopBoardsListener();
+  isAdminMode = false;
+  await signOut(auth).catch(() => {});
+  status("");
+  show("connect");
+});
+$("backBtn").addEventListener("click", () => { status(""); openDashboard(); });
+
+$("connectBtn").addEventListener("click", connect);
+$("code").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+$("saveBtn").addEventListener("click", save);
+
+// Reconnect automatically on revisit (imam flow).
+const saved = localStorage.getItem("primemosque_code");
+if (saved) { $("code").value = saved; connect(); }
+</script>
+</body>
+</html>
