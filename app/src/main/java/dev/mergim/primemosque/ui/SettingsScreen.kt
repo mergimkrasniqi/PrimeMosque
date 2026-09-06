@@ -329,7 +329,7 @@ private fun MainSettingsPage(
         ) {
             Text(strings.done, fontSize = 18.sp)
         }
-        AboutLine()
+        AboutLine(strings, state.boardCode)
     }
 }
 
@@ -401,7 +401,10 @@ private fun DisplaySettingsPage(
     val nightModes = NightMode.entries
     val nightModeIndex = nightModes.indexOf(settings.nightMode)
 
-    SettingsPage(title = strings.displaySectionLabel, rowCount = 6) { rowModifier ->
+    val secondaryOptions: List<AppLanguage?> = listOf(null) + AppLanguage.entries
+    val secondaryIndex = secondaryOptions.indexOf(settings.secondaryLanguage)
+
+    SettingsPage(title = strings.displaySectionLabel, rowCount = 8) { rowModifier ->
         CyclerRow(
             modifier = rowModifier(0),
             label = strings.orientationLabel,
@@ -441,8 +444,29 @@ private fun DisplaySettingsPage(
             onPrevious = { viewModel.setShowDailyQuotes(!settings.showDailyQuotes) },
             onNext = { viewModel.setShowDailyQuotes(!settings.showDailyQuotes) },
         )
+        // Mixed congregations: the board alternates between the primary and
+        // the secondary language in fixed blocks.
         CyclerRow(
             modifier = rowModifier(4),
+            label = strings.secondaryLanguageLabel,
+            value = settings.secondaryLanguage
+                ?.let { stringsFor(it).languageName }
+                ?: strings.switchOff,
+            onPrevious = {
+                viewModel.setSecondaryLanguage(
+                    secondaryOptions[
+                        (secondaryIndex - 1 + secondaryOptions.size) % secondaryOptions.size
+                    ]
+                )
+            },
+            onNext = {
+                viewModel.setSecondaryLanguage(
+                    secondaryOptions[(secondaryIndex + 1) % secondaryOptions.size]
+                )
+            },
+        )
+        CyclerRow(
+            modifier = rowModifier(5),
             label = strings.nightModeLabel,
             value = strings.nightModeNames[settings.nightMode] ?: settings.nightMode.name,
             onPrevious = {
@@ -454,9 +478,16 @@ private fun DisplaySettingsPage(
                 viewModel.setNightMode(nightModes[(nightModeIndex + 1) % nightModes.size])
             },
         )
+        CyclerRow(
+            modifier = rowModifier(6),
+            label = strings.ramadanModeLabel,
+            value = if (settings.ramadanMode) strings.switchOn else strings.switchOff,
+            onPrevious = { viewModel.setRamadanMode(!settings.ramadanMode) },
+            onNext = { viewModel.setRamadanMode(!settings.ramadanMode) },
+        )
         Button(
             onClick = onBack,
-            modifier = rowModifier(5).fillMaxWidth(),
+            modifier = rowModifier(7).fillMaxWidth(),
         ) {
             Text(strings.back, fontSize = 18.sp)
         }
@@ -520,17 +551,21 @@ private fun FridaySettingsPage(
     }
 }
 
-/** App name + version at the bottom of the settings, for support questions. */
+/**
+ * App name + version at the bottom of the settings, for support questions —
+ * plus the web-portal pairing code once remote control is active.
+ */
 @Composable
-private fun AboutLine() {
+private fun AboutLine(strings: Strings, boardCode: String?) {
     val context = LocalContext.current
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
         }.getOrNull() ?: ""
     }
+    val code = boardCode?.let { "  •  ${strings.portalCodeLabel}: $it" } ?: ""
     Text(
-        text = "PrimeMosque v$version",
+        text = "PrimeMosque v$version$code",
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontSize = 13.sp,
         textAlign = TextAlign.Center,

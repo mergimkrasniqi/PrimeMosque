@@ -69,6 +69,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.mergim.primemosque.data.CustomQuote
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.data.PrayerSlot
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
@@ -112,6 +113,14 @@ private fun noticeIcon(key: NoticeKey): ImageVector = when (key) {
 
     NoticeKey.CUSTOM -> Icons.Filled.Campaign
 }
+
+/** Portal-managed quote lists override the bundled ones when present. */
+private fun effectiveQuotes(
+    custom: List<CustomQuote>,
+    bundled: List<KhutbahQuote>,
+): List<KhutbahQuote> =
+    if (custom.isEmpty()) bundled
+    else custom.map { KhutbahQuote(it.text, it.source, it.arabic) }
 
 /** Slots rendered inside another prayer's field instead of as their own row. */
 private val subSlotKeys = setOf(PrayerKey.IMSAK, PrayerKey.SUNRISE, PrayerKey.ZAWAL)
@@ -247,7 +256,7 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
     // footer), and slightly whenever the notice card alone is on board
     // (Fridays, Duha/dhikr windows, custom announcements).
     val scale = when {
-        state.lecture != null -> 0.85f
+        state.lecture != null || state.ramadan -> 0.85f
         state.notices.isNotEmpty() -> 0.9f
         else -> 1f
     }
@@ -264,6 +273,12 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         Spacer(Modifier.height(12.dp * scale))
         CountdownBanner(state, strings, scale = scale)
         Spacer(Modifier.height(12.dp * scale))
+        RamadanBanner(
+            state,
+            strings,
+            modifier = Modifier.padding(bottom = 12.dp * scale),
+            scale = scale
+        )
         LectureBanner(
             state,
             strings,
@@ -326,7 +341,15 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                 .weight(1f),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Lecture banner and notice card flank the clock symmetrically.
+            // Ramadan/lecture banners and notice card flank the clock.
+            if (state.ramadan) {
+                RamadanBanner(
+                    state, strings,
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .padding(end = 20.dp),
+                )
+            }
             if (state.lecture != null) {
                 LectureBanner(
                     state, strings,
@@ -474,7 +497,16 @@ private fun CountdownBanner(
 ) {
     val next = state.next ?: return
     val palette = LocalBoardPalette.current
-    val name = prayerLabel(next.key, strings, friday = next.at.dayOfWeek == DayOfWeek.FRIDAY)
+    // The countdown needs the grammatical form that follows "until" in each
+    // language (SQ indefinite, BS genitive); during Ramadan the wait for
+    // Maghrib is the wait for Iftar.
+    val friday = next.at.dayOfWeek == DayOfWeek.FRIDAY
+    val name = when {
+        state.ramadan && next.key == PrayerKey.MAGHRIB -> strings.iftarCountdownName
+        friday && next.key == PrayerKey.DHUHR -> strings.fridayDhuhrCountdownName
+        else -> strings.countdownNames[next.key]
+            ?: prayerLabel(next.key, strings, friday)
+    }
     Row(
         modifier = Modifier
             .background(palette.cardHighlight, RoundedCornerShape(50))
@@ -504,6 +536,54 @@ private fun CountdownBanner(
  * configured weekday. Sits in its own spot on the board, separate from the
  * rotating notice cards and the footer.
  */
+/**
+ * Pinned all day during Ramadan: today's iftar and the relevant imsak
+ * (tomorrow's once iftar has passed, for suhoor).
+ */
+@Composable
+private fun RamadanBanner(
+    state: UiState,
+    strings: Strings,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+) {
+    if (!state.ramadan) return
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
+            .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.NightsStay,
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(34.dp * scale),
+        )
+        Spacer(Modifier.width(16.dp * scale))
+        Column {
+            Text(
+                text = strings.ramadanTitle,
+                color = palette.accent,
+                fontSize = 20.sp * scale,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "${strings.iftarLabel}: " +
+                    "${state.iftarTime?.format(timeFormatter) ?: "—"}   •   " +
+                    "${strings.prayerNames[PrayerKey.IMSAK]}: " +
+                    (state.imsakTime?.format(timeFormatter) ?: "—"),
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp * scale,
+            )
+        }
+    }
+}
+
 @Composable
 private fun LectureBanner(
     state: UiState,
@@ -866,7 +946,8 @@ fun KhutbahScreen(state: UiState, strings: Strings, onOpenSettings: () -> Unit) 
                         )
                     }
                     Spacer(Modifier.height(24.dp))
-                    val quotes = strings.khutbahQuotes
+                    val quotes =
+                        effectiveQuotes(state.settings.customKhutbahQuotes, strings.khutbahQuotes)
                     if (quotes.isNotEmpty()) {
                         // A slow rotation: long narrations need reading time.
                         val quote =
@@ -936,7 +1017,7 @@ private fun DailyQuoteBlock(
     modifier: Modifier = Modifier,
     scale: Float = 1f,
 ) {
-    val quotes = strings.dailyQuotes
+    val quotes = effectiveQuotes(state.settings.customDailyQuotes, strings.dailyQuotes)
     if (quotes.isEmpty()) return
     val palette = LocalBoardPalette.current
     val quote = quotes[(state.now.toLocalTime().toSecondOfDay() / 30) % quotes.size]

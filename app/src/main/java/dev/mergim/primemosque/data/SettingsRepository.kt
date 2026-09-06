@@ -12,8 +12,13 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.IOException
+import java.security.SecureRandom
 import java.time.DayOfWeek
 
 /** Prayers whose displayed time can be corrected by a per-prayer offset. */
@@ -70,12 +75,27 @@ enum class LectureDay(val dayOfWeek: DayOfWeek?) {
     SUNDAY(DayOfWeek.SUNDAY),
 }
 
+/**
+ * A verse/hadith managed from the web portal. When the imam defines a list
+ * there, it replaces the bundled texts on the board; an empty list means the
+ * built-in collection is used. `**bold**` markup highlights key phrases.
+ */
+@Serializable
+data class CustomQuote(
+    val text: String,
+    val source: String = "",
+    val arabic: String? = null,
+)
+
 data class Settings(
     val mosqueName: String = "Xhamia",
     val place: String = "Prizren",
     val city: String = "Prizren",
     val orientation: DisplayOrientation = DisplayOrientation.PORTRAIT,
     val language: AppLanguage = AppLanguage.SQ,
+    // Mixed congregations: when set, the board alternates between the
+    // primary and this language in fixed blocks (null = single language).
+    val secondaryLanguage: AppLanguage? = null,
     val theme: AppTheme = AppTheme.MUSHAF,
     // Rotate to the next theme family every week (keeping light/dark).
     val themeRotation: Boolean = false,
@@ -96,11 +116,21 @@ data class Settings(
     // Free-text mosque announcements, shown in the notice rotation while set.
     val announcement1: String = "",
     val announcement2: String = "",
+    // Optional expiry (ISO date, inclusive): after this day the announcement
+    // disappears from the board by itself. Empty = shown until cleared.
+    val announcement1Until: String = "",
+    val announcement2Until: String = "",
     // Hijri date correction in days (moon-sighting differences).
     val hijriOffset: Int = 0,
     // Daily wisdom breaks: every few minutes the prayer table gives way
     // briefly to rotating Qur'an verses and hadiths.
     val showDailyQuotes: Boolean = true,
+    // Ramadan mode: during the Hijri month of Ramadan the board pins an
+    // iftar/imsak banner and counts down to Iftar.
+    val ramadanMode: Boolean = true,
+    // Portal-managed quote lists; empty = the bundled texts are used.
+    val customDailyQuotes: List<CustomQuote> = emptyList(),
+    val customKhutbahQuotes: List<CustomQuote> = emptyList(),
 )
 
 // A power cut can kill the TV mid-write and corrupt a preferences file;
@@ -122,6 +152,12 @@ private val Context.runtimeDataStore by preferencesDataStore(
 private fun Flow<Preferences>.orDefaults(): Flow<Preferences> =
     catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
 
+private val quotesJson = Json { ignoreUnknownKeys = true }
+
+private fun String?.toQuotes(): List<CustomQuote> = this
+    ?.let { runCatching { quotesJson.decodeFromString<List<CustomQuote>>(it) }.getOrNull() }
+    ?: emptyList()
+
 class SettingsRepository(private val context: Context) {
 
     private object Keys {
@@ -130,6 +166,7 @@ class SettingsRepository(private val context: Context) {
         val CITY = stringPreferencesKey("city")
         val ORIENTATION = stringPreferencesKey("orientation")
         val LANGUAGE = stringPreferencesKey("language")
+        val SECONDARY_LANGUAGE = stringPreferencesKey("secondary_language")
         val THEME = stringPreferencesKey("theme")
         val THEME_ROTATION = booleanPreferencesKey("theme_rotation")
         val NIGHT_MODE = stringPreferencesKey("night_mode")
@@ -142,9 +179,15 @@ class SettingsRepository(private val context: Context) {
         val KHUTBAH_MINUTES = intPreferencesKey("khutbah_minutes")
         val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
         val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
+        val ANNOUNCEMENT_1_UNTIL = stringPreferencesKey("announcement_1_until")
+        val ANNOUNCEMENT_2_UNTIL = stringPreferencesKey("announcement_2_until")
+        val RAMADAN_MODE = booleanPreferencesKey("ramadan_mode")
         val HIJRI_OFFSET = intPreferencesKey("hijri_offset")
         val DAILY_QUOTES = booleanPreferencesKey("daily_quotes")
+        val CUSTOM_DAILY_QUOTES = stringPreferencesKey("custom_daily_quotes")
+        val CUSTOM_KHUTBAH_QUOTES = stringPreferencesKey("custom_khutbah_quotes")
         val LAST_SEEN_EPOCH_MS = longPreferencesKey("last_seen_epoch_ms")
+        val BOARD_CODE = stringPreferencesKey("board_code")
 
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
     }
@@ -161,6 +204,9 @@ class SettingsRepository(private val context: Context) {
             language = p[Keys.LANGUAGE]
                 ?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
                 ?: defaults.language,
+            // "OFF" (and anything unknown) means no secondary language.
+            secondaryLanguage = p[Keys.SECONDARY_LANGUAGE]
+                ?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() },
             // Themes removed in an update fall back to the default.
             theme = p[Keys.THEME]
                 ?.let { runCatching { AppTheme.valueOf(it) }.getOrNull() }
@@ -184,8 +230,13 @@ class SettingsRepository(private val context: Context) {
             khutbahMinutes = p[Keys.KHUTBAH_MINUTES] ?: defaults.khutbahMinutes,
             announcement1 = p[Keys.ANNOUNCEMENT_1] ?: defaults.announcement1,
             announcement2 = p[Keys.ANNOUNCEMENT_2] ?: defaults.announcement2,
+            announcement1Until = p[Keys.ANNOUNCEMENT_1_UNTIL] ?: defaults.announcement1Until,
+            announcement2Until = p[Keys.ANNOUNCEMENT_2_UNTIL] ?: defaults.announcement2Until,
+            ramadanMode = p[Keys.RAMADAN_MODE] ?: defaults.ramadanMode,
             hijriOffset = p[Keys.HIJRI_OFFSET] ?: defaults.hijriOffset,
             showDailyQuotes = p[Keys.DAILY_QUOTES] ?: defaults.showDailyQuotes,
+            customDailyQuotes = p[Keys.CUSTOM_DAILY_QUOTES].toQuotes(),
+            customKhutbahQuotes = p[Keys.CUSTOM_KHUTBAH_QUOTES].toQuotes(),
         )
     }
 
@@ -203,6 +254,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setLanguage(value: AppLanguage) =
         context.dataStore.edit { it[Keys.LANGUAGE] = value.name }
+
+    suspend fun setSecondaryLanguage(value: AppLanguage?) =
+        context.dataStore.edit { it[Keys.SECONDARY_LANGUAGE] = value?.name ?: "OFF" }
 
     suspend fun setTheme(value: AppTheme) =
         context.dataStore.edit { it[Keys.THEME] = value.name }
@@ -245,11 +299,45 @@ class SettingsRepository(private val context: Context) {
     suspend fun setAnnouncement2(value: String) =
         context.dataStore.edit { it[Keys.ANNOUNCEMENT_2] = value }
 
+    suspend fun setAnnouncement1Until(value: String) =
+        context.dataStore.edit { it[Keys.ANNOUNCEMENT_1_UNTIL] = value }
+
+    suspend fun setAnnouncement2Until(value: String) =
+        context.dataStore.edit { it[Keys.ANNOUNCEMENT_2_UNTIL] = value }
+
+    suspend fun setRamadanMode(value: Boolean) =
+        context.dataStore.edit { it[Keys.RAMADAN_MODE] = value }
+
     suspend fun setHijriOffset(value: Int) =
         context.dataStore.edit { it[Keys.HIJRI_OFFSET] = value }
 
     suspend fun setShowDailyQuotes(value: Boolean) =
         context.dataStore.edit { it[Keys.DAILY_QUOTES] = value }
+
+    suspend fun setCustomDailyQuotes(value: List<CustomQuote>) =
+        context.dataStore.edit { it[Keys.CUSTOM_DAILY_QUOTES] = quotesJson.encodeToString(value) }
+
+    suspend fun setCustomKhutbahQuotes(value: List<CustomQuote>) =
+        context.dataStore.edit { it[Keys.CUSTOM_KHUTBAH_QUOTES] = quotesJson.encodeToString(value) }
+
+    // Pairing code for the web portal: the board listens to the Firestore
+    // document named by this code, and the imam enters it in the portal.
+    // Shown in the settings footer; generated once and kept forever.
+    val boardCode: Flow<String?> =
+        context.dataStore.data.orDefaults().map { it[Keys.BOARD_CODE] }
+
+    suspend fun boardCodeOrCreate(): String {
+        boardCode.first()?.let { return it }
+        // No easily-confused characters (0/O, 1/I): the imam reads this off
+        // the TV screen and types it into the portal.
+        val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val random = SecureRandom()
+        val code = buildString(8) {
+            repeat(8) { append(alphabet[random.nextInt(alphabet.length)]) }
+        }
+        context.dataStore.edit { it[Keys.BOARD_CODE] = code }
+        return code
+    }
 
     // Most recent credible wall-clock time the app has seen, persisted so
     // that after a power cut a clock that boots up *behind* it can be

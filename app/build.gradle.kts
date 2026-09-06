@@ -13,8 +13,8 @@ android {
         applicationId = "dev.mergim.primemosque"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     buildTypes {
@@ -55,6 +55,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
+    // Remote control (web portal): initialized manually in RemoteControl.kt,
+    // so no google-services.json / plugin is needed.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)

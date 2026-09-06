@@ -54,8 +54,14 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 @Composable
 fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
-    val strings = stringsFor(state.settings.language)
     var showSettings by remember { mutableStateOf(false) }
+    // The board follows the effective language (which may alternate between
+    // two languages); the settings and setup screens stay in the primary so
+    // they don't switch mid-configuration.
+    val strings = stringsFor(
+        if (showSettings || !state.settings.setupDone) state.settings.language
+        else state.language
+    )
     val orientation = state.settings.orientation
 
     // Night energy saver: the chosen theme's dark variant + dimmed backlight

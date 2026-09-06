@@ -24,7 +24,10 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 Every 4 minutes the prayer table steps aside for 90 seconds and the board shows rotating **Qur'an verses and hadiths from Bukhari & Muslim** (khutbah-style card: original Arabic for verses, translation with the key phrase highlighted, source) — 18 texts about praying on time, good character, patience, mercy and good deeds, in all 4 languages. The table then returns automatically. Suppressed during announcements, the khutbah and the night saver, and can be turned off entirely in the Display settings ("Verses & hadiths during the day").
 
 ### Custom announcements
-Two free-text slots ("Njoftimet") for the mosque's own messages — janaza notices, Ramadan programs, fundraisers. While set, they rotate in the notice card all day alongside the contextual notices.
+Two free-text slots ("Njoftimet") for the mosque's own messages — janaza notices, Ramadan programs, fundraisers. While set, they rotate in the notice card all day alongside the contextual notices. From the portal each announcement can carry an **expiry date** (shown through that day, inclusive) after which it removes itself from the board.
+
+### Ramadan mode
+Automatic during the Hijri month of Ramadan (follows the offset-corrected Hijri date; toggleable on the TV and in the portal): the board pins a **Ramazani banner with today's Iftar and the relevant Imsak** (tomorrow's after iftar has passed, for suhoor), the countdown to Maghrib relabels to **"deri në Iftar"**, and the sunnah-fasting reminders (Mon/Thu, White Days) pause since everyone is fasting anyway.
 
 ### Contextual notices (rotating card)
 A card on the board shows guidance only while it applies, rotating every 30 s when several are active:
@@ -43,10 +46,24 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
 - **First-run setup wizard** — on first launch the essential settings (language, city, mosque name, place, orientation, theme) are presented once, so a new mosque can configure the board without discovering the settings screen.
 - **Categorised settings** (press OK on the remote): a compact main page with the language plus sub-pages — Xhamia (name, place, city with official minute offsets), Ekrani (orientation, theme, night saver), Xhumaja (Jumu'ah time, khutbah duration), Ligjërata javore, Njoftimet, and Përshtatja e kohëve (per-prayer ±min, Hijri date). Every category row shows a live summary of its values.
 - **4 theme families, each light + dark**: Mushaf (cream/red), Zaytun (olive), Nila (indigo), Hibr (paper & ink). Optional **weekly automatic rotation** switches to the next family every Monday — keeping your light/dark preference — so the board never gets monotonous.
-- **4 languages**: Shqip, English, Türkçe, Bosanski — including prayer names, notices, dhikr translations, khutbah quotes, Hijri month spellings and date locales.
+- **4 languages**: Shqip, English, Türkçe, Bosanski — including prayer names, notices, dhikr translations, khutbah quotes, Hijri month spellings and date locales. For mixed congregations a **secondary language** can be set (on the TV or from the portal): the whole board then alternates between the two languages every 2 minutes.
 - Screen is kept awake permanently (signage use), and a boot receiver relaunches the board after a power cut on firmwares that allow it (elsewhere, set the app as home or open it manually).
 - **Corruption-proof storage** — a power cut can kill the TV mid-write; a corrupted settings file no longer bricks the app at startup (it used to require clearing app data). Broken files are replaced with defaults, and the frequently-written runtime state lives in a separate file so the mosque's configuration can't be lost with it.
 - Custom adaptive launcher icon and 16:9 Android TV banner (gold mosque on navy gradient); app version shown at the bottom of settings for support.
+
+## Remote control (Imam web portal)
+
+The whole board can be managed from a browser instead of the TV remote: mosque name/place/city, language, orientation, theme (+ weekly rotation), night saver, announcements, weekly lecture, Jumu'ah time and khutbah duration, per-prayer time adjustments and the Hijri offset — plus the **content collections**: the imam can define his own daily Qur'an-verse/hadith list and his own khutbah quotes (with optional Arabic and `**bold**` key-phrase markup); an empty list falls back to the app's built-in texts. The TV listens to its own Firestore document and applies changes within seconds; the board keeps working fully offline (DataStore remains the source of truth on the device).
+
+**How pairing works:** each TV generates a permanent 8-character code, shown at the bottom of the settings screen ("Kodi i portalit"). The imam opens the portal ([webportal/index.html](webportal/index.html)), enters the code once, and gets a simple Albanian form. The code doubles as the access secret — it never leaves the TV screen.
+
+**Admin dashboard (same page):** "Paneli i xhamive" — sign in with the admin Google account (allow-listed by email in [firestore.rules](webportal/firestore.rules)) to see every registered board with a live **online/offline status** (each TV stamps a heartbeat into its document every 5 minutes; a board is shown online while the last stamp is under 12 minutes old, otherwise with its last-seen time) and jump straight into any board's manage page. Each heartbeat also carries the **board's own clock reading and NTP state**: the dashboard compares it against the server timestamp of the same write and shows "ora ✓" or a red "⚠ ora e tabelës gabon ~X min" warning, so a TV displaying wrong prayer times is visible remotely. Only the admin can list boards or delete them — a board code alone still grants access to that one board only.
+
+**Already configured** against the Firebase project **Prime - Prayer Times** (`prime---prayer-times`): the web app is registered, Firestore is live (multi-region `eur3`, production mode) with the rules from [webportal/firestore.rules](webportal/firestore.rules) published, and the config values are in `RemoteControl.kt` and `webportal/index.html`. The Firebase web `apiKey` is not a secret — access control lives entirely in the Firestore rules. To point at a different project: create it in the console, add a Web app, enable Firestore, publish the rules, and swap the three config values in those two files.
+
+**The portal is live at [prime---prayer-times.web.app](https://prime---prayer-times.web.app)** (Firebase Hosting, free Spark tier). To redeploy after editing [webportal/index.html](webportal/index.html): `firebase deploy --only hosting`; rule changes: `firebase deploy --only firestore:rules` (config in [firebase.json](firebase.json), CLI installed via Homebrew/npm, logged in as the admin account).
+
+Sync is one-directional (portal → TV); on first contact the TV publishes its current values so the portal starts from reality. Upgrade path for later: Firebase Auth for imams, per-board access, and more settings (theme, adjustments) in the document.
 
 ## Screenshots
 

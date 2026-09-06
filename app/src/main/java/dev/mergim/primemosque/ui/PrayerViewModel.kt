@@ -15,6 +15,7 @@ import dev.mergim.primemosque.data.NtpClock
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.data.PrayerRepository
 import dev.mergim.primemosque.data.PrayerSlot
+import dev.mergim.primemosque.data.RemoteControl
 import dev.mergim.primemosque.data.Settings
 import dev.mergim.primemosque.data.SettingsRepository
 import dev.mergim.primemosque.data.THEME_FAMILIES
@@ -84,6 +85,12 @@ data class UiState(
     // Daily wisdom break: the prayer table briefly gives way to rotating
     // Qur'an verses and hadiths (khutbah-style card).
     val quotesBreak: Boolean = false,
+    // Ramadan: active during the Hijri month of Ramadan (if enabled); the
+    // board pins today's iftar and the relevant imsak (tomorrow's after
+    // iftar has passed) and counts down to Iftar.
+    val ramadan: Boolean = false,
+    val iftarTime: LocalTime? = null,
+    val imsakTime: LocalTime? = null,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
     // The clock reads earlier than a time the app has already lived through
@@ -92,6 +99,11 @@ data class UiState(
     // Theme the board should render with right now: the chosen theme, or —
     // with weekly rotation on — this week's family in the chosen variant.
     val theme: AppTheme = AppTheme.MUSHAF,
+    // Pairing code for the web portal (null while remote control is off).
+    val boardCode: String? = null,
+    // Language the board should render right now: the primary, or — with a
+    // secondary language set — alternating between the two in fixed blocks.
+    val language: AppLanguage = AppLanguage.SQ,
 )
 
 class PrayerViewModel(app: Application) : AndroidViewModel(app) {
@@ -122,6 +134,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     init {
+        // Web-portal remote control (no-op until Firebase is configured).
+        RemoteControl.start(app, settingsRepository, viewModelScope)
         connectivity?.registerDefaultNetworkCallback(networkCallback)
         viewModelScope.launch(Dispatchers.IO) {
             while (true) {
@@ -165,8 +179,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             ticker,
             settingsRepository.settings,
             settingsRepository.lastSeenEpochMs,
-        ) { now, settings, lastSeen ->
-            buildState(now, settings, lastSeen)
+            settingsRepository.boardCode,
+        ) { now, settings, lastSeen, boardCode ->
+            buildState(now, settings, lastSeen, boardCode)
         }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
@@ -177,7 +192,12 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             if (minutes == 0) slot else slot.copy(time = slot.time.plusMinutes(minutes.toLong()))
         }
 
-    private fun buildState(now: LocalDateTime, settings: Settings, lastSeenEpochMs: Long): UiState {
+    private fun buildState(
+        now: LocalDateTime,
+        settings: Settings,
+        lastSeenEpochMs: Long,
+        boardCode: String?,
+    ): UiState {
         // Clock sanity: time cannot flow backwards. If the current reading is
         // clearly before a moment the app has already lived through, the TV
         // clock was reset (power cut) — warn until NTP or a manual fix.
@@ -249,6 +269,21 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             year = hijrah.get(ChronoField.YEAR),
         )
 
+        // Ramadan follows the (offset-corrected) Hijri calendar by itself.
+        val ramadan = settings.ramadanMode && hijri.month == HIJRI_RAMADAN
+        val iftarTime = if (ramadan) {
+            slots.firstOrNull { it.key == PrayerKey.MAGHRIB }?.time
+        } else null
+        // Until iftar the board shows today's imsak; afterwards tomorrow's,
+        // which is the one the fasting congregation needs for suhoor.
+        val imsakTime = when {
+            !ramadan -> null
+            iftarTime != null && !iftarTime.atDate(today).isAfter(now) ->
+                adjusted(repository.slotsFor(today.plusDays(1), offset), settings)
+                    .firstOrNull { it.key == PrayerKey.IMSAK }?.time
+            else -> slots.firstOrNull { it.key == PrayerKey.IMSAK }?.time
+        }
+
         val notices = buildNotices(now, today, slots, hijri, settings)
 
         // Full-screen khutbah takeover: from Jumu'ah time (after the 1-minute
@@ -306,10 +341,21 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             khutbah = khutbah,
             night = night,
             quotesBreak = quotesBreak,
+            ramadan = ramadan,
+            iftarTime = iftarTime,
+            imsakTime = imsakTime,
             settings = settings,
             loaded = true,
             clockSuspect = clockSuspect,
             theme = themeFor(today, settings),
+            boardCode = boardCode,
+            // Mixed congregations: alternate the whole board between the
+            // primary and secondary language in fixed clock-driven blocks.
+            language = settings.secondaryLanguage
+                ?.takeIf {
+                    (now.toLocalTime().toSecondOfDay() / LANGUAGE_BLOCK_SECONDS) % 2 == 1
+                }
+                ?: settings.language,
         )
     }
 
@@ -349,10 +395,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         // Custom mosque announcements rotate along with the other notices
-        // all day while they are set.
-        settings.announcement1.takeIf { it.isNotBlank() }
+        // all day while they are set — until their optional expiry date
+        // (inclusive), after which they disappear by themselves.
+        fun activeAnnouncement(text: String, until: String): String? {
+            if (text.isBlank()) return null
+            val untilDate = until.takeIf { it.isNotBlank() }
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?: return text
+            return text.takeIf { !untilDate.isBefore(today) }
+        }
+        activeAnnouncement(settings.announcement1, settings.announcement1Until)
             ?.let { add(Notice(NoticeKey.CUSTOM, custom = it)) }
-        settings.announcement2.takeIf { it.isNotBlank() }
+        activeAnnouncement(settings.announcement2, settings.announcement2Until)
             ?.let { add(Notice(NoticeKey.CUSTOM, custom = it)) }
 
         val sunrise = timeOf(PrayerKey.SUNRISE)
@@ -390,7 +444,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         // Sunnah-fasting reminders for the evening before, from Asr onwards.
-        if (asr != null && !time.isBefore(asr)) {
+        // Pointless during Ramadan, when everyone is already fasting.
+        val ramadan = settings.ramadanMode && hijri.month == HIJRI_RAMADAN
+        if (!ramadan && asr != null && !time.isBefore(asr)) {
             when (today.dayOfWeek) {
                 DayOfWeek.SUNDAY -> add(Notice(NoticeKey.FAST_MONDAY))
                 DayOfWeek.WEDNESDAY -> add(Notice(NoticeKey.FAST_THURSDAY))
@@ -409,6 +465,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setCity(value: String) = viewModelScope.launch { settingsRepository.setCity(value) }
     fun setOrientation(value: DisplayOrientation) = viewModelScope.launch { settingsRepository.setOrientation(value) }
     fun setLanguage(value: AppLanguage) = viewModelScope.launch { settingsRepository.setLanguage(value) }
+    fun setSecondaryLanguage(value: AppLanguage?) =
+        viewModelScope.launch { settingsRepository.setSecondaryLanguage(value) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settingsRepository.setTheme(value) }
     fun setThemeRotation(value: Boolean) =
         viewModelScope.launch { settingsRepository.setThemeRotation(value) }
@@ -429,12 +487,19 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { settingsRepository.setHijriOffset(value.coerceIn(-2, 2)) }
     fun setShowDailyQuotes(value: Boolean) =
         viewModelScope.launch { settingsRepository.setShowDailyQuotes(value) }
+    fun setRamadanMode(value: Boolean) =
+        viewModelScope.launch { settingsRepository.setRamadanMode(value) }
 
     private companion object {
         const val RESYNC_INTERVAL_MS = 60 * 60_000L
         // Network is up but the sync failed (DNS, captive portal, firewall).
         const val RETRY_INTERVAL_MS = 30_000L
         const val LAST_SEEN_INTERVAL_MS = 5 * 60_000L
+        // With a secondary language set, the board switches language on
+        // these block boundaries.
+        const val LANGUAGE_BLOCK_SECONDS = 2 * 60
+        // Month index of Ramadan in the Hijri calendar.
+        const val HIJRI_RAMADAN = 9
         // Daily wisdom cycle: 4 min of the prayer table, then 90 s of
         // verses/hadiths (three quotes at the 30 s rotation).
         const val QUOTES_TABLE_SECONDS = 4 * 60
