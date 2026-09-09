@@ -531,7 +531,7 @@ function fillForm(data) {
 
 async function connect() {
   const code = $("code").value.trim().toUpperCase();
-  if (code.length < 6) { status("Shkruaj kodin e plotë.", "err"); return; }
+  if (code.length !== 8) { status("Kodi ka 8 shenja — shkruaje të plotë.", "err"); return; }
   status("Duke u lidhur…");
   const ref = doc(db, "boards", code);
   let snap;

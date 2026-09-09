@@ -3,8 +3,10 @@ rules_version = '2';
 // Access model:
 // - Imams: the 8-character board code is the shared secret — anyone who
 //   knows it (it is only shown on the TV's own settings screen) can read
-//   and manage that ONE board. Codes are random over a 32-character
-//   alphabet (32^8 ≈ 10^12), so they are not guessable in practice.
+//   and manage that ONE board. Codes are exactly 8 characters over a
+//   32-character alphabet (32^8 ≈ 10^12), so they are not guessable in
+//   practice. The length is pinned at 8 to match the only code-minting
+//   path in the app; a shorter pattern would shrink the space ~1000x.
 // - Admin: the Google account(s) below can additionally LIST all boards
 //   (the dashboard) and delete boards.
 service cloud.firestore {
@@ -16,10 +18,10 @@ service cloud.firestore {
     }
 
     match /boards/{code} {
-      allow get: if code.matches('^[A-HJ-NP-Z2-9]{6,8}$') || isAdmin();
+      allow get: if code.matches('^[A-HJ-NP-Z2-9]{8}$') || isAdmin();
       allow list: if isAdmin();
       allow create, update: if
-        (code.matches('^[A-HJ-NP-Z2-9]{6,8}$') || isAdmin())
+        (code.matches('^[A-HJ-NP-Z2-9]{8}$') || isAdmin())
         // Only the fields the app understands can be written.
         && request.resource.data.keys().hasOnly([
              'mosqueName', 'place', 'city', 'language', 'secondaryLanguage',
