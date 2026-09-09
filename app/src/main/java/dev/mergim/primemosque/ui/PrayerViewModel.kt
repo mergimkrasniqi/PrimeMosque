@@ -582,10 +582,11 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         const val LANGUAGE_BLOCK_SECONDS = 2 * 60
         // Month index of Ramadan in the Hijri calendar.
         const val HIJRI_RAMADAN = 9
-        // Daily wisdom cycle: 4 min of the prayer table, then 90 s of
-        // verses/hadiths (three quotes at the 30 s rotation).
-        const val QUOTES_TABLE_SECONDS = 4 * 60
-        const val QUOTES_CYCLE_SECONDS = QUOTES_TABLE_SECONDS + 90
+        // Daily wisdom cycle: 3 min of the prayer table, then 3 min of
+        // verses/hadiths (six quotes at the 30 s rotation).
+        const val QUOTES_TABLE_SECONDS = 3 * 60
+        const val QUOTES_BREAK_SECONDS = 3 * 60
+        const val QUOTES_CYCLE_SECONDS = QUOTES_TABLE_SECONDS + QUOTES_BREAK_SECONDS
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
         const val CLOCK_SLACK_MS = 10 * 60_000L
