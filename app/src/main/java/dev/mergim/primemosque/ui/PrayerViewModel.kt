@@ -5,9 +5,11 @@ import android.net.ConnectivityManager
 import android.net.Network
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import dev.mergim.primemosque.data.ADHAN_PRAYERS
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.City
+import dev.mergim.primemosque.data.DEFAULT_ADHAN_SECONDS
 import dev.mergim.primemosque.data.DisplayOrientation
 import dev.mergim.primemosque.data.LectureDay
 import dev.mergim.primemosque.data.NightMode
@@ -40,6 +42,23 @@ import java.time.chrono.HijrahDate
 import java.time.temporal.ChronoField
 
 data class NextPrayer(val key: PrayerKey, val at: LocalDateTime)
+
+/** The five daily prayers, as opposed to the sun-position slots. */
+private val PRAYER_KEYS = ADHAN_PRAYERS.toSet()
+
+/**
+ * The three stages of the full-screen takeover around a prayer time: the
+ * countdown through the last minutes before it, the adhan itself while the
+ * muezzin calls, and the dua recited once he has finished.
+ */
+enum class AdhanPhase { COUNTDOWN, ADHAN, DUA }
+
+/** The stage the board is in, and how long is left of it. */
+data class AdhanSequence(
+    val phase: AdhanPhase,
+    val slot: PrayerSlot,
+    val remaining: Duration,
+)
 
 /**
  * Contextual guidance shown on the board only while it applies: Friday
@@ -74,7 +93,7 @@ data class UiState(
     val slots: List<PrayerSlot> = emptyList(),
     val current: PrayerKey? = null,
     val next: NextPrayer? = null,
-    val announce: PrayerSlot? = null,
+    val adhan: AdhanSequence? = null,
     val countdown: Duration = Duration.ZERO,
     val hijri: HijriDate? = null,
     val upcomingEvent: UpcomingEvent? = null,
@@ -219,12 +238,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
 
-        val prayerKeys = setOf(
-            PrayerKey.FAJR, PrayerKey.DHUHR, PrayerKey.ASR,
-            PrayerKey.MAGHRIB, PrayerKey.ISHA,
-        )
         val next = slots
-            .filter { it.key in prayerKeys }
+            .filter { it.key in PRAYER_KEYS }
             .map { NextPrayer(it.key, it.time.atDate(today)) }
             .firstOrNull { it.at.isAfter(now) }
             ?: adjusted(repository.slotsFor(today.plusDays(1), offset), settings)
@@ -234,19 +249,12 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // The prayer whose time most recently passed; before Sabahu it is
         // still Jacia (whose period runs past midnight).
         val current = slots
-            .filter { it.key in prayerKeys }
+            .filter { it.key in PRAYER_KEYS }
             .lastOrNull { !it.time.atDate(today).isAfter(now) }
             ?.key
             ?: PrayerKey.ISHA
 
-        // For one minute from the moment a prayer time arrives, the board
-        // shows a full-screen announcement instead of the schedule.
-        val announce = slots
-            .filter { it.key in prayerKeys }
-            .firstOrNull {
-                val at = it.time.atDate(today)
-                !now.isBefore(at) && now.isBefore(at.plusMinutes(1))
-            }
+        val adhan = adhanSequenceFor(now, today, slots, settings, clockSuspect)
 
         // Overnight energy saver: the mosque is empty between Isha and Imsak,
         // so the board drops to the theme's dark variant and dims. The delay
@@ -289,8 +297,11 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // Full-screen khutbah takeover: from Jumu'ah time (after the 1-minute
         // announcement) for the configured duration, the board is replaced by
         // the silence reminder and rotating Jumu'ah quotes.
+        // It starts where the adhan sequence ends, so the configured
+        // duration is the time the reminder is actually on screen.
         val khutbah = friday && slots.firstOrNull { it.key == PrayerKey.DHUHR }
             ?.time?.atDate(today)
+            ?.plusSeconds(sequenceLength(PrayerKey.DHUHR, settings))
             ?.let { at ->
                 !now.isBefore(at) && now.isBefore(at.plusMinutes(settings.khutbahMinutes.toLong()))
             } == true
@@ -324,7 +335,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // is replaced by rotating verses/hadiths, then comes back. Suppressed
         // whenever something more important owns the screen (announcement,
         // khutbah) and during the night saver.
-        val quotesBreak = settings.showDailyQuotes && announce == null && !khutbah && !night &&
+        val quotesBreak = settings.showDailyQuotes && adhan == null && !khutbah && !night &&
             now.toLocalTime().toSecondOfDay() % QUOTES_CYCLE_SECONDS >= QUOTES_TABLE_SECONDS
 
         return UiState(
@@ -332,7 +343,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             slots = slots,
             current = current,
             next = next,
-            announce = announce,
+            adhan = adhan,
             countdown = next?.let { Duration.between(now, it.at) } ?: Duration.ZERO,
             hijri = hijri,
             upcomingEvent = upcomingEvent,
@@ -357,6 +368,67 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 ?: settings.language,
         )
+    }
+
+    /** How long the muezzin needs for this prayer's adhan, in seconds. */
+    private fun adhanLength(key: PrayerKey, settings: Settings): Long =
+        (settings.adhanSeconds[key] ?: DEFAULT_ADHAN_SECONDS[key] ?: 180).toLong()
+
+    /** Seconds the full-screen sequence occupies *after* the prayer time. */
+    private fun sequenceLength(key: PrayerKey, settings: Settings): Long =
+        if (settings.adhanSequence) adhanLength(key, settings) + settings.adhanDuaSeconds
+        else ANNOUNCE_SECONDS
+
+    /**
+     * The full-screen takeover around a prayer time: a countdown through the
+     * last minutes before it, the adhan itself for as long as the muezzin
+     * needs, then the short dua that follows. Null outside those windows,
+     * when the board shows the prayer table as usual.
+     *
+     * Like every other takeover this is a pure function of the clock, so a
+     * board that reboots mid-adhan comes back into the right stage.
+     */
+    private fun adhanSequenceFor(
+        now: LocalDateTime,
+        today: LocalDate,
+        slots: List<PrayerSlot>,
+        settings: Settings,
+        clockSuspect: Boolean,
+    ): AdhanSequence? {
+        for (slot in slots) {
+            if (slot.key !in PRAYER_KEYS) continue
+            val at = slot.time.atDate(today)
+
+            // Sequence off: the board keeps the plain one-minute
+            // "Koha e Namazit të ..." announcement it has always shown.
+            if (!settings.adhanSequence) {
+                val end = at.plusSeconds(ANNOUNCE_SECONDS)
+                if (!now.isBefore(at) && now.isBefore(end)) {
+                    return AdhanSequence(AdhanPhase.ADHAN, slot, Duration.between(now, end))
+                }
+                continue
+            }
+
+            val adhanEnd = at.plusSeconds(adhanLength(slot.key, settings))
+            val duaEnd = adhanEnd.plusSeconds(settings.adhanDuaSeconds.toLong())
+            // A countdown is only as trustworthy as the clock behind it: while
+            // the TV time is provably wrong, the board skips it rather than
+            // tick down to an adhan that will not come. The announcement
+            // itself still runs, as it always has.
+            val countdownStart = at.minusMinutes(settings.preAdhanMinutes.toLong())
+            if (settings.preAdhanMinutes > 0 && !clockSuspect &&
+                !now.isBefore(countdownStart) && now.isBefore(at)
+            ) {
+                return AdhanSequence(AdhanPhase.COUNTDOWN, slot, Duration.between(now, at))
+            }
+            if (!now.isBefore(at) && now.isBefore(adhanEnd)) {
+                return AdhanSequence(AdhanPhase.ADHAN, slot, Duration.between(now, adhanEnd))
+            }
+            if (!now.isBefore(adhanEnd) && now.isBefore(duaEnd)) {
+                return AdhanSequence(AdhanPhase.DUA, slot, Duration.between(now, duaEnd))
+            }
+        }
+        return null
     }
 
     /**
@@ -489,6 +561,16 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { settingsRepository.setShowDailyQuotes(value) }
     fun setRamadanMode(value: Boolean) =
         viewModelScope.launch { settingsRepository.setRamadanMode(value) }
+    fun setAdhanSequence(value: Boolean) =
+        viewModelScope.launch { settingsRepository.setAdhanSequence(value) }
+    fun setPreAdhanMinutes(value: Int) =
+        viewModelScope.launch { settingsRepository.setPreAdhanMinutes(value.coerceIn(0, 10)) }
+    fun setAdhanSeconds(key: PrayerKey, seconds: Int) =
+        viewModelScope.launch {
+            settingsRepository.setAdhanSeconds(key, seconds.coerceIn(30, 420))
+        }
+    fun setAdhanDuaSeconds(value: Int) =
+        viewModelScope.launch { settingsRepository.setAdhanDuaSeconds(value.coerceIn(30, 60)) }
 
     private companion object {
         const val RESYNC_INTERVAL_MS = 60 * 60_000L
@@ -507,5 +589,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
         const val CLOCK_SLACK_MS = 10 * 60_000L
+        // Length of the plain announcement used when the adhan sequence is
+        // switched off, in seconds.
+        const val ANNOUNCE_SECONDS = 60L
     }
 }

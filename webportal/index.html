@@ -227,6 +227,31 @@
     </div>
 
     <div class="card">
+      <h2>Ezani</h2>
+      <p class="hint">Para kohës së namazit tabela shfaqet me numërim, pastaj me
+        "Ezani i …" sa zgjat ezani, pastaj me duanë e ezanit — dhe kthehet te
+        tabela e kohëve. Kohëzgjatjen e ezanit matja njëherë muezinit tuaj:
+        secili e thotë me ritmin e vet.</p>
+      <div class="row">
+        <div>
+          <label for="adhanSequence">Ekranet e ezanit</label>
+          <select id="adhanSequence">
+            <option value="true">Ndezur</option>
+            <option value="false">Fikur</option>
+          </select>
+        </div>
+        <div>
+          <label for="preAdhanMinutes">Numërimi para ezanit</label>
+          <select id="preAdhanMinutes"></select>
+        </div>
+      </div>
+      <label for="adhanDuaSeconds">Kohëzgjatja e duasë së ezanit</label>
+      <select id="adhanDuaSeconds"></select>
+      <label>Kohëzgjatja e ezanit (minuta:sekonda)</label>
+      <div class="grid3" id="adhanDurations"></div>
+    </div>
+
+    <div class="card">
       <h2>Përshtatja e kohëve (± minuta)</h2>
       <p class="hint">Korrigjim mbi kohët e takvimit, −60 deri +60 minuta.</p>
       <div class="grid3" id="adjustments"></div>
@@ -311,6 +336,15 @@ const PRAYERS = {
   FAJR: "Sabahut", DHUHR: "Drekës", ASR: "Ikindisë",
   MAGHRIB: "Akshamit", ISHA: "Jacisë",
 };
+// Prayers announced full-screen, with the app's default adhan lengths in
+// seconds (Fajr carries the extra call, Maghrib is traditionally hurried).
+const ADHAN_PRAYERS = {
+  FAJR: "Sabahu", DHUHR: "Dreka", ASR: "Ikindia",
+  MAGHRIB: "Akshami", ISHA: "Jacia",
+};
+const DEFAULT_ADHAN_SECONDS = {
+  FAJR: 210, DHUHR: 180, ASR: 180, MAGHRIB: 120, ISHA: 180,
+};
 const ADJUST_PRAYERS = {
   FAJR: "Sabahu", SUNRISE: "Lindja e Diellit", DHUHR: "Dreka",
   ASR: "Ikindia", MAGHRIB: "Akshami", ISHA: "Jacia",
@@ -320,7 +354,8 @@ const SIMPLE_FIELDS = ["mosqueName", "place", "city", "language",
   "theme", "themeRotation", "nightMode", "showDailyQuotes", "ramadanMode",
   "announcement1", "announcement2", "announcement1Until", "announcement2Until",
   "lectureTitle", "lectureDay", "lecturePrayer",
-  "jumuahMinutes", "khutbahMinutes", "hijriOffset"];
+  "jumuahMinutes", "khutbahMinutes", "hijriOffset",
+  "adhanSequence", "preAdhanMinutes", "adhanDuaSeconds"];
 
 // The app's own defaults, used when a board document (created by an older
 // app version) is missing a field — never fall back to the first <option>.
@@ -333,6 +368,7 @@ const DEFAULTS = {
   announcement1Until: "", announcement2Until: "",
   lectureTitle: "Ligjërata javore", lectureDay: "OFF", lecturePrayer: "MAGHRIB",
   jumuahMinutes: "-1", khutbahMinutes: "20", hijriOffset: "0",
+  adhanSequence: "true", preAdhanMinutes: "1", adhanDuaSeconds: "45",
 };
 
 function fillSelect(id, options) {
@@ -359,6 +395,42 @@ for (let m = 12 * 60; m <= 15 * 60; m += 5) {
 }
 const khutbah = $("khutbahMinutes");
 for (let m = 5; m <= 45; m += 5) khutbah.add(new Option(`${m} min`, String(m)));
+
+const preAdhan = $("preAdhanMinutes");
+preAdhan.add(new Option("Fikur", "0"));
+for (let m = 1; m <= 10; m += 1) preAdhan.add(new Option(`${m} min`, String(m)));
+const adhanDua = $("adhanDuaSeconds");
+for (const sec of [30, 45, 60]) adhanDua.add(new Option(`${sec} sek`, String(sec)));
+
+const ADHAN_MIN_SECONDS = 30;
+const ADHAN_MAX_SECONDS = 420;
+const ADHAN_STEP_SECONDS = 15;
+
+function snapAdhanSeconds(value) {
+  const seconds = Number.isFinite(value) ? value : ADHAN_MIN_SECONDS;
+  const clamped = Math.max(ADHAN_MIN_SECONDS, Math.min(ADHAN_MAX_SECONDS, seconds));
+  return Math.round(clamped / ADHAN_STEP_SECONDS) * ADHAN_STEP_SECONDS;
+}
+
+// Per-prayer adhan length, in the 15-second steps the TV settings use.
+function adhanSecondsSelect(key) {
+  const select = document.createElement("select");
+  select.id = "adhan_" + key;
+  for (let sec = ADHAN_MIN_SECONDS; sec <= ADHAN_MAX_SECONDS; sec += ADHAN_STEP_SECONDS) {
+    const label = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    select.add(new Option(label, String(sec)));
+  }
+  return select;
+}
+const adhanBox = $("adhanDurations");
+for (const [key, label] of Object.entries(ADHAN_PRAYERS)) {
+  const cell = document.createElement("div");
+  const caption = document.createElement("label");
+  caption.htmlFor = "adhan_" + key;
+  caption.textContent = label;
+  cell.append(caption, adhanSecondsSelect(key));
+  adhanBox.appendChild(cell);
+}
 
 // Per-prayer adjustment inputs.
 const adjBox = $("adjustments");
@@ -421,6 +493,8 @@ let boardRef = null;
 SIMPLE_FIELDS.forEach((f) => $(f).addEventListener("input", () => { dirty = true; }));
 Object.keys(ADJUST_PRAYERS).forEach((k) =>
   $("adj_" + k).addEventListener("input", () => { dirty = true; }));
+Object.keys(ADHAN_PRAYERS).forEach((k) =>
+  $("adhan_" + k).addEventListener("input", () => { dirty = true; }));
 
 function status(message, cls) {
   const el = $("status");
@@ -436,6 +510,14 @@ function fillForm(data) {
   const adjustments = data.adjustments || {};
   for (const key of Object.keys(ADJUST_PRAYERS)) {
     $("adj_" + key).value = String(adjustments[key] ?? 0);
+  }
+  const adhanSeconds = data.adhanSeconds || {};
+  for (const key of Object.keys(ADHAN_PRAYERS)) {
+    // Snapped onto the dropdown's own 15-second grid: a value from
+    // elsewhere that falls between two options would blank the control.
+    $("adhan_" + key).value = String(snapAdhanSeconds(
+      adhanSeconds[key] ?? DEFAULT_ADHAN_SECONDS[key],
+    ));
   }
   dailyQuotes = (data.dailyQuotes || []).map((q) => ({
     text: q.text || "", source: q.source || "", arabic: q.arabic || "",
@@ -488,6 +570,13 @@ async function save() {
     const value = parseInt($("adj_" + key).value, 10);
     adjustments[key] = Number.isFinite(value) ? Math.max(-60, Math.min(60, value)) : 0;
   }
+  const adhanSeconds = {};
+  for (const key of Object.keys(ADHAN_PRAYERS)) {
+    const value = parseInt($("adhan_" + key).value, 10);
+    adhanSeconds[key] = Number.isFinite(value)
+      ? snapAdhanSeconds(value)
+      : DEFAULT_ADHAN_SECONDS[key];
+  }
   try {
     await setDoc(boardRef, {
       mosqueName: $("mosqueName").value.trim(),
@@ -512,6 +601,10 @@ async function save() {
       khutbahMinutes: parseInt($("khutbahMinutes").value, 10),
       hijriOffset: parseInt($("hijriOffset").value, 10),
       adjustments,
+      adhanSequence: $("adhanSequence").value === "true",
+      preAdhanMinutes: parseInt($("preAdhanMinutes").value, 10),
+      adhanDuaSeconds: parseInt($("adhanDuaSeconds").value, 10),
+      adhanSeconds,
       dailyQuotes: cleanQuotes(dailyQuotes),
       khutbahQuotes: cleanQuotes(khutbahQuotes),
     }, { merge: true });

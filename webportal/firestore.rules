@@ -29,6 +29,8 @@ service cloud.firestore {
              'announcement1Until', 'announcement2Until',
              'lectureTitle', 'lectureDay', 'lecturePrayer',
              'jumuahMinutes', 'khutbahMinutes', 'hijriOffset',
+             'adhanSequence', 'preAdhanMinutes', 'adhanDuaSeconds',
+             'adhanSeconds',
              'adjustments', 'dailyQuotes', 'khutbahQuotes',
              'heartbeat', 'boardTimeEpochMs', 'clockSynced', 'appVersion',
            ]);

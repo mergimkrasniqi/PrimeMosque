@@ -27,6 +27,26 @@ val ADJUSTABLE_PRAYERS = listOf(
     PrayerKey.ASR, PrayerKey.MAGHRIB, PrayerKey.ISHA,
 )
 
+/** Prayers announced full-screen: countdown, the adhan itself, then the dua. */
+val ADHAN_PRAYERS = listOf(
+    PrayerKey.FAJR, PrayerKey.DHUHR, PrayerKey.ASR, PrayerKey.MAGHRIB, PrayerKey.ISHA,
+)
+
+/**
+ * Default adhan lengths in seconds for the sung makam style used in Kosovo.
+ * Fajr carries the extra call ("as-salatu khayrun min an-nawm") and runs
+ * longest; Maghrib is traditionally hurried, its window being the shortest.
+ * Every muezzin keeps his own pace, so these are only a starting point --
+ * the imam times his own and corrects them in the settings.
+ */
+val DEFAULT_ADHAN_SECONDS = mapOf(
+    PrayerKey.FAJR to 210,
+    PrayerKey.DHUHR to 180,
+    PrayerKey.ASR to 180,
+    PrayerKey.MAGHRIB to 120,
+    PrayerKey.ISHA to 180,
+)
+
 enum class DisplayOrientation(val degrees: Int) {
     LANDSCAPE(0),
     PORTRAIT(90),
@@ -128,6 +148,16 @@ data class Settings(
     // Ramadan mode: during the Hijri month of Ramadan the board pins an
     // iftar/imsak banner and counts down to Iftar.
     val ramadanMode: Boolean = true,
+    // Full-screen adhan sequence: a countdown through the last minutes
+    // before the prayer time, the adhan itself while the muezzin calls, then
+    // the short dua that follows it -- after which the table comes back.
+    val adhanSequence: Boolean = true,
+    // Length of the pre-adhan countdown in minutes (0 = straight to the adhan).
+    val preAdhanMinutes: Int = 1,
+    // Per-prayer adhan length in seconds; see [DEFAULT_ADHAN_SECONDS].
+    val adhanSeconds: Map<PrayerKey, Int> = DEFAULT_ADHAN_SECONDS,
+    // How long the adhan dua stays up afterwards. It is a short dua.
+    val adhanDuaSeconds: Int = 45,
     // Portal-managed quote lists; empty = the bundled texts are used.
     val customDailyQuotes: List<CustomQuote> = emptyList(),
     val customKhutbahQuotes: List<CustomQuote> = emptyList(),
@@ -189,7 +219,13 @@ class SettingsRepository(private val context: Context) {
         val LAST_SEEN_EPOCH_MS = longPreferencesKey("last_seen_epoch_ms")
         val BOARD_CODE = stringPreferencesKey("board_code")
 
+        val ADHAN_SEQUENCE = booleanPreferencesKey("adhan_sequence")
+        val PRE_ADHAN_MINUTES = intPreferencesKey("pre_adhan_minutes")
+        val ADHAN_DUA_SECONDS = intPreferencesKey("adhan_dua_seconds")
+
         fun adjustment(key: PrayerKey) = intPreferencesKey("adjust_${key.name.lowercase()}")
+
+        fun adhanSeconds(key: PrayerKey) = intPreferencesKey("adhan_${key.name.lowercase()}")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.orDefaults().map { p ->
@@ -235,6 +271,12 @@ class SettingsRepository(private val context: Context) {
             ramadanMode = p[Keys.RAMADAN_MODE] ?: defaults.ramadanMode,
             hijriOffset = p[Keys.HIJRI_OFFSET] ?: defaults.hijriOffset,
             showDailyQuotes = p[Keys.DAILY_QUOTES] ?: defaults.showDailyQuotes,
+            adhanSequence = p[Keys.ADHAN_SEQUENCE] ?: defaults.adhanSequence,
+            preAdhanMinutes = p[Keys.PRE_ADHAN_MINUTES] ?: defaults.preAdhanMinutes,
+            adhanSeconds = ADHAN_PRAYERS.associateWith { key ->
+                p[Keys.adhanSeconds(key)] ?: DEFAULT_ADHAN_SECONDS[key] ?: 180
+            },
+            adhanDuaSeconds = p[Keys.ADHAN_DUA_SECONDS] ?: defaults.adhanDuaSeconds,
             customDailyQuotes = p[Keys.CUSTOM_DAILY_QUOTES].toQuotes(),
             customKhutbahQuotes = p[Keys.CUSTOM_KHUTBAH_QUOTES].toQuotes(),
         )
@@ -313,6 +355,18 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setShowDailyQuotes(value: Boolean) =
         context.dataStore.edit { it[Keys.DAILY_QUOTES] = value }
+
+    suspend fun setAdhanSequence(value: Boolean) =
+        context.dataStore.edit { it[Keys.ADHAN_SEQUENCE] = value }
+
+    suspend fun setPreAdhanMinutes(value: Int) =
+        context.dataStore.edit { it[Keys.PRE_ADHAN_MINUTES] = value }
+
+    suspend fun setAdhanSeconds(key: PrayerKey, seconds: Int) =
+        context.dataStore.edit { it[Keys.adhanSeconds(key)] = seconds }
+
+    suspend fun setAdhanDuaSeconds(value: Int) =
+        context.dataStore.edit { it[Keys.ADHAN_DUA_SECONDS] = value }
 
     suspend fun setCustomDailyQuotes(value: List<CustomQuote>) =
         context.dataStore.edit { it[Keys.CUSTOM_DAILY_QUOTES] = quotesJson.encodeToString(value) }

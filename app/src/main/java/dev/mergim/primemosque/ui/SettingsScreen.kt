@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.mergim.primemosque.data.ADHAN_PRAYERS
 import dev.mergim.primemosque.data.ADJUSTABLE_PRAYERS
 import dev.mergim.primemosque.data.AppLanguage
 import dev.mergim.primemosque.data.AppTheme
@@ -61,7 +62,9 @@ import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.PrayerKey
 import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 
-private enum class SettingsSubPage { MAIN, MOSQUE, DISPLAY, FRIDAY, LECTURE, ADJUSTMENTS, ANNOUNCEMENTS }
+private enum class SettingsSubPage {
+    MAIN, MOSQUE, DISPLAY, ADHAN, FRIDAY, LECTURE, ADJUSTMENTS, ANNOUNCEMENTS
+}
 
 @Composable
 fun SettingsScreen(
@@ -75,6 +78,7 @@ fun SettingsScreen(
     when (page) {
         SettingsSubPage.MOSQUE -> MosqueSettingsPage(state, strings, viewModel, onBack = backToMain)
         SettingsSubPage.DISPLAY -> DisplaySettingsPage(state, strings, viewModel, onBack = backToMain)
+        SettingsSubPage.ADHAN -> AdhanSettingsPage(state, strings, viewModel, onBack = backToMain)
         SettingsSubPage.FRIDAY -> FridaySettingsPage(state, strings, viewModel, onBack = backToMain)
         SettingsSubPage.LECTURE -> LectureSettingsPage(state, strings, viewModel, onBack = backToMain)
         SettingsSubPage.ADJUSTMENTS -> AdjustmentsSettingsPage(state, strings, viewModel, onBack = backToMain)
@@ -271,11 +275,21 @@ private fun MainSettingsPage(
             "${strings.prayerNames[key] ?: key.name} %+d".format(minutes)
         }
         .ifEmpty { "0" }
+    val adhanSummary = if (!settings.adhanSequence) {
+        strings.switchOff
+    } else {
+        buildString {
+            if (settings.preAdhanMinutes > 0) {
+                append("${settings.preAdhanMinutes} ${strings.minutesShort} • ")
+            }
+            append(strings.switchOn)
+        }
+    }
     val announcementsSummary = listOf(settings.announcement1, settings.announcement2)
         .count { it.isNotBlank() }
         .toString()
 
-    SettingsPage(title = strings.settingsTitle, rowCount = 8) { rowModifier ->
+    SettingsPage(title = strings.settingsTitle, rowCount = 9) { rowModifier ->
         CyclerRow(
             modifier = rowModifier(0),
             label = strings.languageLabel,
@@ -307,25 +321,31 @@ private fun MainSettingsPage(
         )
         NavRow(
             modifier = rowModifier(4),
+            label = strings.adhanSectionLabel,
+            value = adhanSummary,
+            onOpen = { onOpenPage(SettingsSubPage.ADHAN) },
+        )
+        NavRow(
+            modifier = rowModifier(5),
             label = strings.lectureSectionLabel,
             value = lectureSummary,
             onOpen = { onOpenPage(SettingsSubPage.LECTURE) },
         )
         NavRow(
-            modifier = rowModifier(5),
+            modifier = rowModifier(6),
             label = strings.announcementsLabel,
             value = announcementsSummary,
             onOpen = { onOpenPage(SettingsSubPage.ANNOUNCEMENTS) },
         )
         NavRow(
-            modifier = rowModifier(6),
+            modifier = rowModifier(7),
             label = strings.adjustSectionLabel,
             value = adjustSummary,
             onOpen = { onOpenPage(SettingsSubPage.ADJUSTMENTS) },
         )
         Button(
             onClick = onClose,
-            modifier = rowModifier(7).fillMaxWidth(),
+            modifier = rowModifier(8).fillMaxWidth(),
         ) {
             Text(strings.done, fontSize = 18.sp)
         }
@@ -488,6 +508,70 @@ private fun DisplaySettingsPage(
         Button(
             onClick = onBack,
             modifier = rowModifier(7).fillMaxWidth(),
+        ) {
+            Text(strings.back, fontSize = 18.sp)
+        }
+    }
+}
+
+/** Adhan lengths read as minutes and seconds, e.g. "3:00". */
+private fun formatSeconds(seconds: Int): String = "%d:%02d".format(seconds / 60, seconds % 60)
+
+/**
+ * The full-screen sequence around each prayer time: how long the board
+ * counts down beforehand, how long the muezzin needs for each adhan, and
+ * how long the dua stays up afterwards.
+ */
+@Composable
+private fun AdhanSettingsPage(
+    state: UiState,
+    strings: Strings,
+    viewModel: PrayerViewModel,
+    onBack: () -> Unit,
+) {
+    BackHandler(onBack = onBack)
+
+    val settings = state.settings
+    val duaSeconds = settings.adhanDuaSeconds
+
+    SettingsPage(title = strings.adhanSectionLabel, rowCount = 9) { rowModifier ->
+        CyclerRow(
+            modifier = rowModifier(0),
+            label = strings.adhanSequenceLabel,
+            value = if (settings.adhanSequence) strings.switchOn else strings.switchOff,
+            onPrevious = { viewModel.setAdhanSequence(!settings.adhanSequence) },
+            onNext = { viewModel.setAdhanSequence(!settings.adhanSequence) },
+        )
+        CyclerRow(
+            modifier = rowModifier(1),
+            label = strings.preAdhanLabel,
+            value = if (settings.preAdhanMinutes == 0) strings.switchOff
+            else "${settings.preAdhanMinutes} ${strings.minutesShort}",
+            onPrevious = { viewModel.setPreAdhanMinutes(settings.preAdhanMinutes - 1) },
+            onNext = { viewModel.setPreAdhanMinutes(settings.preAdhanMinutes + 1) },
+        )
+        // One row per prayer: Fajr carries the extra call and Maghrib is
+        // traditionally the quickest, so they rarely share a length.
+        ADHAN_PRAYERS.forEachIndexed { index, key ->
+            val seconds = settings.adhanSeconds[key] ?: 0
+            CyclerRow(
+                modifier = rowModifier(2 + index),
+                label = "${strings.adhanDurationLabel} • ${strings.prayerNames[key] ?: key.name}",
+                value = formatSeconds(seconds),
+                onPrevious = { viewModel.setAdhanSeconds(key, seconds - 15) },
+                onNext = { viewModel.setAdhanSeconds(key, seconds + 15) },
+            )
+        }
+        CyclerRow(
+            modifier = rowModifier(7),
+            label = strings.adhanDuaDurationLabel,
+            value = "$duaSeconds ${strings.secondsShort}",
+            onPrevious = { viewModel.setAdhanDuaSeconds(duaSeconds - 15) },
+            onNext = { viewModel.setAdhanDuaSeconds(duaSeconds + 15) },
+        )
+        Button(
+            onClick = onBack,
+            modifier = rowModifier(8).fillMaxWidth(),
         ) {
             Text(strings.back, fontSize = 18.sp)
         }

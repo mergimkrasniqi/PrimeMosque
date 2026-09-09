@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.ui.AdhanCountdownScreen
+import dev.mergim.primemosque.ui.AdhanDuaScreen
+import dev.mergim.primemosque.ui.AdhanPhase
 import dev.mergim.primemosque.ui.AnnouncementScreen
 import dev.mergim.primemosque.ui.DisplayScreen
 import dev.mergim.primemosque.ui.KhutbahScreen
@@ -82,7 +85,7 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
     PrimeMosqueTheme(theme = if (nightSaver) state.theme.darkVariant else state.theme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             RotatedLayout(degrees = orientation.degrees) {
-                val announce = state.announce
+                val adhan = state.adhan
                 when {
                     // First-run setup wizard, once settings have loaded.
                     state.loaded && !state.settings.setupDone -> SetupScreen(
@@ -97,11 +100,18 @@ fun PrimeMosqueApp(viewModel: PrayerViewModel = viewModel()) {
                         viewModel = viewModel,
                         onClose = { showSettings = false },
                     )
-                    announce != null -> AnnouncementScreen(
-                        slot = announce,
-                        state = state,
-                        strings = strings,
-                    )
+                    // The full-screen sequence around a prayer time:
+                    // countdown, the adhan itself, then its dua.
+                    adhan != null -> when (adhan.phase) {
+                        AdhanPhase.COUNTDOWN ->
+                            AdhanCountdownScreen(adhan, state, strings) { showSettings = true }
+
+                        AdhanPhase.ADHAN ->
+                            AnnouncementScreen(adhan, state, strings) { showSettings = true }
+
+                        AdhanPhase.DUA ->
+                            AdhanDuaScreen(state, strings) { showSettings = true }
+                    }
                     state.khutbah -> KhutbahScreen(
                         state = state,
                         strings = strings,

@@ -131,6 +131,10 @@ object RemoteControl {
         "khutbahMinutes" to s.khutbahMinutes,
         "hijriOffset" to s.hijriOffset,
         "adjustments" to s.prayerAdjustments.entries.associate { it.key.name to it.value },
+        "adhanSequence" to s.adhanSequence,
+        "preAdhanMinutes" to s.preAdhanMinutes,
+        "adhanDuaSeconds" to s.adhanDuaSeconds,
+        "adhanSeconds" to s.adhanSeconds.entries.associate { it.key.name to it.value },
         "dailyQuotes" to s.customDailyQuotes.map { quoteMap(it) },
         "khutbahQuotes" to s.customKhutbahQuotes.map { quoteMap(it) },
         "heartbeat" to FieldValue.serverTimestamp(),
@@ -184,6 +188,19 @@ object RemoteControl {
                 ?: return@forEach
             val minutes = (rawValue as? Number)?.toInt() ?: return@forEach
             repository.setPrayerAdjustment(key, minutes.coerceIn(-60, 60))
+        }
+        doc.getBoolean("adhanSequence")?.let { repository.setAdhanSequence(it) }
+        doc.getLong("preAdhanMinutes")
+            ?.let { repository.setPreAdhanMinutes(it.toInt().coerceIn(0, 10)) }
+        doc.getLong("adhanDuaSeconds")
+            ?.let { repository.setAdhanDuaSeconds(it.toInt().coerceIn(30, 60)) }
+        (doc.get("adhanSeconds") as? Map<*, *>)?.forEach { (rawKey, rawValue) ->
+            val key = (rawKey as? String)
+                ?.let { runCatching { PrayerKey.valueOf(it) }.getOrNull() }
+                ?.takeIf { it in ADHAN_PRAYERS }
+                ?: return@forEach
+            val seconds = (rawValue as? Number)?.toInt() ?: return@forEach
+            repository.setAdhanSeconds(key, seconds.coerceIn(30, 420))
         }
         doc.get("dailyQuotes")?.let { repository.setCustomDailyQuotes(parseQuotes(it)) }
         doc.get("khutbahQuotes")?.let { repository.setCustomKhutbahQuotes(parseQuotes(it)) }

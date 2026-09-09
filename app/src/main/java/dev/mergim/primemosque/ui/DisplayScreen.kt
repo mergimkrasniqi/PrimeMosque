@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -816,51 +817,247 @@ private fun PrayerCard(
     }
 }
 
-/**
- * Full-screen announcement shown for one minute from the moment a prayer
- * time arrives ("Koha e Namazit të ...").
- */
-@Composable
-fun AnnouncementScreen(slot: PrayerSlot, state: UiState, strings: Strings) {
-    val palette = LocalBoardPalette.current
-    val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-    val name = if (friday && slot.key == PrayerKey.DHUHR) {
+/** Minutes and seconds, for the short pre-adhan countdown. */
+private fun Duration.asShortCountdown(): String =
+    "%d:%02d".format(toMinutes(), seconds % 60)
+
+/** The prayer's name in the form the announcement templates expect. */
+private fun announceName(slot: PrayerSlot, state: UiState, strings: Strings): String =
+    if (state.now.dayOfWeek == DayOfWeek.FRIDAY && slot.key == PrayerKey.DHUHR) {
         strings.fridayDhuhrAnnounceName
     } else {
         strings.announceNames[slot.key] ?: slot.key.name
     }
+
+/**
+ * Shared frame for the three full-screen stages around a prayer time. The
+ * wall clock stays in the corner throughout: for the several minutes the
+ * table is away, someone walking in still needs to know the time.
+ *
+ * The settings key works here too. The sequence owns the screen for minutes
+ * at a time, and an imam reaching for the remote should never have to wait
+ * it out to get at the settings.
+ */
+@Composable
+private fun TakeoverFrame(
+    state: UiState,
+    onOpenSettings: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val palette = LocalBoardPalette.current
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(palette.bgTop, palette.bgBottom))),
+            .background(Brush.verticalGradient(listOf(palette.bgTop, palette.bgBottom)))
+            .focusRequester(focusRequester)
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter ||
+                        event.key == Key.Menu)
+                ) {
+                    onOpenSettings()
+                    true
+                } else {
+                    false
+                }
+            }
+            .focusable(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(horizontal = 32.dp),
-        ) {
+            content = content,
+        )
+        Text(
+            text = state.now.toLocalTime().format(timeFormatter),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(28.dp),
+        )
+    }
+}
+
+/**
+ * Full-screen countdown through the last minutes before the adhan, so the
+ * congregation can see exactly how long is left to get to the mosque.
+ */
+@Composable
+fun AdhanCountdownScreen(
+    sequence: AdhanSequence,
+    state: UiState,
+    strings: Strings,
+    onOpenSettings: () -> Unit,
+) {
+    val palette = LocalBoardPalette.current
+    val slot = sequence.slot
+    TakeoverFrame(state, onOpenSettings) {
+        Text(
+            text = strings.preAdhanTitle,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 28.sp,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(20.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = prayerIcon(slot.key),
                 contentDescription = null,
                 tint = palette.accent,
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier.size(48.dp),
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.width(16.dp))
             Text(
-                text = strings.announceTemplate.format(name),
+                text = strings.adhanTemplate.format(announceName(slot, state, strings)),
                 color = palette.accent,
-                fontSize = 46.sp,
-                lineHeight = 58.sp,
+                fontSize = 44.sp,
+                lineHeight = 54.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(32.dp))
+        }
+        Spacer(Modifier.height(28.dp))
+        Text(
+            text = sequence.remaining.asShortCountdown(),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 130.sp,
+            lineHeight = 140.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = slot.time.format(timeFormatter),
+            color = MaterialTheme.colorScheme.secondary,
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(Modifier.height(28.dp))
+        Text(
+            text = strings.preAdhanNote,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 22.sp,
+            fontStyle = FontStyle.Italic,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/**
+ * Full-screen announcement while the muezzin calls the adhan ("Ezani i
+ * Drekës"), or — with the sequence switched off — the plain one-minute
+ * notice that the prayer time has arrived.
+ */
+@Composable
+fun AnnouncementScreen(
+    sequence: AdhanSequence,
+    state: UiState,
+    strings: Strings,
+    onOpenSettings: () -> Unit,
+) {
+    val palette = LocalBoardPalette.current
+    val slot = sequence.slot
+    val name = announceName(slot, state, strings)
+    val title = if (state.settings.adhanSequence) {
+        strings.adhanTemplate.format(name)
+    } else {
+        strings.announceTemplate.format(name)
+    }
+    TakeoverFrame(state, onOpenSettings) {
+        Icon(
+            imageVector = prayerIcon(slot.key),
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(72.dp),
+        )
+        Spacer(Modifier.height(32.dp))
+        Text(
+            text = title,
+            color = palette.accent,
+            fontSize = 46.sp,
+            lineHeight = 58.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(32.dp))
+        Text(
+            text = slot.time.format(timeFormatter),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 88.sp,
+            lineHeight = 96.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+/**
+ * The dua recited once the muezzin has finished, shown briefly before the
+ * board returns to the prayer table: Arabic, transliteration to read along
+ * with, and the translation.
+ */
+@Composable
+fun AdhanDuaScreen(state: UiState, strings: Strings, onOpenSettings: () -> Unit) {
+    val palette = LocalBoardPalette.current
+    val dua = strings.adhanDua
+    val shape = RoundedCornerShape(24.dp)
+    TakeoverFrame(state, onOpenSettings) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = null,
+                tint = palette.accent,
+                modifier = Modifier.size(36.dp),
+            )
+            Spacer(Modifier.width(14.dp))
             Text(
-                text = slot.time.format(timeFormatter),
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 88.sp,
-                lineHeight = 96.sp,
+                text = strings.adhanDuaTitle,
+                color = palette.accent,
+                fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.height(28.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .widthIn(max = 1000.dp)
+                .background(palette.cardHighlight, shape)
+                .border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+                .padding(horizontal = 40.dp, vertical = 32.dp),
+        ) {
+            Text(
+                text = dua.arabic,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 34.sp,
+                lineHeight = 58.sp,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = dua.transliteration,
+                color = palette.accent,
+                fontSize = 24.sp,
+                lineHeight = 34.sp,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = dua.translation,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 24.sp,
+                lineHeight = 34.sp,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = dua.source,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 17.sp,
             )
         }
     }
