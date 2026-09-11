@@ -3,6 +3,8 @@ package dev.mergim.primemosque.ui
 import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -125,6 +127,13 @@ private fun effectiveQuotes(
 
 /** Slots rendered inside another prayer's field instead of as their own row. */
 private val subSlotKeys = setOf(PrayerKey.IMSAK, PrayerKey.SUNRISE, PrayerKey.ZAWAL)
+
+/**
+ * How long a rotating card takes to give way to its next entry. The board
+ * is read from across a room and each entry stands for 30 seconds, so the
+ * change is an unhurried dissolve rather than a cut.
+ */
+private const val CARD_TRANSITION_MS = 700
 
 private fun subTimesFor(
     slot: PrayerSlot,
@@ -644,44 +653,58 @@ private fun NoticeCard(
     modifier: Modifier = Modifier,
     scale: Float = 1f,
 ) {
-    val notices = state.notices
+    // Only notices the current language can actually render take part in the
+    // rotation, so the card is never framed around nothing.
+    val notices = state.notices.filter { strings.noticeTexts[it.key] != null }
     if (notices.isEmpty()) return
     val notice = notices[(state.now.toLocalTime().toSecondOfDay() / 30) % notices.size]
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(16.dp)
-    Crossfade(targetState = notice, label = "notice", modifier = modifier) { active ->
-        val text = strings.noticeTexts[active.key] ?: return@Crossfade
-        val body = active.custom
-            ?: active.arg?.let { text.body.format(it) }
-            ?: text.body
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(palette.cardHighlight, shape)
-                .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
-                .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = noticeIcon(active.key),
-                contentDescription = null,
-                tint = palette.accent,
-                modifier = Modifier.size(34.dp * scale),
-            )
-            Spacer(Modifier.width(16.dp * scale))
-            Column {
-                Text(
-                    text = text.title,
-                    color = palette.accent,
-                    fontSize = 20.sp * scale,
-                    fontWeight = FontWeight.Bold,
+    // Frame outside the crossfade, as on the quote card: the notice text
+    // dissolves in place and the card's height glides between a one-line
+    // reminder and a three-line one, instead of snapping.
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
+            .animateContentSize(tween(CARD_TRANSITION_MS))
+            .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
+    ) {
+        Crossfade(
+            targetState = notice,
+            animationSpec = tween(CARD_TRANSITION_MS),
+            label = "notice",
+        ) { active ->
+            val text = strings.noticeTexts[active.key] ?: return@Crossfade
+            val body = active.custom
+                ?: active.arg?.let { text.body.format(it) }
+                ?: text.body
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = noticeIcon(active.key),
+                    contentDescription = null,
+                    tint = palette.accent,
+                    modifier = Modifier.size(34.dp * scale),
                 )
-                Text(
-                    text = body,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 17.sp * scale,
-                    lineHeight = 22.sp * scale,
-                )
+                Spacer(Modifier.width(16.dp * scale))
+                Column {
+                    Text(
+                        text = text.title,
+                        color = palette.accent,
+                        fontSize = 20.sp * scale,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = body,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 17.sp * scale,
+                        lineHeight = 22.sp * scale,
+                    )
+                }
             }
         }
     }
@@ -1166,39 +1189,52 @@ fun KhutbahScreen(state: UiState, strings: Strings, onOpenSettings: () -> Unit) 
 private fun QuoteCard(quote: KhutbahQuote, modifier: Modifier = Modifier, scale: Float = 1f) {
     val palette = LocalBoardPalette.current
     val shape = RoundedCornerShape(24.dp)
-    Crossfade(targetState = quote, label = "quote", modifier = modifier) { q ->
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(palette.cardHighlight, shape)
-                .border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
-                .padding(horizontal = 32.dp * scale, vertical = 24.dp * scale),
-        ) {
-            q.arabic?.let { arabic ->
+    // The card's frame sits outside the crossfade on purpose: only the text
+    // dissolves, so the card itself never blinks between quotes. Its height
+    // glides rather than snapping, which the collection needs now that a
+    // quote can be one line or a ten-line narration.
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+            .animateContentSize(tween(CARD_TRANSITION_MS))
+            .padding(horizontal = 32.dp * scale, vertical = 24.dp * scale),
+    ) {
+        Crossfade(
+            targetState = quote,
+            animationSpec = tween(CARD_TRANSITION_MS),
+            label = "quote",
+        ) { q ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                q.arabic?.let { arabic ->
+                    Text(
+                        text = arabic,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 28.sp * scale,
+                        lineHeight = 46.sp * scale,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(14.dp * scale))
+                }
                 Text(
-                    text = arabic,
+                    text = boldMarkup(q.text, palette.accent),
                     color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 28.sp * scale,
-                    lineHeight = 46.sp * scale,
+                    fontSize = 22.sp * scale,
+                    lineHeight = 32.sp * scale,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(14.dp * scale))
+                Spacer(Modifier.height(10.dp * scale))
+                Text(
+                    text = q.source,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 15.sp * scale,
+                    textAlign = TextAlign.Center,
+                )
             }
-            Text(
-                text = boldMarkup(q.text, palette.accent),
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 22.sp * scale,
-                lineHeight = 32.sp * scale,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(10.dp * scale))
-            Text(
-                text = q.source,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 15.sp * scale,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
