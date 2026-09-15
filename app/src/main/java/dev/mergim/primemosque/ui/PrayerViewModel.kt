@@ -104,6 +104,11 @@ data class UiState(
     // Daily wisdom break: the prayer table briefly gives way to rotating
     // Qur'an verses and hadiths (khutbah-style card).
     val quotesBreak: Boolean = false,
+    // Which quote the break is showing, counted in elapsed quote slots rather
+    // than in wall-clock ticks. Ticking the clock directly would step the
+    // index by the whole cycle each time, and any step sharing a factor with
+    // the collection size would leave part of the collection never shown.
+    val quoteSlot: Int = 0,
     // Ramadan: active during the Hijri month of Ramadan (if enabled); the
     // board pins today's iftar and the relevant imsak (tomorrow's after
     // iftar has passed) and counts down to Iftar.
@@ -338,6 +343,11 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         val quotesBreak = settings.showDailyQuotes && adhan == null && !khutbah && !night &&
             now.toLocalTime().toSecondOfDay() % QUOTES_CYCLE_SECONDS >= QUOTES_TABLE_SECONDS
 
+        val secondOfDay = now.toLocalTime().toSecondOfDay()
+        val quoteSlot = (secondOfDay / QUOTES_CYCLE_SECONDS) * QUOTE_SLOTS_PER_BREAK +
+            ((secondOfDay % QUOTES_CYCLE_SECONDS - QUOTES_TABLE_SECONDS) / QUOTE_SLOT_SECONDS)
+                .coerceAtLeast(0)
+
         return UiState(
             now = now,
             slots = slots,
@@ -352,6 +362,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             khutbah = khutbah,
             night = night,
             quotesBreak = quotesBreak,
+            quoteSlot = quoteSlot,
             ramadan = ramadan,
             iftarTime = iftarTime,
             imsakTime = imsakTime,
@@ -582,11 +593,16 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         const val LANGUAGE_BLOCK_SECONDS = 2 * 60
         // Month index of Ramadan in the Hijri calendar.
         const val HIJRI_RAMADAN = 9
-        // Daily wisdom cycle: 3 min of the prayer table, then 3 min of
-        // verses/hadiths (six quotes at the 30 s rotation).
-        const val QUOTES_TABLE_SECONDS = 3 * 60
-        const val QUOTES_BREAK_SECONDS = 3 * 60
+        // Daily wisdom cycle: 30 s of the prayer table, then a single 30 s
+        // quote, alternating all day. Nobody waits more than half a minute
+        // for the times, and a passer-by who only glances on the way in still
+        // has a fair chance of catching a verse.
+        const val QUOTES_TABLE_SECONDS = 30
+        const val QUOTES_BREAK_SECONDS = 30
         const val QUOTES_CYCLE_SECONDS = QUOTES_TABLE_SECONDS + QUOTES_BREAK_SECONDS
+        // One quote fills a slot; a break is a whole number of them.
+        const val QUOTE_SLOT_SECONDS = 30
+        const val QUOTE_SLOTS_PER_BREAK = QUOTES_BREAK_SECONDS / QUOTE_SLOT_SECONDS
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
         const val CLOCK_SLACK_MS = 10 * 60_000L

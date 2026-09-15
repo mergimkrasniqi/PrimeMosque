@@ -298,24 +298,35 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         Spacer(Modifier.weight(1f))
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
         // Daily wisdom break: the table steps aside for the rotating quotes.
-        if (state.quotesBreak) {
-            DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = scale)
-        } else {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp * scale),
-            ) {
-                state.slots
-                    .filter { it.key !in subSlotKeys }
-                    .forEach { slot ->
-                        PrayerRow(
-                            slot, strings,
-                            friday = friday,
-                            current = slot.key == state.current,
-                            subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
-                            scale = scale,
-                        )
-                    }
+        // The two dissolve into each other — the swap comes round every 30
+        // seconds, and a hard cut that often would read as flicker.
+        Crossfade(
+            targetState = state.quotesBreak,
+            animationSpec = tween(CARD_TRANSITION_MS),
+            label = "board",
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(tween(CARD_TRANSITION_MS)),
+        ) { showQuotes ->
+            if (showQuotes) {
+                DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = scale)
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp * scale),
+                ) {
+                    state.slots
+                        .filter { it.key !in subSlotKeys }
+                        .forEach { slot ->
+                            PrayerRow(
+                                slot, strings,
+                                friday = friday,
+                                current = slot.key == state.current,
+                                subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
+                                scale = scale,
+                            )
+                        }
+                }
             }
         }
         Spacer(Modifier.weight(1f))
@@ -395,30 +406,40 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
             }
         }
         val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        // Daily wisdom break: the table steps aside for the rotating quotes.
-        if (state.quotesBreak) {
-            DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = 0.85f)
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                state.slots
-                    .filter { it.key !in subSlotKeys }
-                    .forEach { slot ->
-                        PrayerCard(
-                            slot = slot,
-                            strings = strings,
-                            friday = friday,
-                            current = slot.key == state.current,
-                            subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                        )
-                    }
+        // Daily wisdom break: the table steps aside for the rotating quotes,
+        // dissolving rather than cutting (see the portrait board).
+        Crossfade(
+            targetState = state.quotesBreak,
+            animationSpec = tween(CARD_TRANSITION_MS),
+            label = "board",
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(tween(CARD_TRANSITION_MS)),
+        ) { showQuotes ->
+            if (showQuotes) {
+                DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = 0.85f)
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    state.slots
+                        .filter { it.key !in subSlotKeys }
+                        .forEach { slot ->
+                            PrayerCard(
+                                slot = slot,
+                                strings = strings,
+                                friday = friday,
+                                current = slot.key == state.current,
+                                subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(),
+                            )
+                        }
+                }
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -1253,7 +1274,7 @@ private fun DailyQuoteBlock(
     val quotes = effectiveQuotes(state.settings.customDailyQuotes, strings.dailyQuotes)
     if (quotes.isEmpty()) return
     val palette = LocalBoardPalette.current
-    val quote = quotes[(state.now.toLocalTime().toSecondOfDay() / 30) % quotes.size]
+    val quote = quotes[state.quoteSlot % quotes.size]
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
