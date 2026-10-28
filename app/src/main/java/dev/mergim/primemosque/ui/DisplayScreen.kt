@@ -1271,7 +1271,7 @@ private fun DailyQuoteBlock(
     modifier: Modifier = Modifier,
     scale: Float = 1f,
 ) {
-    val quotes = effectiveQuotes(state.settings.customDailyQuotes, strings.dailyQuotes)
+    val quotes = effectiveQuotes(state.settings.customDailyQuotes, state.dailyQuotes)
     if (quotes.isEmpty()) return
     val palette = LocalBoardPalette.current
     val quote = quotes[state.quoteSlot % quotes.size]

@@ -11,6 +11,7 @@ import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.City
 import dev.mergim.primemosque.data.DEFAULT_ADHAN_SECONDS
 import dev.mergim.primemosque.data.DisplayOrientation
+import dev.mergim.primemosque.data.HadithRepository
 import dev.mergim.primemosque.data.LectureDay
 import dev.mergim.primemosque.data.NightMode
 import dev.mergim.primemosque.data.NtpClock
@@ -109,6 +110,9 @@ data class UiState(
     // index by the whole cycle each time, and any step sharing a factor with
     // the collection size would leave part of the collection never shown.
     val quoteSlot: Int = 0,
+    // Bundled quotes the break rotates through in the board's current
+    // language (the Albanian board mixes in the Rijadus Salihin).
+    val dailyQuotes: List<KhutbahQuote> = emptyList(),
     // Ramadan: active during the Hijri month of Ramadan (if enabled); the
     // board pins today's iftar and the relevant imsak (tomorrow's after
     // iftar has passed) and counts down to Iftar.
@@ -134,6 +138,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repository = PrayerRepository(app)
     private val settingsRepository = SettingsRepository(app)
+
+    // A thousand narrations: parsed on first use, which happens on the
+    // Default dispatcher where the state is built, never on the main thread.
+    // Only those that fit the card are shown; the longest run to pages and
+    // would be clipped mid-sentence, unreadable in a 30 s slot anyway.
+    private val albanianDailyQuotes by lazy {
+        val rijad = runCatching { HadithRepository(app).rijadusSalihin() }
+            .getOrDefault(emptyList())
+            .filter { it.text.length <= MAX_QUOTE_CHARS }
+            .map { KhutbahQuote(it.text, RIJAD_SOURCE) }
+        interleave(stringsFor(AppLanguage.SQ).dailyQuotes, rijad)
+    }
 
     // Kosovo timezone, independent of (possibly wrong) device settings.
     private val zone = ZoneId.of("Europe/Belgrade")
@@ -343,10 +359,22 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         val quotesBreak = settings.showDailyQuotes && adhan == null && !khutbah && !night &&
             now.toLocalTime().toSecondOfDay() % QUOTES_CYCLE_SECONDS >= QUOTES_TABLE_SECONDS
 
+        // Cycles are counted from the epoch rather than from midnight: the
+        // collection outlasts a day's worth of slots, and restarting it each
+        // midnight would replay the same stretch daily while the part that
+        // falls in the night saver never showed at all.
         val secondOfDay = now.toLocalTime().toSecondOfDay()
-        val quoteSlot = (secondOfDay / QUOTES_CYCLE_SECONDS) * QUOTE_SLOTS_PER_BREAK +
+        val quoteCycle = today.toEpochDay() * (SECONDS_PER_DAY / QUOTES_CYCLE_SECONDS) +
+            secondOfDay / QUOTES_CYCLE_SECONDS
+        val quoteSlot = (quoteCycle * QUOTE_SLOTS_PER_BREAK).toInt() +
             ((secondOfDay % QUOTES_CYCLE_SECONDS - QUOTES_TABLE_SECONDS) / QUOTE_SLOT_SECONDS)
                 .coerceAtLeast(0)
+
+        // Mixed congregations: alternate the whole board between the
+        // primary and secondary language in fixed clock-driven blocks.
+        val language = settings.secondaryLanguage
+            ?.takeIf { (secondOfDay / LANGUAGE_BLOCK_SECONDS) % 2 == 1 }
+            ?: settings.language
 
         return UiState(
             now = now,
@@ -363,6 +391,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             night = night,
             quotesBreak = quotesBreak,
             quoteSlot = quoteSlot,
+            dailyQuotes = if (language == AppLanguage.SQ) albanianDailyQuotes
+            else stringsFor(language).dailyQuotes,
             ramadan = ramadan,
             iftarTime = iftarTime,
             imsakTime = imsakTime,
@@ -371,13 +401,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             clockSuspect = clockSuspect,
             theme = themeFor(today, settings),
             boardCode = boardCode,
-            // Mixed congregations: alternate the whole board between the
-            // primary and secondary language in fixed clock-driven blocks.
-            language = settings.secondaryLanguage
-                ?.takeIf {
-                    (now.toLocalTime().toSecondOfDay() / LANGUAGE_BLOCK_SECONDS) % 2 == 1
-                }
-                ?: settings.language,
+            language = language,
         )
     }
 
@@ -603,11 +627,36 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // One quote fills a slot; a break is a whole number of them.
         const val QUOTE_SLOT_SECONDS = 30
         const val QUOTE_SLOTS_PER_BREAK = QUOTES_BREAK_SECONDS / QUOTE_SLOT_SECONDS
+        const val SECONDS_PER_DAY = 24 * 60 * 60
+        const val RIJAD_SOURCE = "Rijadu Salihin"
+        // Longest narration that still fits the portrait card (about ten
+        // lines) with a notice and the footer on screen.
+        const val MAX_QUOTE_CHARS = 400
         // Tolerance before declaring the clock wrong, so small manual
         // corrections or minor drift never trigger the warning.
         const val CLOCK_SLACK_MS = 10 * 60_000L
         // Length of the plain announcement used when the adhan sequence is
         // switched off, in seconds.
         const val ANNOUNCE_SECONDS = 60L
+    }
+}
+
+/**
+ * Spreads [curated] evenly through [collection], so the hand-picked verses
+ * keep coming round between the narrations instead of bunching at one end.
+ */
+private fun interleave(
+    curated: List<KhutbahQuote>,
+    collection: List<KhutbahQuote>,
+): List<KhutbahQuote> {
+    if (curated.isEmpty() || collection.isEmpty()) return curated + collection
+    val every = maxOf(1, collection.size / curated.size)
+    val picks = curated.iterator()
+    return buildList {
+        collection.forEachIndexed { i, quote ->
+            if (i % every == 0 && picks.hasNext()) add(picks.next())
+            add(quote)
+        }
+        picks.forEachRemaining(::add)
     }
 }
