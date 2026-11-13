@@ -639,8 +639,8 @@ private val SQ = Strings(
             "Rijadu Salihin • Muslimi",
         ),
         KhutbahQuote(
-            "O besimtarë! Frikësojuni Allahut dhe bëhuni me ata " +
-                    "që janë të sinqertë (në fjalë dhe në vepra)!.**",
+            "O besimtarë! **Frikësojuni Allahut dhe bëhuni me ata " +
+                    "që janë të sinqertë** (në fjalë dhe në vepra)!",
             "Kur'an, Et-Teube 119",
             arabic = "يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ ٱتَّقُوا۟ ٱللَّهَ وَكُونُوا۟ مَعَ ٱلصَّٰدِقِينَ",
         ),
@@ -776,7 +776,7 @@ private val SQ = Strings(
             "**Me të vërtetë, janë të shpëtuar besimtarët, " +
                     "të cilët janë të përulur në namazin e tyre, **",
             "Kur'an, El-Mu'minun 1-2",
-            arabic = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
+            arabic = "قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
         ),
         KhutbahQuote(
             "Aisheja r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «**Veprat më të " +
@@ -939,6 +939,434 @@ private val SQ = Strings(
                     "më të virtytshme.**",
             "Kur'an, Esh-Shura 43",
             arabic = "وَلَمَن صَبَرَ وَغَفَرَ إِنَّ ذَٰلِكَ لَمِنْ عَزْمِ ٱلْأُمُورِ",
+        ),
+        // Sherif Ahmeti's translation (spelling corrected), Arabic from the
+        // Tanzil Uthmani text, as the verses above.
+        KhutbahQuote(
+            "Thuaj: **Ai, Allahu është Një!** Allahu është mbështetja (Atij i mbështetet " +
+                    "çdo krijesë). As s’ka lindur kë, as nuk është i lindur. **Dhe Atij askush nuk " +
+                    "i është i barabartë.**",
+            "Kur'an, El-Ihlas 1-4",
+            arabic = "قُلْ هُوَ ٱللَّهُ أَحَدٌ ٱللَّهُ ٱلصَّمَدُ لَمْ يَلِدْ وَلَمْ يُولَدْ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ",
+        ),
+        KhutbahQuote(
+            "“**Zoti ynë, mos na i lako zemrat tona pasi na i drejtove**, na dhuro mëshirën" +
+                    " Tënde, pse vetëm Ti je dhuruesi i madh”.",
+            "Kur'an, Ali Imran 8",
+            arabic = "رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً ۚ إِنَّكَ أَنتَ ٱلْوَهَّابُ",
+        ),
+        KhutbahQuote(
+            "E, ka prej tyre asish që thonë: “**Zoti ynë na jep të mira në këtë jetë, të " +
+                    "mira edhe në botën tjetër, dhe na ruaj prej dënimit me zjarr!**”",
+            "Kur'an, El-Bekare 201",
+            arabic = "وَمِنْهُم مَّن يَقُولُ رَبَّنَآ ءَاتِنَا فِى ٱلدُّنْيَا حَسَنَةًۭ وَفِى ٱلْءَاخِرَةِ حَسَنَةًۭ وَقِنَا عَذَابَ ٱلنَّارِ",
+        ),
+        KhutbahQuote(
+            "**Zoti ynë! më fal (gabimet) mua edhe prindërve të mi**, fali edhe të gjithë " +
+                    "besimtarët ditën kur jepet llogaria.",
+            "Kur'an, Ibrahim 41",
+            arabic = "رَبَّنَا ٱغْفِرْ لِى وَلِوَٰلِدَىَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ ٱلْحِسَابُ",
+        ),
+        KhutbahQuote(
+            "Dhe në shenjë mëshire shtrije pranë tyre krahun përulës e respektues dhe " +
+                    "thuaj: “**Zoti im! mëshiroji ata të dy, sikurse më edukuan mua kur isha i " +
+                    "vogël**”.",
+            "Kur'an, El-Isra 24",
+            arabic = "وَٱخْفِضْ لَهُمَا جَنَاحَ ٱلذُّلِّ مِنَ ٱلرَّحْمَةِ وَقُل رَّبِّ ٱرْحَمْهُمَا كَمَا رَبَّيَانِى صَغِيرًۭا",
+        ),
+        KhutbahQuote(
+            "I lartë është Allahu, Sunduesi i vërtetë. Ti mos nxito me Kur’anin para se të " +
+                    "përfundojë shpallja e tij te ti, dhe thuaj: “**Zoti im, më shto dituri!**”",
+            "Kur'an, Ta Ha 114",
+            arabic = "فَتَعَٰلَى ٱللَّهُ ٱلْمَلِكُ ٱلْحَقُّ ۗ وَلَا تَعْجَلْ بِٱلْقُرْءَانِ مِن قَبْلِ أَن يُقْضَىٰٓ إِلَيْكَ وَحْيُهُۥ ۖ وَقُل رَّبِّ زِدْنِى عِلْمًۭا",
+        ),
+        KhutbahQuote(
+            "**O ju që besuat, përkujtoni Allahun sa më shpesh.** Dhe madhëronie Atë " +
+                    "mëngjes e mbrëmje.",
+            "Kur'an, El-Ahzab 41-42",
+            arabic = "يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ ٱذْكُرُوا۟ ٱللَّهَ ذِكْرًۭا كَثِيرًۭا وَسَبِّحُوهُ بُكْرَةًۭ وَأَصِيلًا",
+        ),
+        KhutbahQuote(
+            "Është e vërtetë se Allahu dhe engjëjt e Tij me madhërim e mëshirojnë " +
+                    "Pejgamberin. **O ju që keni besuar, madhëronie pra atë (duke rënë salavatë) " +
+                    "dhe përshëndeteni me selam.**",
+            "Kur'an, El-Ahzab 56",
+            arabic = "إِنَّ ٱللَّهَ وَمَلَٰٓئِكَتَهُۥ يُصَلُّونَ عَلَى ٱلنَّبِىِّ ۚ يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ صَلُّوا۟ عَلَيْهِ وَسَلِّمُوا۟ تَسْلِيمًا",
+        ),
+        KhutbahQuote(
+            "Thuaj: “O robërit e Mi që keni besuar, kini frikë ndaj Zotit tuaj. Ata që bënë" +
+                    " mirë në këtë jetë, kanë të mirë të madhe, e Toka e Allahut është e gjerë, " +
+                    "**ndërsa të durueshmive u jepet shpërblimi i tyre pa masë!**”",
+            "Kur'an, Ez-Zumer 10",
+            arabic = "قُلْ يَٰعِبَادِ ٱلَّذِينَ ءَامَنُوا۟ ٱتَّقُوا۟ رَبَّكُمْ ۚ لِلَّذِينَ أَحْسَنُوا۟ فِى هَٰذِهِ ٱلدُّنْيَا حَسَنَةٌۭ ۗ وَأَرْضُ ٱللَّهِ وَٰسِعَةٌ ۗ إِنَّمَا يُوَفَّى ٱلصَّٰبِرُونَ أَجْرَهُم بِغَيْرِ حِسَابٍۢ",
+        ),
+        KhutbahQuote(
+            "**E mos u dobësoni (fizikisht) dhe mos u dëshpëroni (shpirtërisht)** derisa ju" +
+                    " jeni më të lartit, po qe se jeni besimtarë të sinqertë.",
+            "Kur'an, Ali Imran 139",
+            arabic = "وَلَا تَهِنُوا۟ وَلَا تَحْزَنُوا۟ وَأَنتُمُ ٱلْأَعْلَوْنَ إِن كُنتُم مُّؤْمِنِينَ",
+        ),
+        KhutbahQuote(
+            "Thuaj: “**Neve nuk na godet asgjë tjetër, përveç çka na ka caktuar Allahu**; " +
+                    "Ai është ndihmëtar yni”. Prandaj, vetëm Allahut le t’i mbështeten besimtarët.",
+            "Kur'an, Et-Teube 51",
+            arabic = "قُل لَّن يُصِيبَنَآ إِلَّا مَا كَتَبَ ٱللَّهُ لَنَا هُوَ مَوْلَىٰنَا ۚ وَعَلَى ٱللَّهِ فَلْيَتَوَكَّلِ ٱلْمُؤْمِنُونَ",
+        ),
+        KhutbahQuote(
+            "E, besimtarë të vërtetë janë vetëm ata, **të të cilëve kur përmendet Allahu u " +
+                    "rrëqethen zemrat e tyre, kur u lexohen ajetet e Tij u shtohet besimi**, dhe që" +
+                    " janë të mbështetur vetëm te Zoti i tyre.",
+            "Kur'an, El-Enfal 2",
+            arabic = "إِنَّمَا ٱلْمُؤْمِنُونَ ٱلَّذِينَ إِذَا ذُكِرَ ٱللَّهُ وَجِلَتْ قُلُوبُهُمْ وَإِذَا تُلِيَتْ عَلَيْهِمْ ءَايَٰتُهُۥ زَادَتْهُمْ إِيمَٰنًۭا وَعَلَىٰ رَبِّهِمْ يَتَوَكَّلُونَ",
+        ),
+        KhutbahQuote(
+            "**A menduat se Ne u krijuam kot dhe se nuk do ktheheni ju te Ne?**",
+            "Kur'an, El-Mu'minun 115",
+            arabic = "أَفَحَسِبْتُمْ أَنَّمَا خَلَقْنَٰكُمْ عَبَثًۭا وَأَنَّكُمْ إِلَيْنَا لَا تُرْجَعُونَ",
+        ),
+        KhutbahQuote(
+            "**Unë nuk i krijova xhinët dhe njerëzit për tjetër pos që të më adhurojnë.**",
+            "Kur'an, Edh-Dharijat 56",
+            arabic = "وَمَا خَلَقْتُ ٱلْجِنَّ وَٱلْإِنسَ إِلَّا لِيَعْبُدُونِ",
+        ),
+        KhutbahQuote(
+            "**Ai është që krijoi vdekjen dhe jetën, për t’ju sprovuar se cili prej jush " +
+                    "është më vepërmirë.** Ai është ngadhnjyesi, mëkatëfalësi.",
+            "Kur'an, El-Mulk 2",
+            arabic = "ٱلَّذِى خَلَقَ ٱلْمَوْتَ وَٱلْحَيَوٰةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًۭا ۚ وَهُوَ ٱلْعَزِيزُ ٱلْغَفُورُ",
+        ),
+        KhutbahQuote(
+            "**Secili njeri do të shijojë vdekjen**, e shpërblimet tuaja u plotësohen ditën" +
+                    " e kijametit, e kush shmanget zjarrit e futet në Xhennet, ai ka arritur " +
+                    "shpëtim, e jeta e kësaj bote nuk është tjetër pos një përjetim mashtrues.",
+            "Kur'an, Ali Imran 185",
+            arabic = "كُلُّ نَفْسٍۢ ذَآئِقَةُ ٱلْمَوْتِ ۗ وَإِنَّمَا تُوَفَّوْنَ أُجُورَكُمْ يَوْمَ ٱلْقِيَٰمَةِ ۖ فَمَن زُحْزِحَ عَنِ ٱلنَّارِ وَأُدْخِلَ ٱلْجَنَّةَ فَقَدْ فَازَ ۗ وَمَا ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا مَتَٰعُ ٱلْغُرُورِ",
+        ),
+        KhutbahQuote(
+            "**Falni namazin dhe jepni zekatin**, dhe përuluni (në ruku’) me ata që " +
+                    "përulen.",
+            "Kur'an, El-Bekare 43",
+            arabic = "وَأَقِيمُوا۟ ٱلصَّلَوٰةَ وَءَاتُوا۟ ٱلزَّكَوٰةَ وَٱرْكَعُوا۟ مَعَ ٱلرَّٰكِعِينَ",
+        ),
+        KhutbahQuote(
+            "**Fale namazin kur zbret (nga zeniti) dielli, e deri në errësirën e natës** " +
+                    "dhe duke bërë lutjen (namazin) e agimit. Vërtet, lutja e agimit është e " +
+                    "përcjellur.",
+            "Kur'an, El-Isra 78",
+            arabic = "أَقِمِ ٱلصَّلَوٰةَ لِدُلُوكِ ٱلشَّمْسِ إِلَىٰ غَسَقِ ٱلَّيْلِ وَقُرْءَانَ ٱلْفَجْرِ ۖ إِنَّ قُرْءَانَ ٱلْفَجْرِ كَانَ مَشْهُودًۭا",
+        ),
+        KhutbahQuote(
+            "**Vazhdoni rregullisht namazet (faljet), e edhe atë namazin e mesëm**, dhe " +
+                    "ndaj Allahut të jeni respektues (në namaze).",
+            "Kur'an, El-Bekare 238",
+            arabic = "حَٰفِظُوا۟ عَلَى ٱلصَّلَوَٰتِ وَٱلصَّلَوٰةِ ٱلْوُسْطَىٰ وَقُومُوا۟ لِلَّهِ قَٰنِتِينَ",
+        ),
+        KhutbahQuote(
+            "Dhe ti, jij i durueshëm, se **Allahu nuk ua humb shpërblimin bamirësve.**",
+            "Kur'an, Hud 115",
+            arabic = "وَٱصْبِرْ فَإِنَّ ٱللَّهَ لَا يُضِيعُ أَجْرَ ٱلْمُحْسِنِينَ",
+        ),
+        KhutbahQuote(
+            "**S’ka dyshim se Allahu është me ata që janë të devotshëm** (që ruhen prej të " +
+                    "këqijave) dhe me ata që janë bamirës.",
+            "Kur'an, En-Nahl 128",
+            arabic = "إِنَّ ٱللَّهَ مَعَ ٱلَّذِينَ ٱتَّقَوا۟ وَّٱلَّذِينَ هُم مُّحْسِنُونَ",
+        ),
+        KhutbahQuote(
+            "Thuaj: **Nëse e doni Allahun, atëherë ejani pas meje që Allahu t’ju dojë**, " +
+                    "t’ju falë mëkatet tuaja, se Allahu është që fal shumë, mëshiron shumë.",
+            "Kur'an, Ali Imran 31",
+            arabic = "قُلْ إِن كُنتُمْ تُحِبُّونَ ٱللَّهَ فَٱتَّبِعُونِى يُحْبِبْكُمُ ٱللَّهُ وَيَغْفِرْ لَكُمْ ذُنُوبَكُمْ ۗ وَٱللَّهُ غَفُورٌۭ رَّحِيمٌۭ",
+        ),
+        KhutbahQuote(
+            "**Shembulli i pasurisë së atyre që e japin në rrugën e Allahut është si një " +
+                    "kokërr prej të cilës mbijnë shtatë kallinj**, ndërsa në secilin kalli ka nga " +
+                    "njëqind kokrra. Allahu ia shumëfishon (shpërblimin) atij që dëshiron, Allahu " +
+                    "është Bujar i Madh, i di qëllimet.",
+            "Kur'an, El-Bekare 261",
+            arabic = "مَّثَلُ ٱلَّذِينَ يُنفِقُونَ أَمْوَٰلَهُمْ فِى سَبِيلِ ٱللَّهِ كَمَثَلِ حَبَّةٍ أَنۢبَتَتْ سَبْعَ سَنَابِلَ فِى كُلِّ سُنۢبُلَةٍۢ مِّا۟ئَةُ حَبَّةٍۢ ۗ وَٱللَّهُ يُضَٰعِفُ لِمَن يَشَآءُ ۗ وَٱللَّهُ وَٰسِعٌ عَلِيمٌ",
+        ),
+        KhutbahQuote(
+            "Ne e kemi krijuar njeriun dhe dimë se ç’pëshpërit ai në vetvete dhe **Ne jemi " +
+                    "më afër tij se damari (që rrah) i qafës së tij.**",
+            "Kur'an, Kaf 16",
+            arabic = "وَلَقَدْ خَلَقْنَا ٱلْإِنسَٰنَ وَنَعْلَمُ مَا تُوَسْوِسُ بِهِۦ نَفْسُهُۥ ۖ وَنَحْنُ أَقْرَبُ إِلَيْهِ مِنْ حَبْلِ ٱلْوَرِيدِ",
+        ),
+        KhutbahQuote(
+            "Zoti juaj ka thënë: “**Më thirrni Mua, Unë ju përgjigjem**, e ata që nga " +
+                    "mendjemadhësia i shmangen adhurimit ndaj Meje, do të hyjnë të nënçmuar në " +
+                    "Xhehennem”.",
+            "Kur'an, Gafir 60",
+            arabic = "وَقَالَ رَبُّكُمُ ٱدْعُونِىٓ أَسْتَجِبْ لَكُمْ ۚ إِنَّ ٱلَّذِينَ يَسْتَكْبِرُونَ عَنْ عِبَادَتِى سَيَدْخُلُونَ جَهَنَّمَ دَاخِرِينَ",
+        ),
+        KhutbahQuote(
+            "**Lutnie Zotin tuaj të përulur e në heshtje**, pse Ai nuk i do ata që e " +
+                    "teprojnë.",
+            "Kur'an, El-A'raf 55",
+            arabic = "ٱدْعُوا۟ رَبَّكُمْ تَضَرُّعًۭا وَخُفْيَةً ۚ إِنَّهُۥ لَا يُحِبُّ ٱلْمُعْتَدِينَ",
+        ),
+        KhutbahQuote(
+            "E kur ta kryesh (obligimin), atëbotë mundohu me adhurim (Allahut). **Dhe, " +
+                    "vetëm te Zoti yt përqendro synimin!**",
+            "Kur'an, El-Inshirah 7-8",
+            arabic = "فَإِذَا فَرَغْتَ فَٱنصَبْ وَإِلَىٰ رَبِّكَ فَٱرْغَب",
+        ),
+        KhutbahQuote(
+            "**Zoti yt nuk të ka lënë, as nuk të ka përbuzur.** Dhe se bota e ardhshme " +
+                    "është shumë më e mirë për ty se e para. **E Zoti yt do të japë ty, e ti do të " +
+                    "kënaqesh.**",
+            "Kur'an, Ed-Duha 3-5",
+            arabic = "مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ وَلَلْءَاخِرَةُ خَيْرٌۭ لَّكَ مِنَ ٱلْأُولَىٰ وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰٓ",
+        ),
+        KhutbahQuote(
+            "**E, cilën të mirë të Zotit tuaj po e mohoni** (ju o njerëz dhe ju o xhinë)?",
+            "Kur'an, Er-Rahman 13",
+            arabic = "فَبِأَىِّ ءَالَآءِ رَبِّكُمَا تُكَذِّبَانِ",
+        ),
+        KhutbahQuote(
+            "**Mos iu qas asaj për të cilën nuk ke njohuri**, pse të dëgjuarit, të pamurit " +
+                    "dhe zemra, për të gjitha këto ka përgjegjësi.",
+            "Kur'an, El-Isra 36",
+            arabic = "وَلَا تَقْفُ مَا لَيْسَ لَكَ بِهِۦ عِلْمٌ ۚ إِنَّ ٱلسَّمْعَ وَٱلْبَصَرَ وَٱلْفُؤَادَ كُلُّ أُو۟لَٰٓئِكَ كَانَ عَنْهُ مَسْـُٔولًۭا",
+        ),
+        KhutbahQuote(
+            "**Dhe mos ec nëpër tokë me mburrje**, pse ti as nuk mund ta çash tokën as nuk " +
+                    "mund ta arrish lartësinë e maleve.",
+            "Kur'an, El-Isra 37",
+            arabic = "وَلَا تَمْشِ فِى ٱلْأَرْضِ مَرَحًا ۖ إِنَّكَ لَن تَخْرِقَ ٱلْأَرْضَ وَلَن تَبْلُغَ ٱلْجِبَالَ طُولًۭا",
+        ),
+        KhutbahQuote(
+            "Dhe mos shtrembëro fytyrën tënde prej njerëzve, mos ec nëpër tokë kryelartë, " +
+                    "se **Allahu nuk e do asnjë mendjemadh e që shumë lavdërohet.**",
+            "Kur'an, Lukman 18",
+            arabic = "وَلَا تُصَعِّرْ خَدَّكَ لِلنَّاسِ وَلَا تَمْشِ فِى ٱلْأَرْضِ مَرَحًا ۖ إِنَّ ٱللَّهَ لَا يُحِبُّ كُلَّ مُخْتَالٍۢ فَخُورٍۢ",
+        ),
+        KhutbahQuote(
+            "**Kush vjen me një (punë) të mirë, ai (në ditën e gjykimit) shpërblehet dhjetë" +
+                    " fish**, e kush vjen me (vepër) të keqe, ai ndëshkohet vetëm për të. Atyre nuk" +
+                    " u bëhet e padrejtë.",
+            "Kur'an, El-En'am 160",
+            arabic = "مَن جَآءَ بِٱلْحَسَنَةِ فَلَهُۥ عَشْرُ أَمْثَالِهَا ۖ وَمَن جَآءَ بِٱلسَّيِّئَةِ فَلَا يُجْزَىٰٓ إِلَّا مِثْلَهَا وَهُمْ لَا يُظْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Të cilët, kur i godet ndonjë e pakëndshme thonë: “**Ne jemi të Allahut dhe ne " +
+                    "vetëm te Ai kthehemi!**”",
+            "Kur'an, El-Bekare 156",
+            arabic = "ٱلَّذِينَ إِذَآ أَصَٰبَتْهُم مُّصِيبَةٌۭ قَالُوٓا۟ إِنَّا لِلَّهِ وَإِنَّآ إِلَيْهِ رَٰجِعُونَ",
+        ),
+        KhutbahQuote(
+            "**Andaj, sa të keni mundësi ruanu prej dënimit të Allahut**, dëgjoni, " +
+                    "respektoni dhe jepni për të mirën tuaj, e kush i ruhet lakmisë së vetvetes, të" +
+                    " tillët janë të shpëtuarit.",
+            "Kur'an, Et-Tegabun 16",
+            arabic = "فَٱتَّقُوا۟ ٱللَّهَ مَا ٱسْتَطَعْتُمْ وَٱسْمَعُوا۟ وَأَطِيعُوا۟ وَأَنفِقُوا۟ خَيْرًۭا لِّأَنفُسِكُمْ ۗ وَمَن يُوقَ شُحَّ نَفْسِهِۦ فَأُو۟لَٰٓئِكَ هُمُ ٱلْمُفْلِحُونَ",
+        ),
+        KhutbahQuote(
+            "**O ju që besuat, kinie frikë Allahun me sinqeritet të vërtetë dhe mos vdisni," +
+                    " pos vetëm duke qenë muslimanë** (besimtarë)!",
+            "Kur'an, Ali Imran 102",
+            arabic = "يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ ٱتَّقُوا۟ ٱللَّهَ حَقَّ تُقَاتِهِۦ وَلَا تَمُوتُنَّ إِلَّا وَأَنتُم مُّسْلِمُونَ",
+        ),
+        KhutbahQuote(
+            "Edhe ata që thonë: “**Zoti ynë, na bën që të jemi të gëzuar me (punën) e grave" +
+                    " tona dhe pasardhësve tanë**, neve na bën shembull për të devotshmit”.",
+            "Kur'an, El-Furkan 74",
+            arabic = "وَٱلَّذِينَ يَقُولُونَ رَبَّنَا هَبْ لَنَا مِنْ أَزْوَٰجِنَا وَذُرِّيَّٰتِنَا قُرَّةَ أَعْيُنٍۢ وَٱجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا",
+        ),
+        KhutbahQuote(
+            "Edhe ata që kanë ardhur pas tyre e thonë: “**Zoti ynë, falna ne dhe vëllezërit" +
+                    " tanë që para nesh u pajisën me besim** dhe mos lejo në zemrat tona farë " +
+                    "urrejtjeje ndaj atyre që besuan. Zoti ynë Ti je i butë, mëshirues!”",
+            "Kur'an, El-Hashr 10",
+            arabic = "وَٱلَّذِينَ جَآءُو مِنۢ بَعْدِهِمْ يَقُولُونَ رَبَّنَا ٱغْفِرْ لَنَا وَلِإِخْوَٰنِنَا ٱلَّذِينَ سَبَقُونَا بِٱلْإِيمَٰنِ وَلَا تَجْعَلْ فِى قُلُوبِنَا غِلًّۭا لِّلَّذِينَ ءَامَنُوا۟ رَبَّنَآ إِنَّكَ رَءُوفٌۭ رَّحِيمٌ",
+        ),
+        KhutbahQuote(
+            "**Kush bën ndonjë të keqe apo ngarkon veten, pastaj kërkon falje te Allahu, ai" +
+                    " e gjen Allahun falës dhe mëshirues.**",
+            "Kur'an, En-Nisa 110",
+            arabic = "وَمَن يَعْمَلْ سُوٓءًا أَوْ يَظْلِمْ نَفْسَهُۥ ثُمَّ يَسْتَغْفِرِ ٱللَّهَ يَجِدِ ٱللَّهَ غَفُورًۭا رَّحِيمًۭا",
+        ),
+        KhutbahQuote(
+            "Unë u thashë: “**Kërkoni falje Zotit tuaj, se Ai vërtet fal shumë**; Ai ju " +
+                    "lëshon nga qielli shi me bollëk.”",
+            "Kur'an, Nuh 10-11",
+            arabic = "فَقُلْتُ ٱسْتَغْفِرُوا۟ رَبَّكُمْ إِنَّهُۥ كَانَ غَفَّارًۭا يُرْسِلِ ٱلسَّمَآءَ عَلَيْكُم مِّدْرَارًۭا",
+        ),
+        KhutbahQuote(
+            "**O besimtarë, nëse ju ndihmoni (fenë) Allahun, Ai u ndihmon juve** dhe ua " +
+                    "forcon këmbët tuaja.",
+            "Kur'an, Muhammed 7",
+            arabic = "يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوٓا۟ إِن تَنصُرُوا۟ ٱللَّهَ يَنصُرْكُمْ وَيُثَبِّتْ أَقْدَامَكُمْ",
+        ),
+        KhutbahQuote(
+            "Dhe nga faktet (e madhërisë së) e Tij është që për të mirën tuaj, Ai krijoi " +
+                    "nga vetë lloji juaj palën (gratë), ashtu që të gjeni prehje te ato dhe **në " +
+                    "mes jush krijoi dashuri dhe mëshirë.** Në këtë ka argumente për njerëzit që " +
+                    "mendojnë.",
+            "Kur'an, Er-Rum 21",
+            arabic = "وَمِنْ ءَايَٰتِهِۦٓ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَٰجًۭا لِّتَسْكُنُوٓا۟ إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةًۭ وَرَحْمَةً ۚ إِنَّ فِى ذَٰلِكَ لَءَايَٰتٍۢ لِّقَوْمٍۢ يَتَفَكَّرُونَ",
+        ),
+        KhutbahQuote(
+            "Ata të dy thanë: “**Zoti ynë, ne i bëmë të padrejtë vetvetes, në qoftë se nuk " +
+                    "na fal dhe nuk na mëshiron, ne me siguri do të jemi prej të shkatërruarve!**”",
+            "Kur'an, El-A'raf 23",
+            arabic = "قَالَا رَبَّنَا ظَلَمْنَآ أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ ٱلْخَٰسِرِينَ",
+        ),
+        KhutbahQuote(
+            "**Ka shpëtuar ai që është pastruar. Që e përkujton emrin e Zotit të vet dhe " +
+                    "falet.**",
+            "Kur'an, El-A'la 14-15",
+            arabic = "قَدْ أَفْلَحَ مَن تَزَكَّىٰ وَذَكَرَ ٱسْمَ رَبِّهِۦ فَصَلَّىٰ",
+        ),
+        KhutbahQuote(
+            "**Pra, ka shpëtuar ai që e pastroi vetveten.** E ka dështuar ai që e poshtëroi" +
+                    " vetveten.",
+            "Kur'an, Esh-Shems 9-10",
+            arabic = "قَدْ أَفْلَحَ مَن زَكَّىٰهَا وَقَدْ خَابَ مَن دَسَّىٰهَا",
+        ),
+        KhutbahQuote(
+            "**Urdhëro familjen tënde të falë namaz, e edhe ti vetë zbatoje atë**, ngase Ne" +
+                    " nuk kërkojmë prej teje ndonjë furnizim (për ty as për familjen tënde), Ne të " +
+                    "furnizojmë ty (dhe ata), ardhmëria e mirë është e atij që ruhet.",
+            "Kur'an, Ta Ha 132",
+            arabic = "وَأْمُرْ أَهْلَكَ بِٱلصَّلَوٰةِ وَٱصْطَبِرْ عَلَيْهَا ۖ لَا نَسْـَٔلُكَ رِزْقًۭا ۖ نَّحْنُ نَرْزُقُكَ ۗ وَٱلْعَٰقِبَةُ لِلتَّقْوَىٰ",
+        ),
+        KhutbahQuote(
+            "**Po edhe nëse përpiqeni t’i numëroni dhuntitë (të mirat) e Allahut, nuk do të" +
+                    " mund të arrini t’i përcaktoni ato.** Me siguri Allahu shumë fal dhe shumë " +
+                    "mëshiron.",
+            "Kur'an, En-Nahl 18",
+            arabic = "وَإِن تَعُدُّوا۟ نِعْمَةَ ٱللَّهِ لَا تُحْصُوهَآ ۗ إِنَّ ٱللَّهَ لَغَفُورٌۭ رَّحِيمٌۭ",
+        ),
+        KhutbahQuote(
+            "I heqin trupat e tyre prej dyshekëve, **duke e lutur Zotin e tyre nga frika " +
+                    "dhe nga shpresa** dhe nga ajo që Ne u kemi dhënë (pasuria) atyre, ata japin.",
+            "Kur'an, Es-Sexhde 16",
+            arabic = "تَتَجَافَىٰ جُنُوبُهُمْ عَنِ ٱلْمَضَاجِعِ يَدْعُونَ رَبَّهُمْ خَوْفًۭا وَطَمَعًۭا وَمِمَّا رَزَقْنَٰهُمْ يُنفِقُونَ",
+        ),
+        KhutbahQuote(
+            "Dhe në një pjesë të natës zgjohu me të (me Kur’anin - namazin), **është e " +
+                    "sigurt se Zoti yt do të ngrisë ty në një vend të lavdishëm.**",
+            "Kur'an, El-Isra 79",
+            arabic = "وَمِنَ ٱلَّيْلِ فَتَهَجَّدْ بِهِۦ نَافِلَةًۭ لَّكَ عَسَىٰٓ أَن يَبْعَثَكَ رَبُّكَ مَقَامًۭا مَّحْمُودًۭا",
+        ),
+        KhutbahQuote(
+            "**Lexo me emrin e Zotit tënd, i cili krijoi.** Krijoi njeriun prej gjakut të " +
+                    "ngjizur. Lexo për Zotin tënd Bujar! Është Ai që ua mësoi pendën. **Ia mësoi " +
+                    "njeriut atë që nuk e dinte.**",
+            "Kur'an, El-Alak 1-5",
+            arabic = "ٱقْرَأْ بِٱسْمِ رَبِّكَ ٱلَّذِى خَلَقَ خَلَقَ ٱلْإِنسَٰنَ مِنْ عَلَقٍ ٱقْرَأْ وَرَبُّكَ ٱلْأَكْرَمُ ٱلَّذِى عَلَّمَ بِٱلْقَلَمِ عَلَّمَ ٱلْإِنسَٰنَ مَا لَمْ يَعْلَمْ",
+        ),
+        KhutbahQuote(
+            "**Ky është libri në të cilin nuk ka dyshim, udhëzues për ata që frikësohen** " +
+                    "(nga Allahu). Të cilët e besojnë të fshehtën, e kryejnë faljen dhe prej asaj " +
+                    "që Ne i kemi furnizuar, japin.",
+            "Kur'an, El-Bekare 2-3",
+            arabic = "ذَٰلِكَ ٱلْكِتَٰبُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًۭى لِّلْمُتَّقِينَ ٱلَّذِينَ يُؤْمِنُونَ بِٱلْغَيْبِ وَيُقِيمُونَ ٱلصَّلَوٰةَ وَمِمَّا رَزَقْنَٰهُمْ يُنفِقُونَ",
+        ),
+        KhutbahQuote(
+            "**Ne Kur’anin e bëmë të lehtë për mësim**, po a ndokush që merr mësim?",
+            "Kur'an, El-Kamer 17",
+            arabic = "وَلَقَدْ يَسَّرْنَا ٱلْقُرْءَانَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍۢ",
+        ),
+        KhutbahQuote(
+            "Kjo jetë e kësaj bote nuk është tjetër vetëm se dëfrim e lojë, **e jeta e " +
+                    "vërtetë, padyshim është ajo e botës së ardhme** (Ahireti), sikur ta dinin.",
+            "Kur'an, El-Ankebut 64",
+            arabic = "وَمَا هَٰذِهِ ٱلْحَيَوٰةُ ٱلدُّنْيَآ إِلَّا لَهْوٌۭ وَلَعِبٌۭ ۚ وَإِنَّ ٱلدَّارَ ٱلْءَاخِرَةَ لَهِىَ ٱلْحَيَوَانُ ۚ لَوْ كَانُوا۟ يَعْلَمُونَ",
+        ),
+        KhutbahQuote(
+            "Po ju i jepni përparësi jetës së dunjasë, **Ndërsa ahireti (amshimi) është më " +
+                    "i mirë dhe i përjetshëm.**",
+            "Kur'an, El-A'la 16-17",
+            arabic = "بَلْ تُؤْثِرُونَ ٱلْحَيَوٰةَ ٱلدُّنْيَا وَٱلْءَاخِرَةُ خَيْرٌۭ وَأَبْقَىٰٓ",
+        ),
+        KhutbahQuote(
+            "S’ka dyshim se **ata që thanë: “Zoti ynë është Allahu”, pastaj nuk u " +
+                    "luhatën**, atyre u zbresin melaiket (në prag të vdekjes dhe u thonë): “Mos u " +
+                    "frikësoni dhe mos u pikëlloni, keni myzhde Xhennetin që ju premtohej!”",
+            "Kur'an, Fussilet 30",
+            arabic = "إِنَّ ٱلَّذِينَ قَالُوا۟ رَبُّنَا ٱللَّهُ ثُمَّ ٱسْتَقَٰمُوا۟ تَتَنَزَّلُ عَلَيْهِمُ ٱلْمَلَٰٓئِكَةُ أَلَّا تَخَافُوا۟ وَلَا تَحْزَنُوا۟ وَأَبْشِرُوا۟ بِٱلْجَنَّةِ ٱلَّتِى كُنتُمْ تُوعَدُونَ",
+        ),
+        KhutbahQuote(
+            "**A nuk janë vërtet evlijatë (të dashurit) e Allahut pa frikë e brengosje?**",
+            "Kur'an, Junus 62",
+            arabic = "أَلَآ إِنَّ أَوْلِيَآءَ ٱللَّهِ لَا خَوْفٌ عَلَيْهِمْ وَلَا هُمْ يَحْزَنُونَ",
+        ),
+        KhutbahQuote(
+            "Ne do t’ju sprovojmë me ndonjë frikë, me uri, me ndonjë humbje nga pasuria e " +
+                    "nga jeta e edhe nga frytet, **por ti përgëzoji durimtarët.**",
+            "Kur'an, El-Bekare 155",
+            arabic = "وَلَنَبْلُوَنَّكُم بِشَىْءٍۢ مِّنَ ٱلْخَوْفِ وَٱلْجُوعِ وَنَقْصٍۢ مِّنَ ٱلْأَمْوَٰلِ وَٱلْأَنفُسِ وَٱلثَّمَرَٰتِ ۗ وَبَشِّرِ ٱلصَّٰبِرِينَ",
+        ),
+        KhutbahQuote(
+            "Ndëshkimi i të keqes, bëhet në të njëjtën masë, **e kush fal e bën pajtim, " +
+                    "shpërblimi i tij është te Allahu.** Vërtet, Ai nuk i do zullumqarët.",
+            "Kur'an, Esh-Shura 40",
+            arabic = "وَجَزَٰٓؤُا۟ سَيِّئَةٍۢ سَيِّئَةٌۭ مِّثْلُهَا ۖ فَمَنْ عَفَا وَأَصْلَحَ فَأَجْرُهُۥ عَلَى ٱللَّهِ ۚ إِنَّهُۥ لَا يُحِبُّ ٱلظَّٰلِمِينَ",
+        ),
+        KhutbahQuote(
+            "**Ata janë që për hir të Tij u japin ushqim të varfërve, jetimëve dhe të " +
+                    "zënëve robër.** Ne po ju ushqejmë vetëm për hir të Allahut dhe prej jush nuk " +
+                    "kërkojmë ndonjë shpërblim e as falënderim.",
+            "Kur'an, El-Insan 8-9",
+            arabic = "وَيُطْعِمُونَ ٱلطَّعَامَ عَلَىٰ حُبِّهِۦ مِسْكِينًۭا وَيَتِيمًۭا وَأَسِيرًا إِنَّمَا نُطْعِمُكُمْ لِوَجْهِ ٱللَّهِ لَا نُرِيدُ مِنكُمْ جَزَآءًۭ وَلَا شُكُورًا",
+        ),
+        KhutbahQuote(
+            "O ju që keni besuar, **nëse ndonjë i pandërgjegjshëm u sjell ndonjë lajm, ju " +
+                    "shqyrtonie mirë**, ashtu që të mos e goditni ndonjë popull pa e ditur " +
+                    "realitetin, e pastaj të pendoheni për atë që keni bërë.",
+            "Kur'an, El-Huxhurat 6",
+            arabic = "يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوٓا۟ إِن جَآءَكُمْ فَاسِقٌۢ بِنَبَإٍۢ فَتَبَيَّنُوٓا۟ أَن تُصِيبُوا۟ قَوْمًۢا بِجَهَٰلَةٍۢ فَتُصْبِحُوا۟ عَلَىٰ مَا فَعَلْتُمْ نَٰدِمِينَ",
+        ),
+        KhutbahQuote(
+            "**Dhe ngutuni (me punë që meritoni) në falje mëkatesh nga Zoti juaj** dhe për " +
+                    "në një Xhennet, gjerësia e të cilit është si gjerësia e qiejve dhe e tokës, i " +
+                    "përgatitur për të devotshmit.",
+            "Kur'an, Ali Imran 133",
+            arabic = "۞ وَسَارِعُوٓا۟ إِلَىٰ مَغْفِرَةٍۢ مِّن رَّبِّكُمْ وَجَنَّةٍ عَرْضُهَا ٱلسَّمَٰوَٰتُ وَٱلْأَرْضُ أُعِدَّتْ لِلْمُتَّقِينَ",
+        ),
+        KhutbahQuote(
+            "**O shpirt i qetësuar! Kthehu te Zoti yt i kënaqur** (për vete) e kënaqës (për" +
+                    " Zotin)! Hyr mes robërve të Mi! Dhe hyr në Xhennetin Tim!",
+            "Kur'an, El-Fexhr 27-30",
+            arabic = "يَٰٓأَيَّتُهَا ٱلنَّفْسُ ٱلْمُطْمَئِنَّةُ ٱرْجِعِىٓ إِلَىٰ رَبِّكِ رَاضِيَةًۭ مَّرْضِيَّةًۭ فَٱدْخُلِى فِى عِبَٰدِى وَٱدْخُلِى جَنَّتِى",
+        ),
+        KhutbahQuote(
+            "Ai (Musai) tha: “**Ma zgjero (më ndihmo) gjoksin tim! Dhe më lehtëso në këtë " +
+                    "punë timen!** Më zgjidh nyjen e gjuhës sime! Që ta kuptojnë fjalën time!”",
+            "Kur'an, Ta Ha 25-28",
+            arabic = "قَالَ رَبِّ ٱشْرَحْ لِى صَدْرِى وَيَسِّرْ لِىٓ أَمْرِى وَٱحْلُلْ عُقْدَةًۭ مِّن لِّسَانِى يَفْقَهُوا۟ قَوْلِى",
+        ),
+        KhutbahQuote(
+            "E ti thuaj: “**O Zoti im, më fal e më mëshiro, se Ti je më i miri i " +
+                    "mëshiruesve!**”",
+            "Kur'an, El-Mu'minun 118",
+            arabic = "وَقُل رَّبِّ ٱغْفِرْ وَٱرْحَمْ وَأَنتَ خَيْرُ ٱلرَّٰحِمِينَ",
+        ),
+        KhutbahQuote(
+            "Kur djelmoshat u strehuan në shpellë e thanë: “**O Zoti ynë, na dhuro nga ana " +
+                    "Jote mëshirë dhe na përgatit udhëzim të drejtë** në tërë çështjen tonë!”",
+            "Kur'an, El-Kehf 10",
+            arabic = "إِذْ أَوَى ٱلْفِتْيَةُ إِلَى ٱلْكَهْفِ فَقَالُوا۟ رَبَّنَآ ءَاتِنَا مِن لَّدُنكَ رَحْمَةًۭ وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًۭا",
+        ),
+        KhutbahQuote(
+            "**Njoftoji robërit e Mi se vërtet Unë jam Ai që fal shumë dhe mëshirues i " +
+                    "madh.**",
+            "Kur'an, El-Hixhr 49",
+            arabic = "۞ نَبِّئْ عِبَادِىٓ أَنِّىٓ أَنَا ٱلْغَفُورُ ٱلرَّحِيمُ",
+        ),
+        KhutbahQuote(
+            "**Ai është që fal mëkatet, është i dashur.**",
+            "Kur'an, El-Buruxh 14",
+            arabic = "وَهُوَ ٱلْغَفُورُ ٱلْوَدُودُ",
+        ),
+        KhutbahQuote(
+            "Të Allahut janë edhe (anët nga) lindja edhe perëndimi, **dhe kahdo që të " +
+                    "ktheheni, aty është anë e Allahut.** Vërtet, Allahu është i gjerë (në bujari) " +
+                    "e i dijshëm.",
+            "Kur'an, El-Bekare 115",
+            arabic = "وَلِلَّهِ ٱلْمَشْرِقُ وَٱلْمَغْرِبُ ۚ فَأَيْنَمَا تُوَلُّوا۟ فَثَمَّ وَجْهُ ٱللَّهِ ۚ إِنَّ ٱللَّهَ وَٰسِعٌ عَلِيمٌۭ",
         ),
     ),
     switchOn = "Ndezur",
@@ -1648,7 +2076,7 @@ private val EN = Strings(
             "**Certainly will the believers have succeeded: They who are during their " +
                     "prayer humbly submissive**",
             "Qur'an, Al-Mu'minun 1-2",
-            arabic = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
+            arabic = "قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
         ),
         KhutbahQuote(
             "Aisha r.a. narrates that the Prophet s.a.w.s. said: «**The deeds most " +
@@ -2505,7 +2933,7 @@ private val TR = Strings(
         KhutbahQuote(
             "**Müminler saadete ermişlerdir. Onlar namazda huşu içindedirler.**",
             "Kur'an, Mü'minûn 1-2",
-            arabic = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
+            arabic = "قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
         ),
         KhutbahQuote(
             "Âişe r.a. anlatır: Peygamber s.a.v. şöyle buyurdu: «**Allah'a en sevimli " +
@@ -3359,7 +3787,7 @@ private val BS = Strings(
             "**Ono što žele – vjernici će postići, oni koji molitvu svoju ponizno " +
                     "obavljaju,**",
             "Kur'an, El-Mu'minun 1-2",
-            arabic = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
+            arabic = "قَدْ أَفْلَحَ ٱلْمُؤْمِنُونَ ٱلَّذِينَ هُمْ فِى صَلَاتِهِمْ خَٰشِعُونَ",
         ),
         KhutbahQuote(
             "Aiša r.a. prenosi da je Vjerovjesnik s.a.v.s. rekao: «**Allahu su " +

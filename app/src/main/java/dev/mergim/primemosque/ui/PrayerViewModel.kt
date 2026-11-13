@@ -143,12 +143,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     // Default dispatcher where the state is built, never on the main thread.
     // Only those that fit the card are shown; the longest run to pages and
     // would be clipped mid-sentence, unreadable in a 30 s slot anyway.
+    // Verses (the curated entries carrying the Arabic) take every other
+    // turn, as they did before the collection arrived: mixed in by count
+    // alone, a hundred verses among eight hundred narrations would barely
+    // ever come round.
     private val albanianDailyQuotes by lazy {
         val rijad = runCatching { HadithRepository(app).rijadusSalihin() }
             .getOrDefault(emptyList())
             .filter { it.text.length <= MAX_QUOTE_CHARS }
             .map { KhutbahQuote(it.text, RIJAD_SOURCE) }
-        interleave(stringsFor(AppLanguage.SQ).dailyQuotes, rijad)
+        val (verses, hadiths) = stringsFor(AppLanguage.SQ).dailyQuotes
+            .partition { it.arabic != null }
+        alternate(verses, interleave(hadiths, rijad))
     }
 
     // Kosovo timezone, independent of (possibly wrong) device settings.
@@ -642,7 +648,22 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
 }
 
 /**
- * Spreads [curated] evenly through [collection], so the hand-picked verses
+ * Pairs every narration with a verse, cycling through [verses] (the shorter
+ * list) so the narrations still advance one by one and every verse keeps
+ * coming round, a few times a day.
+ */
+private fun alternate(
+    verses: List<KhutbahQuote>,
+    narrations: List<KhutbahQuote>,
+): List<KhutbahQuote> {
+    if (verses.isEmpty() || narrations.isEmpty()) return verses + narrations
+    return narrations.flatMapIndexed { i, narration ->
+        listOf(verses[i % verses.size], narration)
+    }
+}
+
+/**
+ * Spreads [curated] evenly through [collection], so the hand-picked hadiths
  * keep coming round between the narrations instead of bunching at one end.
  */
 private fun interleave(
