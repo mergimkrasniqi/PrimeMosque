@@ -1,6 +1,6 @@
 # PrimeMosque
 
-Offline prayer-times display (digital signage) for Android TV / Google TV, built for mosques in Kosovo. Designed for a TV mounted in **portrait** orientation — the app renders its UI rotated, since TV panels only output landscape. A landscape layout is also available for normally mounted TVs.
+Offline prayer-times display (digital signage) for Android TV / Google TV, built for mosques in Kosovo. Designed for a TV mounted in **portrait** orientation — the app renders its UI rotated, since TV panels only output landscape. For normally mounted TVs there is a **split landscape layout**: the prayer times stand on the left all day, while the right side shows the clock, rotating Qur'an verses and hadiths, the notices and the dhikr footer.
 
 Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV.
 
@@ -20,8 +20,13 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 - **Custom Jumu'ah time** — each mosque can hold Xhuma at its own fixed time (12:00–15:00 in 5-minute steps) or simply follow Dhuhr; the board, announcement, countdown and notices all shift together.
 - **Full-screen khutbah mode** — from the Jumu'ah time, for a configurable duration (default 20 min), the whole board is replaced: mosque name, clock and date on top, and in the center a rotating collection of **10 Jumu'ah hadiths and Qur'an verses**. Hadiths are given in full narration form ("Ebu Hurejra r.a. tregon se Pejgamberi s.a.v.s. ka thënë: «…»"), verses include the **original Arabic** above the translation, and the key phrase of each quote is highlighted in the theme accent. A calm crossfade rotates them every 30 seconds.
 
-### Daily wisdom breaks
-Every 4 minutes the prayer table steps aside for 90 seconds and the board shows rotating **Qur'an verses and hadiths from Bukhari & Muslim** (khutbah-style card: original Arabic for verses, translation with the key phrase highlighted, source) — 18 texts about praying on time, good character, patience, mercy and good deeds, in all 4 languages. The table then returns automatically. Suppressed during announcements, the khutbah and the night saver, and can be turned off entirely in the Display settings ("Verses & hadiths during the day").
+### Daily verses & hadiths
+The board shows rotating **Qur'an verses and hadiths** all day in a khutbah-style card: original Arabic for verses, the translation with its key phrase highlighted, and the source.
+- **Portrait:** the prayer table and a quote take turns, 30 seconds each, so nobody waits more than half a minute for the times. Suppressed during announcements, the khutbah and the night saver.
+- **Landscape:** the quotes have their own panel beside the prayer times and change every minute. Each quote is set as large as the panel allows, so a short verse reads from across the hall and a long narration still fits whole.
+- **Albanian:** 114 verses (Sherif Ahmeti's translation) take every other turn with the hadiths: 54 hand-picked ones plus the narrations of **Rijadus Salihin** that fit the card. In English, Türkçe and Bosanski, 46 verses and 54 hadiths alternate.
+
+Can be turned off entirely in the Display settings ("Verses & hadiths during the day"), and the imam can replace the list with his own from the portal.
 
 ### Custom announcements
 Two free-text slots ("Njoftimet") for the mosque's own messages — janaza notices, Ramadan programs, fundraisers. While set, they rotate in the notice card all day alongside the contextual notices. From the portal each announcement can carry an **expiry date** (shown through that day, inclusive) after which it removes itself from the board.
@@ -37,7 +42,7 @@ A card on the board shows guidance only while it applies, rotating every 30 s wh
 - **Sunnah fasting reminders** the evening before: Monday & Thursday fasts, and the White Days (13/14/15 of the Hijri month).
 
 ### Weekly lecture banner
-A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears next to the clock showing "Sot pas namazit të Akshamit (19:25)". When the banner is visible, the portrait board scales itself down slightly so everything still fits.
+A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears on the board (above the prayer times in landscape) showing "Sot pas namazit të Akshamit (19:25)". When the banner is visible, the portrait board scales itself down slightly so everything still fits.
 
 ### Night energy saver
 Between Jacia (plus a configurable delay, so the congregation still sees the normal board) and Imsaku the display switches to the dark variant of the selected theme and dims the backlight — the mosque is empty, no reason to burn power. The daytime theme returns automatically at Imsak. Note: app-level backlight dimming is ignored by most TV firmwares; the biggest savings come from the TV's own on/off timer (the app resumes from standby right where it was).
@@ -78,9 +83,9 @@ Sync is one-directional (portal → TV); on first contact the TV publishes its c
   </tr>
 </table>
 
-**Landscape board on a Friday** (Nila dark theme) — weekly lecture banner and notice card flanking the clock:
+**Landscape board on a Friday** (Nila dark theme) — prayer times on the left under the weekly lecture banner; clock, a rotating Qur'an verse, the Friday notice and the salawat on the right:
 
-<img src="docs/screenshots/landscape-friday.png" width="720" alt="Landscape board with lecture banner and notice card">
+<img src="docs/screenshots/landscape-friday.png" width="720" alt="Split landscape board: prayer times on the left, clock, Qur'an verse, notice and salawat on the right">
 
 **Khutbah mode** (Hibr dark theme) — during the khutbah the board is replaced by rotating Jumu'ah hadiths and verses (Qur'anic Arabic + translation, key phrases highlighted):
 

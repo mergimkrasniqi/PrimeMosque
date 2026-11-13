@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -44,6 +43,7 @@ import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,13 +62,19 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -340,110 +346,210 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
     }
 }
 
+/**
+ * Landscape board, split in two: the day's schedule stands on the left all
+ * day, while the right side holds the clock on top, the verses and hadiths
+ * in the middle and the notices and dhikr footer at the bottom. With room
+ * for both side by side, nothing has to take turns: the quotes rotate in
+ * their own panel and the times never leave the screen.
+ */
 @Composable
 private fun LandscapeBoard(state: UiState, strings: Strings) {
-    Column(
+    val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
+    // Pinned banners join the schedule column, whose rows tighten to make
+    // room for them.
+    val banners = listOf(state.ramadan, state.lecture != null).count { it }
+    val rowScale = when (banners) {
+        0 -> 1f
+        1 -> 0.88f
+        else -> 0.74f
+    }
+    val quotes = effectiveQuotes(state.settings.customDailyQuotes, state.dailyQuotes)
+    val showQuotes = state.settings.showDailyQuotes && quotes.isNotEmpty()
+    Row(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 40.dp, vertical = 24.dp),
+            .padding(horizontal = 32.dp, vertical = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(28.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) { Header(state, strings, centered = false) }
-            Column(horizontalAlignment = Alignment.End) {
-                DateLines(state, strings, centered = false)
-            }
-        }
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
+                .weight(0.42f)
+                .fillMaxHeight(),
         ) {
-            // Ramadan/lecture banners and notice card flank the clock.
-            if (state.ramadan) {
-                RamadanBanner(
-                    state, strings,
-                    modifier = Modifier
-                        .weight(0.9f)
-                        .padding(end = 20.dp),
-                )
-            }
-            if (state.lecture != null) {
-                LectureBanner(
-                    state, strings,
-                    modifier = Modifier
-                        .weight(0.9f)
-                        .padding(end = 20.dp),
-                )
-            }
-            BoxWithConstraints(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center,
+            Header(state, strings, centered = false, scale = 0.8f)
+            Spacer(Modifier.height(12.dp))
+            RamadanBanner(state, strings, Modifier.padding(bottom = 8.dp), scale = 0.8f)
+            LectureBanner(state, strings, Modifier.padding(bottom = 8.dp), scale = 0.8f)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // Scale the clock + countdown to the vertical space actually
-                // available, so nothing clips on low-resolution screens.
-                val compact = maxHeight < 200.dp
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    BigClock(
-                        state,
-                        mainSize = if (compact) 46.sp else 72.sp,
-                        secondsSize = if (compact) 22.sp else 36.sp,
-                    )
-                    Spacer(Modifier.height(if (compact) 6.dp else 12.dp))
-                    CountdownBanner(state, strings, compact = compact)
+                state.slots
+                    .filter { it.key !in subSlotKeys }
+                    .forEach { slot ->
+                        LandscapePrayerRow(
+                            slot, strings,
+                            friday = friday,
+                            current = slot.key == state.current,
+                            subTimes = subTimesFor(slot, state.slots, strings, withLabels = true),
+                            scale = rowScale,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .weight(0.58f)
+                .fillMaxHeight(),
+        ) {
+            if (showQuotes) {
+                LandscapeClock(state, strings, clockSize = 68.sp)
+                Spacer(Modifier.height(12.dp))
+                FittedQuoteCard(
+                    quote = quotes[state.quoteSlot % quotes.size],
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+            } else {
+                // Quotes switched off: the clock takes the panel instead.
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    LandscapeClock(state, strings, clockSize = 96.sp)
                 }
             }
-            if (state.notices.isNotEmpty()) {
-                NoticeCard(
-                    state, strings,
-                    modifier = Modifier
-                        .weight(0.9f)
-                        .padding(start = 20.dp),
+            NoticeCard(state, strings, Modifier.padding(top = 10.dp), scale = 0.85f)
+            Spacer(Modifier.height(10.dp))
+            Footer(state, strings, scale = 0.8f)
+        }
+    }
+}
+
+/**
+ * The landscape board's time block: the clock centred over the right-hand
+ * panel, both dates on one line beneath it, then the countdown as plain
+ * text, so the three read as one centred stack.
+ */
+@Composable
+private fun LandscapeClock(state: UiState, strings: Strings, clockSize: TextUnit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        BigClock(state, mainSize = clockSize)
+        Text(
+            text = dateLine(state, strings),
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(6.dp))
+        CountdownLine(state, strings)
+    }
+}
+
+/** Gregorian and Hijri date on one line. */
+private fun dateLine(state: UiState, strings: Strings): String {
+    val gregorian = state.now.toLocalDate()
+        .format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", strings.locale))
+        .replaceFirstChar { it.uppercase(strings.locale) }
+    val hijri = state.hijri?.let { h ->
+        "${h.day} ${strings.hijriMonths.getOrNull(h.month - 1) ?: ""} ${h.year}"
+    }
+    return listOfNotNull(gregorian, hijri).joinToString("  •  ")
+}
+
+/** The countdown as a plain line of text, without the pill around it. */
+@Composable
+private fun CountdownLine(state: UiState, strings: Strings) {
+    val next = state.next ?: return
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = state.countdown.asClock(),
+            color = LocalBoardPalette.current.accent,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = " ${strings.nextPrayerIn} ${countdownName(next, state, strings)}",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 20.sp,
+        )
+    }
+}
+
+/**
+ * A schedule row for the landscape board's left column: the rows share the
+ * column's height between them, so the times can be set larger than in the
+ * portrait list, and the sub-times sit under the name to leave the width
+ * to the time itself.
+ */
+@Composable
+private fun LandscapePrayerRow(
+    slot: PrayerSlot,
+    strings: Strings,
+    friday: Boolean,
+    current: Boolean,
+    subTimes: List<String>,
+    scale: Float,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(16.dp)
+    val contentColor = MaterialTheme.colorScheme.onBackground
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(if (current) palette.cardHighlight else palette.card, shape)
+            .then(
+                if (current) {
+                    Modifier.border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(horizontal = 20.dp * scale),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = prayerIcon(slot.key),
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(30.dp * scale),
+        )
+        Spacer(Modifier.width(16.dp * scale))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = prayerLabel(slot.key, strings, friday),
+                fontSize = 26.sp * scale,
+                color = contentColor,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+            subTimes.forEach { sub ->
+                Text(
+                    text = sub,
+                    fontSize = 14.sp * scale,
+                    lineHeight = 18.sp * scale,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
                 )
             }
         }
-        val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
-        // Daily wisdom break: the table steps aside for the rotating quotes,
-        // dissolving rather than cutting (see the portrait board).
-        Crossfade(
-            targetState = state.quotesBreak,
-            animationSpec = tween(CARD_TRANSITION_MS),
-            label = "board",
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize(tween(CARD_TRANSITION_MS)),
-        ) { showQuotes ->
-            if (showQuotes) {
-                DailyQuoteBlock(state, strings, modifier = Modifier.fillMaxWidth(), scale = 0.85f)
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    state.slots
-                        .filter { it.key !in subSlotKeys }
-                        .forEach { slot ->
-                            PrayerCard(
-                                slot = slot,
-                                strings = strings,
-                                friday = friday,
-                                current = slot.key == state.current,
-                                subTimes = subTimesFor(slot, state.slots, strings, withLabels = false),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                            )
-                        }
-                }
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Footer(state, strings)
+        Text(
+            text = slot.time.format(timeFormatter),
+            fontSize = 40.sp * scale,
+            color = contentColor,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -519,6 +625,16 @@ private fun DateLines(state: UiState, strings: Strings, centered: Boolean, scale
     }
 }
 
+private fun countdownName(next: NextPrayer, state: UiState, strings: Strings): String {
+    val friday = next.at.dayOfWeek == DayOfWeek.FRIDAY
+    return when {
+        state.ramadan && next.key == PrayerKey.MAGHRIB -> strings.iftarCountdownName
+        friday && next.key == PrayerKey.DHUHR -> strings.fridayDhuhrCountdownName
+        else -> strings.countdownNames[next.key]
+            ?: prayerLabel(next.key, strings, friday)
+    }
+}
+
 @Composable
 private fun CountdownBanner(
     state: UiState,
@@ -531,13 +647,7 @@ private fun CountdownBanner(
     // The countdown needs the grammatical form that follows "until" in each
     // language (SQ indefinite, BS genitive); during Ramadan the wait for
     // Maghrib is the wait for Iftar.
-    val friday = next.at.dayOfWeek == DayOfWeek.FRIDAY
-    val name = when {
-        state.ramadan && next.key == PrayerKey.MAGHRIB -> strings.iftarCountdownName
-        friday && next.key == PrayerKey.DHUHR -> strings.fridayDhuhrCountdownName
-        else -> strings.countdownNames[next.key]
-            ?: prayerLabel(next.key, strings, friday)
-    }
+    val name = countdownName(next, state, strings)
     Row(
         modifier = Modifier
             .background(palette.cardHighlight, RoundedCornerShape(50))
@@ -796,67 +906,6 @@ private fun PrayerRow(
                 color = contentColor,
                 fontWeight = FontWeight.Bold,
             )
-        }
-    }
-}
-
-@Composable
-private fun PrayerCard(
-    slot: PrayerSlot,
-    strings: Strings,
-    friday: Boolean,
-    current: Boolean = false,
-    subTimes: List<String> = emptyList(),
-    modifier: Modifier = Modifier,
-) {
-    val palette = LocalBoardPalette.current
-    val shape = RoundedCornerShape(16.dp)
-    val contentColor = MaterialTheme.colorScheme.onBackground
-    Column(
-        modifier = modifier
-            .background(if (current) palette.cardHighlight else palette.card, shape)
-            .then(
-                if (current) {
-                    Modifier.border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
-                } else {
-                    Modifier
-                }
-            )
-            .padding(vertical = 16.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = prayerIcon(slot.key),
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(28.dp),
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = prayerLabel(slot.key, strings, friday),
-            fontSize = 18.sp,
-            color = contentColor,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = slot.time.format(timeFormatter),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = contentColor,
-        )
-        if (subTimes.isNotEmpty()) {
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                subTimes.forEach { sub ->
-                    Text(
-                        text = sub,
-                        fontSize = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
         }
     }
 }
@@ -1227,38 +1276,141 @@ private fun QuoteCard(quote: KhutbahQuote, modifier: Modifier = Modifier, scale:
             animationSpec = tween(CARD_TRANSITION_MS),
             label = "quote",
         ) { q ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                q.arabic?.let { arabic ->
-                    Text(
-                        text = arabic,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 28.sp * scale,
-                        lineHeight = 46.sp * scale,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(14.dp * scale))
-                }
-                Text(
-                    text = boldMarkup(q.text, palette.accent),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 22.sp * scale,
-                    lineHeight = 32.sp * scale,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(10.dp * scale))
-                Text(
-                    text = q.source,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 15.sp * scale,
-                    textAlign = TextAlign.Center,
-                )
+            QuoteContent(q, scale)
+        }
+    }
+}
+
+// Type sizes of a quote at scale 1; the fitted card measures with the same
+// values it renders with, so the two cannot drift apart.
+private val QUOTE_ARABIC_SIZE = 28.sp
+private val QUOTE_ARABIC_LINE = 46.sp
+private val QUOTE_ARABIC_GAP = 14.dp
+private val QUOTE_TEXT_SIZE = 22.sp
+private val QUOTE_TEXT_LINE = 32.sp
+private val QUOTE_SOURCE_GAP = 10.dp
+private val QUOTE_SOURCE_SIZE = 15.sp
+// Without its own line height the source would take the body style's 24sp
+// line, leaving a strip of empty space under it.
+private val QUOTE_SOURCE_LINE = 20.sp
+
+/** The Arabic (for verses), the translation and the source, centred. */
+@Composable
+private fun QuoteContent(quote: KhutbahQuote, scale: Float) {
+    val palette = LocalBoardPalette.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        quote.arabic?.let { arabic ->
+            Text(
+                text = arabic,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = QUOTE_ARABIC_SIZE * scale,
+                lineHeight = QUOTE_ARABIC_LINE * scale,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(QUOTE_ARABIC_GAP * scale))
+        }
+        Text(
+            text = boldMarkup(quote.text, palette.accent),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = QUOTE_TEXT_SIZE * scale,
+            lineHeight = QUOTE_TEXT_LINE * scale,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(QUOTE_SOURCE_GAP * scale))
+        Text(
+            text = quote.source,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = QUOTE_SOURCE_SIZE * scale,
+            lineHeight = QUOTE_SOURCE_LINE * scale,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/**
+ * Quote card of a fixed size, for the landscape board's quote panel: each
+ * quote is set as large as the panel allows, so a two-line verse reads from
+ * the back of the hall while a ten-line narration still fits whole.
+ */
+@Composable
+private fun FittedQuoteCard(quote: KhutbahQuote, modifier: Modifier = Modifier) {
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(24.dp)
+    BoxWithConstraints(
+        modifier = modifier
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.4f), shape)
+            .padding(horizontal = 28.dp, vertical = 16.dp),
+    ) {
+        val measurer = rememberTextMeasurer()
+        val style = LocalTextStyle.current
+        val density = LocalDensity.current
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        Crossfade(
+            targetState = quote,
+            animationSpec = tween(CARD_TRANSITION_MS),
+            label = "quote",
+            modifier = Modifier.fillMaxSize(),
+        ) { q ->
+            val scale = remember(q, width, height, style, density) {
+                fitQuoteScale(q, measurer, style, density, width, height)
+            }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                QuoteContent(q, scale)
             }
         }
     }
 }
+
+/**
+ * Largest scale at which [quote] fits the given box, found by bisection so
+ * the text grows right up to the card's edges instead of stopping at the
+ * last coarse step that fit.
+ */
+private fun fitQuoteScale(
+    quote: KhutbahQuote,
+    measurer: TextMeasurer,
+    style: TextStyle,
+    density: Density,
+    width: Int,
+    height: Int,
+): Float {
+    fun heightOf(text: String, size: TextUnit, line: TextUnit): Int =
+        measurer.measure(
+            // Bold spans are wider than plain text, so measure them as such.
+            text = boldMarkup(text, Color.Unspecified),
+            style = style.merge(TextStyle(fontSize = size, lineHeight = line, textAlign = TextAlign.Center)),
+            constraints = Constraints(maxWidth = width),
+            density = density,
+        ).size.height
+
+    fun fits(scale: Float): Boolean = with(density) {
+        var total = heightOf(quote.text, QUOTE_TEXT_SIZE * scale, QUOTE_TEXT_LINE * scale) +
+            (QUOTE_SOURCE_GAP * scale).roundToPx() +
+            heightOf(quote.source, QUOTE_SOURCE_SIZE * scale, QUOTE_SOURCE_LINE * scale)
+        quote.arabic?.let {
+            total += heightOf(it, QUOTE_ARABIC_SIZE * scale, QUOTE_ARABIC_LINE * scale) +
+                (QUOTE_ARABIC_GAP * scale).roundToPx()
+        }
+        total <= height
+    }
+
+    if (fits(QUOTE_FIT_MAX)) return QUOTE_FIT_MAX
+    var low = QUOTE_FIT_MIN // fits, or is the floor regardless
+    var high = QUOTE_FIT_MAX // does not fit
+    repeat(10) {
+        val mid = (low + high) / 2
+        if (fits(mid)) low = mid else high = mid
+    }
+    return low
+}
+
+private const val QUOTE_FIT_MAX = 1.6f
+private const val QUOTE_FIT_MIN = 0.55f
 
 /**
  * Daily wisdom break: replaces the prayer table for a short window on a
