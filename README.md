@@ -42,7 +42,7 @@ A card on the board shows guidance only while it applies, rotating every 30 s wh
 - **Sunnah fasting reminders** the evening before: Monday & Thursday fasts, and the White Days (13/14/15 of the Hijri month).
 
 ### Weekly lecture banner
-A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears on the board (above the prayer times in landscape) showing "Sot pas namazit të Akshamit (19:25)". When the banner is visible, the portrait board scales itself down slightly so everything still fits.
+A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears on the board (above the prayer times in landscape) showing "Sot pas namazit të Akshamit (19:25)". The banner stays up until that prayer's time arrives; from then on the lecture is under way, so it disappears for the rest of the day. When the banner is visible, the portrait board scales itself down slightly so everything still fits.
 
 ### Night energy saver
 Between Jacia (plus a configurable delay, so the congregation still sees the normal board) and Imsaku the display switches to the dark variant of the selected theme and dims the backlight — the mosque is empty, no reason to burn power. The daytime theme returns automatically at Imsak. Note: app-level backlight dimming is ignored by most TV firmwares; the biggest savings come from the TV's own on/off timer (the app resumes from standby right where it was).

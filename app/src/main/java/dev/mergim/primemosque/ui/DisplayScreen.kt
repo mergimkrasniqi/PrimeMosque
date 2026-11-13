@@ -673,11 +673,6 @@ private fun CountdownBanner(
 }
 
 /**
- * Recurring lecture banner, pinned all day on the
- * configured weekday. Sits in its own spot on the board, separate from the
- * rotating notice cards and the footer.
- */
-/**
  * Pinned all day during Ramadan: today's iftar and the relevant imsak
  * (tomorrow's once iftar has passed, for suhoor).
  */
@@ -725,6 +720,11 @@ private fun RamadanBanner(
     }
 }
 
+/**
+ * Recurring lecture banner, pinned on the configured weekday until the
+ * prayer the lecture follows. Sits in its own spot on the board, separate
+ * from the rotating notice cards and the footer.
+ */
 @Composable
 private fun LectureBanner(
     state: UiState,

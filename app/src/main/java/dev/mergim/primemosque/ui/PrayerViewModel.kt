@@ -82,7 +82,7 @@ enum class NoticeKey {
 
 data class Notice(val key: NoticeKey, val arg: Int? = null, val custom: String? = null)
 
-/** The recurring lecture, pinned on the board for the whole configured day. */
+/** The recurring lecture, pinned on its day until the prayer it follows. */
 data class LectureInfo(val title: String, val prayer: PrayerKey, val time: LocalTime?)
 
 data class HijriDate(val day: Int, val month: Int, val year: Int)
@@ -333,15 +333,20 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 !now.isBefore(at) && now.isBefore(at.plusMinutes(settings.khutbahMinutes.toLong()))
             } == true
 
-        // Recurring lecture: pinned all day on the
-        // configured weekday, announcing it follows the configured prayer.
+        // Recurring lecture: pinned on the configured weekday, announcing it
+        // follows the configured prayer, until that prayer's time arrives.
+        // From then on the congregation is at the lecture itself, so the
+        // reminder has done its job and the board gets its room back for the
+        // rest of the day.
+        val lectureTime = slots.firstOrNull { it.key == settings.lecturePrayer }?.time
         val lecture = settings.lectureDay.dayOfWeek
             ?.takeIf { it == today.dayOfWeek && settings.lectureTitle.isNotBlank() }
+            ?.takeIf { lectureTime == null || now.toLocalTime().isBefore(lectureTime) }
             ?.let {
                 LectureInfo(
                     title = settings.lectureTitle,
                     prayer = settings.lecturePrayer,
-                    time = slots.firstOrNull { s -> s.key == settings.lecturePrayer }?.time,
+                    time = lectureTime,
                 )
             }
 
