@@ -26,6 +26,8 @@ class PrayerRepository(context: Context) {
 
     private val zone = ZoneId.of("Europe/Belgrade")
 
+    private val timeFormat = DateTimeFormatter.ofPattern("H:mm")
+
     val data: PrayerDataFile = context.assets
         .open("kosovo-prayer-times.json")
         .bufferedReader()
@@ -55,13 +57,13 @@ class PrayerRepository(context: Context) {
         val month = data.prayerTimes[monthName] ?: return emptyList()
         // Feb 29 in leap years falls back to the last available day of the month.
         val entry = month.firstOrNull { it.day == date.dayOfMonth } ?: month.last()
-        val fmt = DateTimeFormatter.ofPattern("H:mm")
-        fun t(raw: String) = LocalTime.parse(raw, fmt).plusMinutes(offsetMinutes.toLong())
+        val shift = takvimDstShiftMinutes(date, data.metadata.year, entry.day, zone)
+        fun t(raw: String) =
+            LocalTime.parse(raw, timeFormat).plusMinutes((offsetMinutes + shift).toLong())
         // In Kosovo the congregational Dreka/Xhuma is held at a fixed clock
         // time: 13:00 during daylight saving time, 12:00 in standard time.
         // The astronomical noon from the takvim is kept as the ZAWAL sub-time.
-        val dst = zone.rules.isDaylightSavings(date.atTime(12, 0).atZone(zone).toInstant())
-        val dhuhrFixed = if (dst) LocalTime.of(13, 0) else LocalTime.of(12, 0)
+        val dhuhrFixed = if (isDaylightSaving(date, zone)) LocalTime.of(13, 0) else LocalTime.of(12, 0)
         return listOf(
             PrayerSlot(PrayerKey.IMSAK, t(entry.imsak)),
             // In Kosovo the Sabahu prayer is held 40 minutes before sunrise.
@@ -74,4 +76,31 @@ class PrayerRepository(context: Context) {
             PrayerSlot(PrayerKey.ISHA, t(entry.isha)),
         )
     }
+}
+
+private fun isDaylightSaving(date: LocalDate, zone: ZoneId): Boolean =
+    zone.rules.isDaylightSavings(date.atTime(12, 0).atZone(zone).toInstant())
+
+/**
+ * Minutes to add to a takvim time for [date]. The takvim gives clock times
+ * for its own year ([takvimYear]), with that year's daylight saving already
+ * applied, but the clocks change on different dates every year (2026: 29
+ * March / 25 October; 2027: 28 March / 31 October). Taken back to standard
+ * time by the takvim year's dates and forward again by this year's, the
+ * times are right on the switch days of any year. [takvimDay] is the day of
+ * the month the entry is for, which differs from [date] on 29 February.
+ */
+internal fun takvimDstShiftMinutes(
+    date: LocalDate,
+    takvimYear: Int,
+    takvimDay: Int,
+    zone: ZoneId,
+): Int {
+    // Without a known takvim year there is nothing to correct against.
+    if (takvimYear <= 0) return 0
+    val takvimDate = runCatching { LocalDate.of(takvimYear, date.month, takvimDay) }
+        .getOrNull() ?: return 0
+    val now = if (isDaylightSaving(date, zone)) 60 else 0
+    val then = if (isDaylightSaving(takvimDate, zone)) 60 else 0
+    return now - then
 }

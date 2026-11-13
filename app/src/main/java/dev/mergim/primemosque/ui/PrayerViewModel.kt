@@ -160,10 +160,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     // Kosovo timezone, independent of (possibly wrong) device settings.
     private val zone = ZoneId.of("Europe/Belgrade")
 
-    // Minor events that should not appear on the board.
-    private val hiddenEvents = setOf(
-        "laylat_al_miraj", "laylat_al_baraat", "ashura", "mawlid",
-    )
+    // The upcoming Islamic day only changes with the date (or the Hijri
+    // correction), so it is worked out once per day, not on every tick.
+    private var eventCache: Triple<LocalDate, Int, UpcomingEvent?>? = null
 
     val cities: List<City> = repository.cities
 
@@ -227,7 +226,27 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             settingsRepository.lastSeenEpochMs,
             settingsRepository.boardCode,
         ) { now, settings, lastSeen, boardCode ->
-            buildState(now, settings, lastSeen, boardCode)
+            // A setting the board cannot use (a bad value from the portal, or
+            // one left by an older version) must not take the board down on
+            // every tick: it falls back to the default settings, keeping the
+            // mosque's name and layout, until the setting is corrected.
+            runCatching { buildState(now, settings, lastSeen, boardCode) }
+                .getOrElse {
+                    buildState(
+                        now,
+                        Settings(
+                            mosqueName = settings.mosqueName,
+                            place = settings.place,
+                            city = settings.city,
+                            orientation = settings.orientation,
+                            language = settings.language,
+                            theme = settings.theme,
+                            setupDone = settings.setupDone,
+                        ),
+                        lastSeen,
+                        boardCode,
+                    )
+                }
         }
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
@@ -256,7 +275,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // On Fridays a mosque may hold Jumu'ah at its own fixed time instead
         // of the Dhuhr time; the announcement, khutbah notice and countdown
         // all follow it because they derive from the slot list.
-        val jumuah = settings.jumuahMinutes.takeIf { friday && it >= 0 }
+        val jumuah = settings.jumuahMinutes.takeIf { friday && it in 0 until 24 * 60 }
         val slots = adjusted(repository.slotsFor(today, offset), settings).map { slot ->
             if (jumuah != null && slot.key == PrayerKey.DHUHR) {
                 slot.copy(time = LocalTime.of(jumuah / 60, jumuah % 60))
@@ -350,18 +369,15 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
 
-        // Islamic events shift on the Gregorian calendar every year, so the
-        // bundled dates are only valid for the takvim's own year.
-        val upcomingEvent = if (today.year == repository.data.metadata.year) {
-            repository.data.metadata.islamicEvents
-                .filterKeys { it !in hiddenEvents }
-                .mapNotNull { (key, date) ->
-                    runCatching { UpcomingEvent(key, LocalDate.parse(date)) }.getOrNull()
-                }
-                .filter { !it.date.isBefore(today) }
-                .minByOrNull { it.date }
-                ?.takeIf { Duration.between(today.atStartOfDay(), it.date.atStartOfDay()).toDays() <= 30 }
-        } else null
+        // The next major Islamic day, from the board's own Hijri calendar, so
+        // it follows the same ±day correction as the Hijri date and Ramadan
+        // mode, and keeps working in every year, not only the takvim's.
+        val upcomingEvent = eventCache
+            ?.takeIf { it.first == today && it.second == settings.hijriOffset }
+            ?.third
+            ?: upcomingIslamicEvent(today, settings.hijriOffset).also {
+                eventCache = Triple(today, settings.hijriOffset, it)
+            }
 
         // Daily wisdom breaks: on a fixed clock-driven cycle the prayer table
         // is replaced by rotating verses/hadiths, then comes back. Suppressed
@@ -650,6 +666,34 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // switched off, in seconds.
         const val ANNOUNCE_SECONDS = 60L
     }
+}
+
+/** Major Islamic days by Hijri (month, day), named as in [Strings.eventNames]. */
+private val HIJRI_EVENTS = mapOf(
+    (1 to 1) to "islamic_new_year",
+    (9 to 1) to "ramadan_start",
+    // The night of the 27th begins at Maghrib on the 26th; the BIK takvim
+    // lists Lejletul-Kadr under that evening's date.
+    (9 to 26) to "laylat_al_qadr",
+    (10 to 1) to "eid_al_fitr",
+    (12 to 10) to "eid_al_adha",
+)
+
+/**
+ * The first major Islamic day from [today] to [withinDays] days ahead, by the
+ * Hijri calendar shifted by [hijriOffset] days for local moon sighting.
+ */
+internal fun upcomingIslamicEvent(
+    today: LocalDate,
+    hijriOffset: Int,
+    withinDays: Int = 30,
+): UpcomingEvent? = (0..withinDays).firstNotNullOfOrNull { ahead ->
+    val date = today.plusDays(ahead.toLong())
+    // HijrahDate covers 1300-1600 AH; past that the board shows no event.
+    val hijri = runCatching { HijrahDate.from(date.plusDays(hijriOffset.toLong())) }
+        .getOrNull() ?: return@firstNotNullOfOrNull null
+    HIJRI_EVENTS[hijri.get(ChronoField.MONTH_OF_YEAR) to hijri.get(ChronoField.DAY_OF_MONTH)]
+        ?.let { UpcomingEvent(it, date) }
 }
 
 /**

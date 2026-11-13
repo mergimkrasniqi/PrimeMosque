@@ -14,7 +14,43 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null
+        && request.auth.token.email_verified == true
         && request.auth.token.email in ['mkrasniqi571@gmail.com'];
+    }
+
+    function str(d, key, max) {
+      return !(key in d) || (d[key] is string && d[key].size() <= max);
+    }
+    function flag(d, key) {
+      return !(key in d) || d[key] is bool;
+    }
+    function num(d, key, lo, hi) {
+      return !(key in d) || (d[key] is int && d[key] >= lo && d[key] <= hi);
+    }
+
+    // Types and ranges the board can handle. A value outside them is refused
+    // here, so a buggy or hostile write can't reach the TVs.
+    function validBoard(d) {
+      return str(d, 'mosqueName', 200) && str(d, 'place', 200) && str(d, 'city', 100)
+        && str(d, 'language', 10) && str(d, 'secondaryLanguage', 10)
+        && str(d, 'orientation', 40) && str(d, 'theme', 40) && str(d, 'nightMode', 40)
+        && str(d, 'announcement1', 2000) && str(d, 'announcement2', 2000)
+        && str(d, 'announcement1Until', 10) && str(d, 'announcement2Until', 10)
+        && str(d, 'lectureTitle', 200) && str(d, 'lectureDay', 20)
+        && str(d, 'lecturePrayer', 20) && str(d, 'appVersion', 40)
+        && flag(d, 'themeRotation') && flag(d, 'showDailyQuotes')
+        && flag(d, 'ramadanMode') && flag(d, 'adhanSequence') && flag(d, 'clockSynced')
+        && (!('jumuahMinutes' in d) || d.jumuahMinutes == -1
+            || (d.jumuahMinutes is int && d.jumuahMinutes >= 0 && d.jumuahMinutes < 1440))
+        && num(d, 'khutbahMinutes', 1, 120) && num(d, 'hijriOffset', -5, 5)
+        && num(d, 'preAdhanMinutes', 0, 30) && num(d, 'adhanDuaSeconds', 0, 600)
+        && (!('boardTimeEpochMs' in d) || d.boardTimeEpochMs is int)
+        && (!('rev' in d) || d.rev is int)
+        && (!('heartbeat' in d) || d.heartbeat is timestamp)
+        && (!('adjustments' in d) || (d.adjustments is map && d.adjustments.size() <= 20))
+        && (!('adhanSeconds' in d) || (d.adhanSeconds is map && d.adhanSeconds.size() <= 20))
+        && (!('dailyQuotes' in d) || (d.dailyQuotes is list && d.dailyQuotes.size() <= 500))
+        && (!('khutbahQuotes' in d) || (d.khutbahQuotes is list && d.khutbahQuotes.size() <= 500));
     }
 
     match /boards/{code} {
@@ -35,7 +71,11 @@ service cloud.firestore {
              'adhanSeconds',
              'adjustments', 'dailyQuotes', 'khutbahQuotes',
              'heartbeat', 'boardTimeEpochMs', 'clockSynced', 'appVersion',
-           ]);
+             // Stamped by the portal on every save; the board applies each
+             // revision once (see RemoteControl.kt).
+             'rev',
+           ])
+        && validBoard(request.resource.data);
       allow delete: if isAdmin();
     }
     match /{document=**} {

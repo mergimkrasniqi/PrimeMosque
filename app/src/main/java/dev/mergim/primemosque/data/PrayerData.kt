@@ -15,7 +15,6 @@ data class Metadata(
     val year: Int = 0,
     @SerialName("hijri_year") val hijriYear: String = "",
     @SerialName("city_offsets_minutes") val cityOffsetsMinutes: Map<String, Int> = emptyMap(),
-    @SerialName("islamic_events_2026") val islamicEvents: Map<String, String> = emptyMap(),
 )
 
 @Serializable

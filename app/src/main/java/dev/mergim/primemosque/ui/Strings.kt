@@ -1418,7 +1418,7 @@ private val SQ = Strings(
         "laylat_al_qadr" to "Nata e Kadrit",
         "eid_al_fitr" to "Fitër Bajrami",
         "eid_al_adha" to "Kurban Bajrami",
-        "islamic_new_year_1448" to "Viti i Ri Islam",
+        "islamic_new_year" to "Viti i Ri Islam",
     ),
 )
 
@@ -2290,7 +2290,7 @@ private val EN = Strings(
         "laylat_al_qadr" to "Laylat al-Qadr",
         "eid_al_fitr" to "Eid al-Fitr",
         "eid_al_adha" to "Eid al-Adha",
-        "islamic_new_year_1448" to "Islamic New Year",
+        "islamic_new_year" to "Islamic New Year",
     ),
 )
 
@@ -3142,7 +3142,7 @@ private val TR = Strings(
         "laylat_al_qadr" to "Kadir Gecesi",
         "eid_al_fitr" to "Ramazan Bayramı",
         "eid_al_adha" to "Kurban Bayramı",
-        "islamic_new_year_1448" to "Hicri Yılbaşı",
+        "islamic_new_year" to "Hicri Yılbaşı",
     ),
 )
 
@@ -3996,7 +3996,7 @@ private val BS = Strings(
         "laylat_al_qadr" to "Lejletul-kadr",
         "eid_al_fitr" to "Ramazanski bajram",
         "eid_al_adha" to "Kurban-bajram",
-        "islamic_new_year_1448" to "Nova hidžretska godina",
+        "islamic_new_year" to "Nova hidžretska godina",
     ),
 )
 

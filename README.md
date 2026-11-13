@@ -11,7 +11,7 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 - **Self-healing clock (NTP)** — TVs have no battery-backed clock, so after a power cut the TV's time is wrong until something re-syncs it. The board doesn't trust the TV clock: the moment *any* network is available it fetches the true time from NTP servers (Google/Cloudflare/pool.ntp.org) and runs on that, re-syncing hourly. Without network it falls back to the TV clock — so either keep the TV on Wi-Fi, or after a power cut briefly share a phone hotspot (or set the TV clock manually).
 - **Wrong-clock warning** — the app remembers the latest credible time it has seen; if the TV boots up with its clock *behind* that moment (the tell-tale sign of a power cut) and NTP can't sync, a red banner warns that the prayer times may be wrong, with a button that jumps straight to the TV's network settings. Connect Wi-Fi, press back, and the board fixes itself within seconds.
 - All 7 daily times (Imsaku, Sabahu, Lindja e Diellit, Dreka, Ikindia, Akshami, Jacia) with the current prayer highlighted and a live countdown to the next one.
-- Live clock, Gregorian + Hijri date, upcoming Islamic events.
+- Live clock, Gregorian + Hijri date, and the next major Islamic day within a month (start of Ramadan, Lejletul-Kadr, both Bajrams, Islamic New Year), worked out from the Hijri calendar so it keeps working every year and follows the Hijri ±day correction.
 - **Full-screen announcement** for one minute at the moment each prayer time arrives ("Koha e Namazit të ...", Xhuma-aware on Fridays).
 - **Per-prayer time adjustments** — every displayed time can be corrected by ±minutes from settings; the countdown, announcements, notices and night saver all follow the corrected times. The **Hijri date** can also be corrected by ±days for moon-sighting differences (the White Days reminders follow it).
 - Kosovo timezone is hardcoded, so a misconfigured TV clock zone still shows correct local times.
@@ -68,7 +68,7 @@ The whole board can be managed from a browser instead of the TV remote: mosque n
 
 **The portal is live at [prime---prayer-times.web.app](https://prime---prayer-times.web.app)** (Firebase Hosting, free Spark tier). To redeploy after editing [webportal/index.html](webportal/index.html): `firebase deploy --only hosting`; rule changes: `firebase deploy --only firestore:rules` (config in [firebase.json](firebase.json), CLI installed via Homebrew/npm, logged in as the admin account).
 
-Sync is one-directional (portal → TV); on first contact the TV publishes its current values so the portal starts from reality. Upgrade path for later: Firebase Auth for imams, per-board access, and more settings (theme, adjustments) in the document.
+**Sync works both ways.** On first contact the TV publishes its current values, so the portal starts from what the board shows. Every portal save carries a new revision number (`rev`); the TV applies each revision once and otherwise leaves the document alone, so heartbeats and the TV's own writes never undo changes made with the remote. Changes made with the remote are written back field by field, so the portal shows them too. The Firestore rules check every field's type and range, and the TV clamps every value again before using it. Deploy the rules before the portal (`firebase deploy --only firestore:rules`, then `--only hosting`): the new portal writes `rev`, which older rules refuse. Upgrade path for later: Firebase Auth for imams and per-board access.
 
 ## Screenshots
 
@@ -134,8 +134,26 @@ adb connect <tv-ip>
 adb install app/build/outputs/apk/release/app-release.apk
 ```
 
-The release build is signed with the debug key for easy sideloading — replace with a proper keystore for Play Store distribution.
+Unit tests (clock-change correction, Islamic event dates): `gradlew :app:testDebugUnitTest`.
 
-## Data caveat
+### Release signing key
 
-The bundled takvim embeds one specific year's DST switchover dates. In other years, times within a few days of the late-March / late-October clock change may be off by up to an hour for those few days only.
+A TV only accepts an update signed with the same key as the APK already on it. Without the key, every board has to be uninstalled and set up again, which wipes its settings and its portal pairing. Sign releases with your own key and keep two backups of it, off this machine:
+
+1. Create the key once (keytool asks for the passwords):
+   ```
+   keytool -genkeypair -v -keystore primemosque-release.jks -alias primemosque -keyalg RSA -keysize 4096 -validity 10000
+   ```
+2. Create `keystore.properties` in the project root (git ignores it, and `*.jks`):
+   ```
+   storeFile=primemosque-release.jks
+   storePassword=…
+   keyAlias=primemosque
+   keyPassword=…
+   ```
+
+Without `keystore.properties`, release builds fall back to this machine's debug key and Gradle warns about it. Boards installed with a debug-signed APK need one uninstall and reinstall to move to the release key.
+
+## Takvim data
+
+The bundled takvim is BIK's 2026 table. The times repeat from year to year, but the clock changes don't: the takvim has 2026's dates (29 March, 25 October) built in. The app takes each time back to standard time by the takvim year's dates and forward again by the current year's, so the days around the clock change are right in every year (for example 28 March and 25–30 October 2027). Replace the asset when BIK publishes a new table, and update `metadata.year` with it.

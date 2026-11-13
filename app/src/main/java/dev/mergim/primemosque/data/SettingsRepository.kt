@@ -217,6 +217,7 @@ class SettingsRepository(private val context: Context) {
         val CUSTOM_DAILY_QUOTES = stringPreferencesKey("custom_daily_quotes")
         val CUSTOM_KHUTBAH_QUOTES = stringPreferencesKey("custom_khutbah_quotes")
         val LAST_SEEN_EPOCH_MS = longPreferencesKey("last_seen_epoch_ms")
+        val APPLIED_REMOTE_REV = longPreferencesKey("applied_remote_rev")
         val BOARD_CODE = stringPreferencesKey("board_code")
 
         val ADHAN_SEQUENCE = booleanPreferencesKey("adhan_sequence")
@@ -402,4 +403,14 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setLastSeenEpochMs(value: Long) =
         context.runtimeDataStore.edit { it[Keys.LAST_SEEN_EPOCH_MS] = value }
+
+    // Revision of the last portal save applied to this board. The portal
+    // stamps every save with a new one, so the board applies each save once
+    // and leaves edits made with the remote alone in between. Kept across
+    // restarts, so a cached document is not re-applied at every start.
+    val appliedRemoteRev: Flow<Long?> =
+        context.runtimeDataStore.data.orDefaults().map { it[Keys.APPLIED_REMOTE_REV] }
+
+    suspend fun setAppliedRemoteRev(value: Long) =
+        context.runtimeDataStore.edit { it[Keys.APPLIED_REMOTE_REV] = value }
 }

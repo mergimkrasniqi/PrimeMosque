@@ -26,9 +26,10 @@ bugreport-*.zip
 *.apk
 output-metadata.json
 
-# Keystore files
+# Keystore files and their passwords
 *.jks
 *.keystore
+keystore.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json

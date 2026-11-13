@@ -490,6 +490,15 @@ $("addKhutbahQuote").addEventListener("click", () => {
 });
 
 let boardRef = null;
+// Live listener on the open board. Stopped before another board opens, or a
+// heartbeat from the previous board would refill the form with its values
+// while Save writes to the new one.
+let stopBoardListener = null;
+
+function closeBoard() {
+  if (stopBoardListener) { stopBoardListener(); stopBoardListener = null; }
+  boardRef = null;
+}
 SIMPLE_FIELDS.forEach((f) => $(f).addEventListener("input", () => { dirty = true; }));
 Object.keys(ADJUST_PRAYERS).forEach((k) =>
   $("adj_" + k).addEventListener("input", () => { dirty = true; }));
@@ -533,6 +542,7 @@ async function connect() {
   const code = $("code").value.trim().toUpperCase();
   if (code.length !== 8) { status("Kodi ka 8 shenja — shkruaje të plotë.", "err"); return; }
   status("Duke u lidhur…");
+  closeBoard();
   const ref = doc(db, "boards", code);
   let snap;
   try { snap = await getDoc(ref); }
@@ -548,7 +558,9 @@ async function connect() {
   dirty = false;
   status("I lidhur ✓", "ok");
   // Live updates from the board / other sessions, unless mid-edit.
-  onSnapshot(ref, (s) => { if (s.exists() && !dirty) fillForm(s.data()); });
+  stopBoardListener = onSnapshot(ref, (s) => {
+    if (s.exists() && !dirty && boardRef === ref) fillForm(s.data());
+  });
 }
 
 function cleanQuotes(list) {
@@ -607,6 +619,10 @@ async function save() {
       adhanSeconds,
       dailyQuotes: cleanQuotes(dailyQuotes),
       khutbahQuotes: cleanQuotes(khutbahQuotes),
+      // A new revision tells the board this is a save to apply. The board
+      // ignores the document otherwise, so heartbeats and its own writes
+      // never undo changes made with the TV remote.
+      rev: Date.now(),
     }, { merge: true });
     dirty = false;
     status("U ruajt ✓ — tabela përditësohet brenda sekondash.", "ok");
@@ -725,7 +741,7 @@ $("signOutBtn").addEventListener("click", async () => {
   status("");
   show("connect");
 });
-$("backBtn").addEventListener("click", () => { status(""); openDashboard(); });
+$("backBtn").addEventListener("click", () => { closeBoard(); status(""); openDashboard(); });
 
 $("connectBtn").addEventListener("click", connect);
 $("code").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
