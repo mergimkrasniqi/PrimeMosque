@@ -126,6 +126,10 @@ Notable implementation details:
 - `ui/SettingsScreen.kt` — uses an explicit `focusProperties` up/down focus chain, because Compose's geometric D-pad focus search breaks inside a rotated layout. Text settings open an edit dialog on OK-press so the on-screen keyboard doesn't pop up while navigating. A shared `SettingsPage` scaffold powers the main page, the setup wizard and all category sub-pages.
 - `ui/Strings.kt` — all four languages live in code as plain data (no Android resources), so language switching is instant and driven by the same settings flow. Khutbah quotes mark key phrases with `**…**`, rendered as accent-coloured bold spans by a tiny markup helper in `DisplayScreen.kt`.
 
+## Download
+
+Ready-to-install APKs are on the [Releases page](https://github.com/mergimkrasniqi/PrimeMosque/releases). To put one on a Google TV / Android TV, either sideload it from a computer with `adb install PrimeMosque-<version>.apk`, or open the APK on the TV with a file manager or the Downloader app after allowing installs from unknown sources. Releases are signed with the project's release key, so later versions install over earlier ones and keep their settings.
+
 ## Build & install
 
 ```
