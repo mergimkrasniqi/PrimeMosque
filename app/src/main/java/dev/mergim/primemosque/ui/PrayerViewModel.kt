@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.mergim.primemosque.data.ADHAN_PRAYERS
 import dev.mergim.primemosque.data.AppLanguage
+import dev.mergim.primemosque.data.BAJRAM_MINUTES_RANGE
 import dev.mergim.primemosque.data.AppTheme
 import dev.mergim.primemosque.data.City
 import dev.mergim.primemosque.data.DEFAULT_ADHAN_SECONDS
@@ -63,8 +64,9 @@ data class AdhanSequence(
 
 /**
  * Contextual guidance shown on the board only while it applies: Friday
- * practices, the Duha prayer window, morning/evening dhikr, and reminders
- * the evening before sunnah fasting days.
+ * practices, the Duha prayer window, morning/evening dhikr, the end of the
+ * Sabah time, reminders the evening before sunnah fasting days, and the
+ * special days and seasons of the Hijri year.
  */
 enum class NoticeKey {
     FRIDAY_KAHF,
@@ -77,10 +79,40 @@ enum class NoticeKey {
     FAST_MONDAY,
     FAST_THURSDAY,
     FAST_WHITE_DAYS,
+    SABAH_ENDING,
+    BAJRAM_EVE,
+    DHUL_HIJJA_DAYS,
+    ARAFAH_DAY,
+    FAST_ARAFAH,
+    FAST_TASUA,
+    FAST_ASHURA,
+    SHAWWAL_FAST,
+    LAST_TEN_NIGHTS,
     CUSTOM,
 }
 
-data class Notice(val key: NoticeKey, val arg: Int? = null, val custom: String? = null)
+/**
+ * A notice to show. [arg] fills a number into its text (the day of a White
+ * Day, minutes left), [event] and [time] name a Bajram and its namaz time.
+ */
+data class Notice(
+    val key: NoticeKey,
+    val arg: Int? = null,
+    val custom: String? = null,
+    val event: String? = null,
+    val time: LocalTime? = null,
+)
+
+enum class BajramKind(val eventKey: String) {
+    FITR("eid_al_fitr"),
+    ADHA("eid_al_adha"),
+}
+
+/**
+ * A day of Bajram: Fitër Bajrami lasts three days, Kurban Bajrami four.
+ * [namazTime] is set on the first day, when the Bajram namaz is held.
+ */
+data class Bajram(val kind: BajramKind, val day: Int, val namazTime: LocalTime?)
 
 /** The recurring lecture, pinned on its day until the prayer it follows. */
 data class LectureInfo(val title: String, val prayer: PrayerKey, val time: LocalTime?)
@@ -119,6 +151,10 @@ data class UiState(
     val ramadan: Boolean = false,
     val iftarTime: LocalTime? = null,
     val imsakTime: LocalTime? = null,
+    // Bajram days: the board pins the greeting, and on the first morning the
+    // countdown leads to the Bajram namaz once Sabah has passed.
+    val bajram: Bajram? = null,
+    val countdownToBajram: Boolean = false,
     val settings: Settings = Settings(),
     val loaded: Boolean = false,
     // The clock reads earlier than a time the app has already lived through
@@ -323,6 +359,32 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             year = hijrah.get(ChronoField.YEAR),
         )
 
+        val hijrahTomorrow = HijrahDate.from(today.plusDays(settings.hijriOffset + 1L))
+        val hijriTomorrow = HijriDate(
+            day = hijrahTomorrow.get(ChronoField.DAY_OF_MONTH),
+            month = hijrahTomorrow.get(ChronoField.MONTH_OF_YEAR),
+            year = hijrahTomorrow.get(ChronoField.YEAR),
+        )
+
+        // Bajram days come from the same corrected Hijri calendar; the namaz
+        // is held on the first morning, a set time after sunrise.
+        fun bajramNamaz(daySlots: List<PrayerSlot>): LocalTime? =
+            daySlots.firstOrNull { it.key == PrayerKey.SUNRISE }?.time
+                ?.plusMinutes(settings.bajramMinutesAfterSunrise.toLong())
+        val bajram = bajramDay(hijri)?.let { (kind, day) ->
+            Bajram(kind, day, if (day == 1) bajramNamaz(slots) else null)
+        }
+        // On the first morning, once Sabah is past, the countdown leads to the
+        // Bajram namaz rather than straight on to Dreka.
+        val bajramNamazAt = bajram?.namazTime?.atDate(today)?.takeIf { it.isAfter(now) }
+        val countdownToBajram = bajramNamazAt != null && next != null && bajramNamazAt.isBefore(next.at)
+        // The evening before, the board announces tomorrow's Bajram namaz.
+        val bajramEve = bajramDay(hijriTomorrow)
+            ?.takeIf { (_, day) -> day == 1 }
+            ?.let { (kind, _) ->
+                kind to bajramNamaz(adjusted(repository.slotsFor(today.plusDays(1), offset), settings))
+            }
+
         // Ramadan follows the (offset-corrected) Hijri calendar by itself.
         val ramadan = settings.ramadanMode && hijri.month == HIJRI_RAMADAN
         val iftarTime = if (ramadan) {
@@ -338,7 +400,7 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             else -> slots.firstOrNull { it.key == PrayerKey.IMSAK }?.time
         }
 
-        val notices = buildNotices(now, today, slots, hijri, settings)
+        val notices = buildNotices(now, today, slots, hijri, hijriTomorrow, bajramEve, settings)
 
         // Full-screen khutbah takeover: from Jumu'ah time (after the 1-minute
         // announcement) for the configured duration, the board is replaced by
@@ -409,7 +471,11 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             current = current,
             next = next,
             adhan = adhan,
-            countdown = next?.let { Duration.between(now, it.at) } ?: Duration.ZERO,
+            countdown = when {
+                countdownToBajram && bajramNamazAt != null -> Duration.between(now, bajramNamazAt)
+                next != null -> Duration.between(now, next.at)
+                else -> Duration.ZERO
+            },
             hijri = hijri,
             upcomingEvent = upcomingEvent,
             notices = notices,
@@ -423,6 +489,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             ramadan = ramadan,
             iftarTime = iftarTime,
             imsakTime = imsakTime,
+            bajram = bajram,
+            countdownToBajram = countdownToBajram,
             settings = settings,
             loaded = true,
             clockSuspect = clockSuspect,
@@ -511,12 +579,18 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         today: LocalDate,
         slots: List<PrayerSlot>,
         hijri: HijriDate,
+        hijriTomorrow: HijriDate,
+        bajramEve: Pair<BajramKind, LocalTime?>?,
         settings: Settings,
     ): List<Notice> = buildList {
         val time = now.toLocalTime()
         fun timeOf(key: PrayerKey) = slots.firstOrNull { it.key == key }?.time
 
+        val fajr = timeOf(PrayerKey.FAJR)
+        val sunrise = timeOf(PrayerKey.SUNRISE)
         val dhuhr = timeOf(PrayerKey.DHUHR)
+        val asr = timeOf(PrayerKey.ASR)
+        val maghrib = timeOf(PrayerKey.MAGHRIB)
         val friday = today.dayOfWeek == DayOfWeek.FRIDAY
 
         // Around the khutbah nothing else matters: the silence notice
@@ -526,6 +600,16 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         if (khutbah) {
             add(Notice(NoticeKey.FRIDAY_KHUTBAH))
             return@buildList
+        }
+
+        // The last minutes before sunrise: once the sun is up, Sabah can no
+        // longer be prayed in its time, so the warning has the card to itself.
+        if (fajr != null && sunrise != null && !time.isBefore(fajr) && time.isBefore(sunrise)) {
+            val secondsLeft = Duration.between(time, sunrise).seconds
+            if (secondsLeft <= SABAH_WARNING_MINUTES * 60) {
+                add(Notice(NoticeKey.SABAH_ENDING, arg = ((secondsLeft + 59) / 60).toInt()))
+                return@buildList
+            }
         }
 
         // Custom mosque announcements rotate along with the other notices
@@ -543,9 +627,13 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         activeAnnouncement(settings.announcement2, settings.announcement2Until)
             ?.let { add(Notice(NoticeKey.CUSTOM, custom = it)) }
 
-        val sunrise = timeOf(PrayerKey.SUNRISE)
-        val asr = timeOf(PrayerKey.ASR)
-        val maghrib = timeOf(PrayerKey.MAGHRIB)
+        val afterAsr = asr != null && !time.isBefore(asr)
+        val afterMaghrib = maghrib != null && !time.isBefore(maghrib)
+
+        // The evening before a Bajram, its namaz time.
+        if (bajramEve != null && afterAsr) {
+            add(Notice(NoticeKey.BAJRAM_EVE, event = bajramEve.first.eventKey, time = bajramEve.second))
+        }
 
         if (friday && (maghrib == null || time.isBefore(maghrib))) {
             add(Notice(NoticeKey.FRIDAY_KAHF))
@@ -556,7 +644,6 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
 
-        val fajr = timeOf(PrayerKey.FAJR)
         if (fajr != null && sunrise != null &&
             !time.isBefore(fajr) && time.isBefore(sunrise)
         ) {
@@ -571,16 +658,20 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             add(Notice(NoticeKey.DUHA))
         }
 
-        if (asr != null && maghrib != null &&
-            !time.isBefore(asr) && time.isBefore(maghrib)
-        ) {
+        if (afterAsr && !afterMaghrib) {
             add(Notice(NoticeKey.EVENING_DHIKR))
         }
 
+        // The special days and seasons of the Hijri year.
+        addAll(hijriNotices(hijri, hijriTomorrow, afterAsr, afterMaghrib))
+
         // Sunnah-fasting reminders for the evening before, from Asr onwards.
-        // Pointless during Ramadan, when everyone is already fasting.
-        val ramadan = settings.ramadanMode && hijri.month == HIJRI_RAMADAN
-        if (!ramadan && asr != null && !time.isBefore(asr)) {
+        // Pointless during Ramadan, when everyone is already fasting, and
+        // never for a day on which fasting is not allowed (the Bajrams and
+        // the days of Teshrik).
+        val ramadan = settings.ramadanMode &&
+            (hijri.month == HIJRI_RAMADAN || hijriTomorrow.month == HIJRI_RAMADAN)
+        if (!ramadan && afterAsr && voluntaryFastAllowed(hijriTomorrow)) {
             when (today.dayOfWeek) {
                 DayOfWeek.SUNDAY -> add(Notice(NoticeKey.FAST_MONDAY))
                 DayOfWeek.WEDNESDAY -> add(Notice(NoticeKey.FAST_THURSDAY))
@@ -588,8 +679,8 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
             }
             // The White Days (13/14/15 of the lunar month) each get a
             // reminder the evening before.
-            if (hijri.day in 12..14) {
-                add(Notice(NoticeKey.FAST_WHITE_DAYS, arg = hijri.day + 1))
+            if (hijriTomorrow.day in 13..15) {
+                add(Notice(NoticeKey.FAST_WHITE_DAYS, arg = hijriTomorrow.day))
             }
         }
     }
@@ -615,6 +706,12 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
     fun setJumuahMinutes(value: Int) = viewModelScope.launch { settingsRepository.setJumuahMinutes(value) }
     fun setKhutbahMinutes(value: Int) =
         viewModelScope.launch { settingsRepository.setKhutbahMinutes(value.coerceIn(5, 45)) }
+    fun setBajramMinutes(value: Int) =
+        viewModelScope.launch {
+            settingsRepository.setBajramMinutes(
+                value.coerceIn(BAJRAM_MINUTES_RANGE.first, BAJRAM_MINUTES_RANGE.last)
+            )
+        }
     fun setAnnouncement1(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement1(value) }
     fun setAnnouncement2(value: String) = viewModelScope.launch { settingsRepository.setAnnouncement2(value) }
     fun setHijriOffset(value: Int) =
@@ -654,6 +751,9 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // One quote fills a slot; a break is a whole number of them.
         const val QUOTE_SLOT_SECONDS = 30
         const val QUOTE_SLOTS_PER_BREAK = QUOTES_BREAK_SECONDS / QUOTE_SLOT_SECONDS
+        // The last minutes before sunrise, when the board warns that the
+        // Sabah time is running out.
+        const val SABAH_WARNING_MINUTES = 20L
         const val SECONDS_PER_DAY = 24 * 60 * 60
         const val RIJAD_SOURCE = "Rijadu Salihin"
         // Longest narration that still fits the portrait card (about ten
@@ -665,6 +765,49 @@ class PrayerViewModel(app: Application) : AndroidViewModel(app) {
         // Length of the plain announcement used when the adhan sequence is
         // switched off, in seconds.
         const val ANNOUNCE_SECONDS = 60L
+    }
+}
+
+/**
+ * Which day of which Bajram [hijri] is, if any: Fitër Bajrami is 1-3
+ * Shevval, Kurban Bajrami 10-13 Dhul-Hixhe.
+ */
+internal fun bajramDay(hijri: HijriDate): Pair<BajramKind, Int>? = when {
+    hijri.month == 10 && hijri.day in 1..3 -> BajramKind.FITR to hijri.day
+    hijri.month == 12 && hijri.day in 10..13 -> BajramKind.ADHA to hijri.day - 9
+    else -> null
+}
+
+/**
+ * Whether a voluntary fast may be kept on [day]: never on either Bajram,
+ * nor on the days of Teshrik (11-13 Dhul-Hixhe) that follow Kurban Bajrami.
+ */
+internal fun voluntaryFastAllowed(day: HijriDate): Boolean =
+    !(day.month == 10 && day.day == 1) && !(day.month == 12 && day.day in 10..13)
+
+/**
+ * Reminders tied to the Hijri calendar: the first ten days of Dhul-Hixhe
+ * and the day of Arafat, the evening-before reminders for the Arafat,
+ * Tasua and Ashura fasts, the six days of Shevval, and the last ten nights
+ * of Ramadan (from Maghrib on the 20th, when the 21st night begins).
+ */
+internal fun hijriNotices(
+    today: HijriDate,
+    tomorrow: HijriDate,
+    afterAsr: Boolean,
+    afterMaghrib: Boolean,
+): List<Notice> = buildList {
+    if (today.month == 12 && today.day == 9) add(Notice(NoticeKey.ARAFAH_DAY))
+    if (today.month == 12 && today.day in 1..8) add(Notice(NoticeKey.DHUL_HIJJA_DAYS))
+    if (afterAsr) {
+        if (tomorrow.month == 12 && tomorrow.day == 9) add(Notice(NoticeKey.FAST_ARAFAH))
+        if (tomorrow.month == 1 && tomorrow.day == 9) add(Notice(NoticeKey.FAST_TASUA))
+        if (tomorrow.month == 1 && tomorrow.day == 10) add(Notice(NoticeKey.FAST_ASHURA))
+    }
+    // From the 2nd: fasting on the day of Bajram itself is not allowed.
+    if (today.month == 10 && today.day >= 2) add(Notice(NoticeKey.SHAWWAL_FAST))
+    if (today.month == 9 && (today.day >= 21 || (today.day == 20 && afterMaghrib))) {
+        add(Notice(NoticeKey.LAST_TEN_NIGHTS))
     }
 }
 

@@ -590,8 +590,9 @@ private fun FridaySettingsPage(
     val settings = state.settings
     val jumuah = settings.jumuahMinutes
     val khutbahMinutes = settings.khutbahMinutes
+    val bajramMinutes = settings.bajramMinutesAfterSunrise
 
-    SettingsPage(title = strings.fridaySectionLabel, rowCount = 3) { rowModifier ->
+    SettingsPage(title = strings.fridaySectionLabel, rowCount = 4) { rowModifier ->
         CyclerRow(
             modifier = rowModifier(0),
             label = strings.jumuahLabel,
@@ -626,9 +627,16 @@ private fun FridaySettingsPage(
             onPrevious = { viewModel.setKhutbahMinutes(khutbahMinutes - 5) },
             onNext = { viewModel.setKhutbahMinutes(khutbahMinutes + 5) },
         )
+        CyclerRow(
+            modifier = rowModifier(2),
+            label = strings.bajramMinutesLabel,
+            value = "$bajramMinutes ${strings.minutesShort}",
+            onPrevious = { viewModel.setBajramMinutes(bajramMinutes - 5) },
+            onNext = { viewModel.setBajramMinutes(bajramMinutes + 5) },
+        )
         Button(
             onClick = onBack,
-            modifier = rowModifier(2).fillMaxWidth(),
+            modifier = rowModifier(3).fillMaxWidth(),
         ) {
             Text(strings.back, fontSize = 18.sp)
         }

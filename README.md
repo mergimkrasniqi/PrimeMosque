@@ -11,7 +11,7 @@ Originally built for Xhamia "Sinan Katib" in Prizren, running on a 55" Google TV
 - **Self-healing clock (NTP)** — TVs have no battery-backed clock, so after a power cut the TV's time is wrong until something re-syncs it. The board doesn't trust the TV clock: the moment *any* network is available it fetches the true time from NTP servers (Google/Cloudflare/pool.ntp.org) and runs on that, re-syncing hourly. Without network it falls back to the TV clock — so either keep the TV on Wi-Fi, or after a power cut briefly share a phone hotspot (or set the TV clock manually).
 - **Wrong-clock warning** — the app remembers the latest credible time it has seen; if the TV boots up with its clock *behind* that moment (the tell-tale sign of a power cut) and NTP can't sync, a red banner warns that the prayer times may be wrong, with a button that jumps straight to the TV's network settings. Connect Wi-Fi, press back, and the board fixes itself within seconds.
 - All 7 daily times (Imsaku, Sabahu, Lindja e Diellit, Dreka, Ikindia, Akshami, Jacia) with the current prayer highlighted and a live countdown to the next one.
-- Live clock, Gregorian + Hijri date, and the next major Islamic day within a month (start of Ramadan, Lejletul-Kadr, both Bajrams, Islamic New Year), worked out from the Hijri calendar so it keeps working every year and follows the Hijri ±day correction.
+- Live clock, Gregorian + Hijri date, and the next major Islamic day within a month (start of Ramadan, Lejletul-Kadr, both Bajrams, Islamic New Year), worked out from the Hijri calendar so it keeps working every year and follows the Hijri ±day correction. In the last three days the footer counts down to it ("edhe 3 ditë", "edhe 2 ditë", "nesër", "sot").
 - **Full-screen announcement** for one minute at the moment each prayer time arrives ("Koha e Namazit të ...", Xhuma-aware on Fridays).
 - **Per-prayer time adjustments** — every displayed time can be corrected by ±minutes from settings; the countdown, announcements, notices and night saver all follow the corrected times. The **Hijri date** can also be corrected by ±days for moon-sighting differences (the White Days reminders follow it).
 - Kosovo timezone is hardcoded, so a misconfigured TV clock zone still shows correct local times.
@@ -34,12 +34,22 @@ Two free-text slots ("Njoftimet") for the mosque's own messages — janaza notic
 ### Ramadan mode
 Automatic during the Hijri month of Ramadan (follows the offset-corrected Hijri date; toggleable on the TV and in the portal): the board pins a **Ramazani banner with today's Iftar and the relevant Imsak** (tomorrow's after iftar has passed, for suhoor), the countdown to Maghrib relabels to **"deri në Iftar"**, and the sunnah-fasting reminders (Mon/Thu, White Days) pause since everyone is fasting anyway.
 
+### Bajram
+Both Bajrams come from the board's Hijri calendar (with its ±day correction), so they need no setup each year:
+- **The evening before**, from Ikindia, a notice announces tomorrow's Bajram and the time of the Bajram namaz.
+- **On the first morning**, a pinned banner gives the namaz time, and once Sabah has passed the countdown leads to **"deri në namazin e Bajramit"** instead of to Dreka.
+- **Through the Bajram days** (three for Fitër Bajrami, four for Kurban Bajrami) the banner carries the greeting "Bajrami juaj qoftë i bekuar!".
+
+The namaz time is set in minutes after sunrise (default 30), on the TV under Xhumaja dhe Bajrami or in the portal, so it moves with the season between the two Bajrams.
+
 ### Contextual notices (rotating card)
 A card on the board shows guidance only while it applies, rotating every 30 s when several are active:
 - **Friday**: read Surah El-Kehf, the hour of accepted du'a, Jumu'ah preparation sunnahs — and around the khutbah a single exclusive "remain silent" notice.
 - **Duha prayer** window (from ~20 min after sunrise until shortly before Dhuhr).
 - **Morning dhikr** (Sabahu → sunrise) and **evening dhikr** (Ikindia → Akshami).
-- **Sunnah fasting reminders** the evening before: Monday & Thursday fasts, and the White Days (13/14/15 of the Hijri month).
+- **End of the Sabah time**: in the last 20 minutes before sunrise, "Koha e Sabahut po mbaron" with the minutes left takes the card to itself.
+- **Sunnah fasting reminders** the evening before: Monday & Thursday fasts, and the White Days (13/14/15 of the Hijri month). Never for a day on which fasting isn't allowed: the Bajrams and the days of Teshrik (11–13 Dhul-Hixhe).
+- **The Hijri year**: the first ten days of Dhul-Hixhe and the day of Arafat, the evening-before reminders for the Arafat, Tasua and Ashura fasts, the six days of Shevval (from the 2nd), and the last ten nights of Ramadan (from Maghrib on the 20th).
 
 ### Weekly lecture banner
 A recurring lecture configured on its own settings page: title, day of week, and which prayer it follows (Akshami in summer, Jacia in winter). On that day a pinned banner appears on the board (above the prayer times in landscape) showing "Sot pas namazit të Akshamit (19:25)". The banner stays up until that prayer's time arrives; from then on the lecture is under way, so it disappears for the rest of the day. When the banner is visible, the portrait board scales itself down slightly so everything still fits.
@@ -49,7 +59,7 @@ Between Jacia (plus a configurable delay, so the congregation still sees the nor
 
 ### Setup & customisation
 - **First-run setup wizard** — on first launch the essential settings (language, city, mosque name, place, orientation, theme) are presented once, so a new mosque can configure the board without discovering the settings screen.
-- **Categorised settings** (press OK on the remote): a compact main page with the language plus sub-pages — Xhamia (name, place, city with official minute offsets), Ekrani (orientation, theme, night saver), Xhumaja (Jumu'ah time, khutbah duration), Ligjërata javore, Njoftimet, and Përshtatja e kohëve (per-prayer ±min, Hijri date). Every category row shows a live summary of its values.
+- **Categorised settings** (press OK on the remote): a compact main page with the language plus sub-pages — Xhamia (name, place, city with official minute offsets), Ekrani (orientation, theme, night saver), Xhumaja dhe Bajrami (Jumu'ah time, khutbah duration, Bajram namaz), Ligjërata javore, Njoftimet, and Përshtatja e kohëve (per-prayer ±min, Hijri date). Every category row shows a live summary of its values.
 - **4 theme families, each light + dark**: Mushaf (cream/red), Zaytun (olive), Nila (indigo), Hibr (paper & ink). Optional **weekly automatic rotation** switches to the next family every Monday — keeping your light/dark preference — so the board never gets monotonous.
 - **4 languages**: Shqip, English, Türkçe, Bosanski — including prayer names, notices, dhikr translations, khutbah quotes, Hijri month spellings and date locales. For mixed congregations a **secondary language** can be set (on the TV or from the portal): the whole board then alternates between the two languages every 2 minutes.
 - Screen is kept awake permanently (signage use), and a boot receiver relaunches the board after a power cut on firmwares that allow it (elsewhere, set the app as home or open it manually).

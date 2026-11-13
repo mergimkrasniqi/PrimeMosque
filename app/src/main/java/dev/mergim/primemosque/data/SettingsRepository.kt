@@ -107,6 +107,12 @@ data class CustomQuote(
     val arabic: String? = null,
 )
 
+/** Bajram namaz default, in minutes after sunrise; adjustable per mosque. */
+const val DEFAULT_BAJRAM_MINUTES = 30
+
+/** The range the Bajram namaz setting allows, in minutes after sunrise. */
+val BAJRAM_MINUTES_RANGE = 10..90
+
 data class Settings(
     val mosqueName: String = "Xhamia",
     val place: String = "Prizren",
@@ -133,6 +139,9 @@ data class Settings(
     val jumuahMinutes: Int = -1,
     // How long the full-screen khutbah takeover stays after Jumu'ah time.
     val khutbahMinutes: Int = 20,
+    // Bajram namaz, in minutes after sunrise on the first day of each
+    // Bajram: tied to sunrise, it moves with the season between the two.
+    val bajramMinutesAfterSunrise: Int = DEFAULT_BAJRAM_MINUTES,
     // Free-text mosque announcements, shown in the notice rotation while set.
     val announcement1: String = "",
     val announcement2: String = "",
@@ -207,6 +216,7 @@ class SettingsRepository(private val context: Context) {
         val SETUP_DONE = booleanPreferencesKey("setup_done")
         val JUMUAH_MINUTES = intPreferencesKey("jumuah_minutes")
         val KHUTBAH_MINUTES = intPreferencesKey("khutbah_minutes")
+        val BAJRAM_MINUTES = intPreferencesKey("bajram_minutes")
         val ANNOUNCEMENT_1 = stringPreferencesKey("announcement_1")
         val ANNOUNCEMENT_2 = stringPreferencesKey("announcement_2")
         val ANNOUNCEMENT_1_UNTIL = stringPreferencesKey("announcement_1_until")
@@ -265,6 +275,7 @@ class SettingsRepository(private val context: Context) {
             setupDone = p[Keys.SETUP_DONE] ?: defaults.setupDone,
             jumuahMinutes = p[Keys.JUMUAH_MINUTES] ?: defaults.jumuahMinutes,
             khutbahMinutes = p[Keys.KHUTBAH_MINUTES] ?: defaults.khutbahMinutes,
+            bajramMinutesAfterSunrise = p[Keys.BAJRAM_MINUTES] ?: defaults.bajramMinutesAfterSunrise,
             announcement1 = p[Keys.ANNOUNCEMENT_1] ?: defaults.announcement1,
             announcement2 = p[Keys.ANNOUNCEMENT_2] ?: defaults.announcement2,
             announcement1Until = p[Keys.ANNOUNCEMENT_1_UNTIL] ?: defaults.announcement1Until,
@@ -335,6 +346,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setKhutbahMinutes(value: Int) =
         context.dataStore.edit { it[Keys.KHUTBAH_MINUTES] = value }
+
+    suspend fun setBajramMinutes(value: Int) =
+        context.dataStore.edit { it[Keys.BAJRAM_MINUTES] = value }
 
     suspend fun setAnnouncement1(value: String) =
         context.dataStore.edit { it[Keys.ANNOUNCEMENT_1] = value }

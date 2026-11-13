@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness5
+import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.NoFood
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WbSunny
@@ -85,6 +87,7 @@ import dev.mergim.primemosque.ui.theme.LocalBoardPalette
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val clockFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -118,7 +121,16 @@ private fun noticeIcon(key: NoticeKey): ImageVector = when (key) {
     NoticeKey.EVENING_DHIKR -> Icons.Filled.NightsStay
     NoticeKey.FAST_MONDAY,
     NoticeKey.FAST_THURSDAY,
-    NoticeKey.FAST_WHITE_DAYS -> Icons.Filled.NoFood
+    NoticeKey.FAST_WHITE_DAYS,
+    NoticeKey.FAST_ARAFAH,
+    NoticeKey.FAST_TASUA,
+    NoticeKey.FAST_ASHURA,
+    NoticeKey.SHAWWAL_FAST -> Icons.Filled.NoFood
+    NoticeKey.SABAH_ENDING -> Icons.Filled.WbTwilight
+    NoticeKey.BAJRAM_EVE -> Icons.Filled.Celebration
+    NoticeKey.DHUL_HIJJA_DAYS -> Icons.Filled.Star
+    NoticeKey.ARAFAH_DAY -> Icons.Filled.Terrain
+    NoticeKey.LAST_TEN_NIGHTS -> Icons.Filled.NightsStay
 
     NoticeKey.CUSTOM -> Icons.Filled.Campaign
 }
@@ -272,7 +284,7 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
     // footer), and slightly whenever the notice card alone is on board
     // (Fridays, Duha/dhikr windows, custom announcements).
     val scale = when {
-        state.lecture != null || state.ramadan -> 0.85f
+        state.lecture != null || state.ramadan || state.bajram != null -> 0.85f
         state.notices.isNotEmpty() -> 0.9f
         else -> 1f
     }
@@ -289,6 +301,12 @@ private fun PortraitBoard(state: UiState, strings: Strings) {
         Spacer(Modifier.height(12.dp * scale))
         CountdownBanner(state, strings, scale = scale)
         Spacer(Modifier.height(12.dp * scale))
+        BajramBanner(
+            state,
+            strings,
+            modifier = Modifier.padding(bottom = 12.dp * scale),
+            scale = scale
+        )
         RamadanBanner(
             state,
             strings,
@@ -358,7 +376,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
     val friday = state.now.dayOfWeek == DayOfWeek.FRIDAY
     // Pinned banners join the schedule column, whose rows tighten to make
     // room for them.
-    val banners = listOf(state.ramadan, state.lecture != null).count { it }
+    val banners = listOf(state.ramadan, state.lecture != null, state.bajram != null).count { it }
     val rowScale = when (banners) {
         0 -> 1f
         1 -> 0.88f
@@ -379,6 +397,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
         ) {
             Header(state, strings, centered = false, scale = 0.8f)
             Spacer(Modifier.height(12.dp))
+            BajramBanner(state, strings, Modifier.padding(bottom = 8.dp), scale = 0.8f)
             RamadanBanner(state, strings, Modifier.padding(bottom = 8.dp), scale = 0.8f)
             LectureBanner(state, strings, Modifier.padding(bottom = 8.dp), scale = 0.8f)
             Column(
@@ -407,7 +426,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                 .fillMaxHeight(),
         ) {
             if (showQuotes) {
-                LandscapeClock(state, strings, clockSize = 68.sp)
+                ClockBlock(state, strings, clockSize = 68.sp)
                 Spacer(Modifier.height(12.dp))
                 FittedQuoteCard(
                     quote = quotes[state.quoteSlot % quotes.size],
@@ -423,7 +442,7 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    LandscapeClock(state, strings, clockSize = 96.sp)
+                    ClockBlock(state, strings, clockSize = 96.sp)
                 }
             }
             NoticeCard(state, strings, Modifier.padding(top = 10.dp), scale = 0.85f)
@@ -434,12 +453,11 @@ private fun LandscapeBoard(state: UiState, strings: Strings) {
 }
 
 /**
- * The landscape board's time block: the clock centred over the right-hand
- * panel, both dates on one line beneath it, then the countdown as plain
- * text, so the three read as one centred stack.
+ * The board's time block: the clock, both dates on one line beneath it, then
+ * the countdown as plain text, so the three read as one centred stack.
  */
 @Composable
-private fun LandscapeClock(state: UiState, strings: Strings, clockSize: TextUnit) {
+private fun ClockBlock(state: UiState, strings: Strings, clockSize: TextUnit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -628,6 +646,7 @@ private fun DateLines(state: UiState, strings: Strings, centered: Boolean, scale
 private fun countdownName(next: NextPrayer, state: UiState, strings: Strings): String {
     val friday = next.at.dayOfWeek == DayOfWeek.FRIDAY
     return when {
+        state.countdownToBajram -> strings.bajramCountdownName
         state.ramadan && next.key == PrayerKey.MAGHRIB -> strings.iftarCountdownName
         friday && next.key == PrayerKey.DHUHR -> strings.fridayDhuhrCountdownName
         else -> strings.countdownNames[next.key]
@@ -669,6 +688,56 @@ private fun CountdownBanner(
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = (if (compact) 16.sp else 24.sp) * scale,
         )
+    }
+}
+
+/**
+ * Pinned through the days of Bajram: on the first morning it gives the time
+ * of the Bajram namaz until the namaz begins, then the Bajram greeting.
+ */
+@Composable
+private fun BajramBanner(
+    state: UiState,
+    strings: Strings,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+) {
+    val bajram = state.bajram ?: return
+    val palette = LocalBoardPalette.current
+    val shape = RoundedCornerShape(16.dp)
+    val namaz = bajram.namazTime?.takeIf { state.now.toLocalTime().isBefore(it) }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(palette.cardHighlight, shape)
+            .border(1.dp, palette.accent.copy(alpha = 0.5f), shape)
+            .padding(horizontal = 20.dp * scale, vertical = 12.dp * scale),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Celebration,
+            contentDescription = null,
+            tint = palette.accent,
+            modifier = Modifier.size(34.dp * scale),
+        )
+        Spacer(Modifier.width(16.dp * scale))
+        Column {
+            Text(
+                text = strings.eventNames[bajram.kind.eventKey] ?: bajram.kind.eventKey,
+                color = palette.accent,
+                fontSize = 20.sp * scale,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = if (namaz != null) {
+                    "${strings.bajramNamazLabel}: ${namaz.format(timeFormatter)}"
+                } else {
+                    strings.bajramGreeting
+                },
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp * scale,
+            )
+        }
     }
 }
 
@@ -809,6 +878,12 @@ private fun NoticeCard(
         ) { active ->
             val text = strings.noticeTexts[active.key] ?: return@Crossfade
             val body = active.custom
+                ?: active.event?.let { event ->
+                    text.body.format(
+                        strings.eventNames[event] ?: event,
+                        active.time?.format(timeFormatter) ?: "—",
+                    )
+                }
                 ?: active.arg?.let { text.body.format(it) }
                 ?: text.body
             Row(
@@ -1448,6 +1523,9 @@ private fun DailyQuoteBlock(
     }
 }
 
+/** How many days ahead the footer starts counting down to an Islamic day. */
+private const val EVENT_COUNTDOWN_DAYS = 3L
+
 @Composable
 private fun Footer(state: UiState, strings: Strings, scale: Float = 1f) {
     val palette = LocalBoardPalette.current
@@ -1483,15 +1561,18 @@ private fun Footer(state: UiState, strings: Strings, scale: Float = 1f) {
         )
         state.upcomingEvent?.let { event ->
             val name = strings.eventNames[event.key] ?: event.key
+            val date = event.date.format(DateTimeFormatter.ofPattern("d MMMM", strings.locale))
+            val daysLeft = ChronoUnit.DAYS.between(state.now.toLocalDate(), event.date)
+            // The days are counted only in the last few; further out the
+            // name and date say enough.
+            val countdown = when (daysLeft) {
+                0L -> strings.eventToday
+                1L -> strings.eventTomorrow
+                in 2L..EVENT_COUNTDOWN_DAYS -> strings.eventInDays.format(daysLeft)
+                else -> null
+            }
             Text(
-                text = "$name • ${
-                    event.date.format(
-                        DateTimeFormatter.ofPattern(
-                            "d MMMM",
-                            strings.locale
-                        )
-                    )
-                }",
+                text = listOfNotNull(name, date, countdown).joinToString(" • "),
                 color = MaterialTheme.colorScheme.secondary,
                 fontSize = 18.sp * scale,
             )

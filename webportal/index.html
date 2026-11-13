@@ -213,7 +213,7 @@
     </div>
 
     <div class="card">
-      <h2>Xhumaja</h2>
+      <h2>Xhumaja dhe Bajrami</h2>
       <div class="row">
         <div>
           <label for="jumuahMinutes">Koha e Xhumasë</label>
@@ -222,6 +222,12 @@
         <div>
           <label for="khutbahMinutes">Hutbja (minuta)</label>
           <select id="khutbahMinutes"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="bajramMinutes">Namazi i Bajramit (pas lindjes së diellit)</label>
+          <select id="bajramMinutes"></select>
         </div>
       </div>
     </div>
@@ -354,7 +360,7 @@ const SIMPLE_FIELDS = ["mosqueName", "place", "city", "language",
   "theme", "themeRotation", "nightMode", "showDailyQuotes", "ramadanMode",
   "announcement1", "announcement2", "announcement1Until", "announcement2Until",
   "lectureTitle", "lectureDay", "lecturePrayer",
-  "jumuahMinutes", "khutbahMinutes", "hijriOffset",
+  "jumuahMinutes", "khutbahMinutes", "bajramMinutes", "hijriOffset",
   "adhanSequence", "preAdhanMinutes", "adhanDuaSeconds"];
 
 // The app's own defaults, used when a board document (created by an older
@@ -367,7 +373,7 @@ const DEFAULTS = {
   announcement1: "", announcement2: "",
   announcement1Until: "", announcement2Until: "",
   lectureTitle: "Ligjërata javore", lectureDay: "OFF", lecturePrayer: "MAGHRIB",
-  jumuahMinutes: "-1", khutbahMinutes: "20", hijriOffset: "0",
+  jumuahMinutes: "-1", khutbahMinutes: "20", bajramMinutes: "30", hijriOffset: "0",
   adhanSequence: "true", preAdhanMinutes: "1", adhanDuaSeconds: "45",
 };
 
@@ -395,6 +401,8 @@ for (let m = 12 * 60; m <= 15 * 60; m += 5) {
 }
 const khutbah = $("khutbahMinutes");
 for (let m = 5; m <= 45; m += 5) khutbah.add(new Option(`${m} min`, String(m)));
+const bajram = $("bajramMinutes");
+for (let m = 10; m <= 90; m += 5) bajram.add(new Option(`${m} min`, String(m)));
 
 const preAdhan = $("preAdhanMinutes");
 preAdhan.add(new Option("Fikur", "0"));
@@ -611,6 +619,7 @@ async function save() {
       lecturePrayer: $("lecturePrayer").value,
       jumuahMinutes: parseInt($("jumuahMinutes").value, 10),
       khutbahMinutes: parseInt($("khutbahMinutes").value, 10),
+      bajramMinutes: parseInt($("bajramMinutes").value, 10),
       hijriOffset: parseInt($("hijriOffset").value, 10),
       adjustments,
       adhanSequence: $("adhanSequence").value === "true",

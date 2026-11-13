@@ -126,6 +126,15 @@ data class Strings(
     val clockWarningButton: String,
     val hijriMonths: List<String>,
     val eventNames: Map<String, String>,
+    // Bajram: banner, countdown to the namaz, its setting, and the
+    // footer's countdown to the next Islamic day.
+    val bajramNamazLabel: String,
+    val bajramGreeting: String,
+    val bajramCountdownName: String,
+    val bajramMinutesLabel: String,
+    val eventToday: String,
+    val eventTomorrow: String,
+    val eventInDays: String,
 )
 
 private val SQ = Strings(
@@ -241,6 +250,42 @@ private val SQ = Strings(
             "Ditët e Bardha",
             "Nesër është dita e %d e muajit hënor - agjërimi është sunet.",
         ),
+        NoticeKey.SABAH_ENDING to NoticeText(
+            "Koha e Sabahut po mbaron",
+            "Lindja e diellit për %d min — falni Sabahun para saj.",
+        ),
+        NoticeKey.BAJRAM_EVE to NoticeText(
+            "Nesër është Bajram",
+            "%s — namazi i Bajramit falet nesër në %s.",
+        ),
+        NoticeKey.DHUL_HIJJA_DAYS to NoticeText(
+            "Dhjetë ditët e Dhul-Hixhes",
+            "Ditët më të mira të vitit — shtoni tekbirin, tehlilin dhe veprat e mira.",
+        ),
+        NoticeKey.ARAFAH_DAY to NoticeText(
+            "Dita e Arafatit",
+            "Sot është dita e Arafatit — shtoni duatë; agjërimi i saj shlyen gjynahet e dy viteve.",
+        ),
+        NoticeKey.FAST_ARAFAH to NoticeText(
+            "Agjërimi i Arafatit",
+            "Nesër është dita e Arafatit — agjërimi i saj shlyen gjynahet e vitit të kaluar dhe të atij që vjen.",
+        ),
+        NoticeKey.FAST_TASUA to NoticeText(
+            "Agjërimi i Tasuasë",
+            "Nesër është 9 Muharrem — agjëroni bashkë me Ashuranë, siç kishte për qëllim Pejgamberi s.a.v.s.",
+        ),
+        NoticeKey.FAST_ASHURA to NoticeText(
+            "Agjërimi i Ashurasë",
+            "Nesër është dita e Ashurasë — agjërimi i saj shlyen gjynahet e vitit të kaluar.",
+        ),
+        NoticeKey.SHAWWAL_FAST to NoticeText(
+            "Gjashtë ditët e Shevvalit",
+            "Kush agjëron Ramazanin e pastaj gjashtë ditë të Shevvalit, është sikur të ketë agjëruar gjithë vitin.",
+        ),
+        NoticeKey.LAST_TEN_NIGHTS to NoticeText(
+            "Dhjetë netët e fundit",
+            "Kërkojeni Natën e Kadrit në netët tek të dhjetë netëve të fundit të Ramazanit.",
+        ),
         NoticeKey.CUSTOM to NoticeText("Njoftim", ""),
     ),
     settingsTitle = "Cilësimet",
@@ -280,7 +325,7 @@ private val SQ = Strings(
     ),
     mosqueSectionLabel = "Xhamia",
     displaySectionLabel = "Ekrani",
-    fridaySectionLabel = "Xhumaja",
+    fridaySectionLabel = "Xhumaja dhe Bajrami",
     lectureSectionLabel = "Ligjërata javore",
     lectureTitleLabel = "Titulli",
     lectureDayLabel = "Dita",
@@ -1413,6 +1458,13 @@ private val SQ = Strings(
         "Xhumadel-ula", "Xhumadel-uhra", "Rexheb", "Shaban",
         "Ramazan", "Shevval", "Dhul-kade", "Dhul-hixhe",
     ),
+    bajramNamazLabel = "Namazi i Bajramit",
+    bajramGreeting = "Bajrami juaj qoftë i bekuar!",
+    bajramCountdownName = "namazin e Bajramit",
+    bajramMinutesLabel = "Namazi i Bajramit (min pas lindjes së diellit)",
+    eventToday = "sot",
+    eventTomorrow = "nesër",
+    eventInDays = "edhe %d ditë",
     eventNames = mapOf(
         "ramadan_start" to "Fillimi i Ramazanit",
         "laylat_al_qadr" to "Nata e Kadrit",
@@ -1535,6 +1587,42 @@ private val EN = Strings(
             "The White Days",
             "Tomorrow is day %d of the lunar month - fasting is Sunnah.",
         ),
+        NoticeKey.SABAH_ENDING to NoticeText(
+            "Fajr time is ending",
+            "Sunrise in %d min — pray Fajr before it.",
+        ),
+        NoticeKey.BAJRAM_EVE to NoticeText(
+            "Eid is tomorrow",
+            "%s — the Eid prayer is tomorrow at %s.",
+        ),
+        NoticeKey.DHUL_HIJJA_DAYS to NoticeText(
+            "The ten days of Dhul-Hijjah",
+            "The best days of the year — increase takbir, tahlil and good deeds.",
+        ),
+        NoticeKey.ARAFAH_DAY to NoticeText(
+            "The Day of Arafah",
+            "Today is the Day of Arafah — make much du'a; its fast expiates the sins of two years.",
+        ),
+        NoticeKey.FAST_ARAFAH to NoticeText(
+            "Fast of Arafah",
+            "Tomorrow is the Day of Arafah — its fast expiates the sins of the past year and the coming one.",
+        ),
+        NoticeKey.FAST_TASUA to NoticeText(
+            "Fast of Tasu'a",
+            "Tomorrow is 9 Muharram — fast it together with Ashura, as the Prophet s.a.w.s. intended.",
+        ),
+        NoticeKey.FAST_ASHURA to NoticeText(
+            "Fast of Ashura",
+            "Tomorrow is Ashura — its fast expiates the sins of the past year.",
+        ),
+        NoticeKey.SHAWWAL_FAST to NoticeText(
+            "Six days of Shawwal",
+            "Fasting Ramadan and then six days of Shawwal is like fasting the whole year.",
+        ),
+        NoticeKey.LAST_TEN_NIGHTS to NoticeText(
+            "The last ten nights",
+            "Seek Laylat al-Qadr in the odd nights of the last ten nights of Ramadan.",
+        ),
         NoticeKey.CUSTOM to NoticeText("Announcement", ""),
     ),
     settingsTitle = "Settings",
@@ -1574,7 +1662,7 @@ private val EN = Strings(
     ),
     mosqueSectionLabel = "Mosque",
     displaySectionLabel = "Display",
-    fridaySectionLabel = "Friday",
+    fridaySectionLabel = "Friday & Eid",
     lectureSectionLabel = "Weekly lecture",
     lectureTitleLabel = "Title",
     lectureDayLabel = "Day",
@@ -2285,6 +2373,13 @@ private val EN = Strings(
         "Jumada al-ula", "Jumada al-akhirah", "Rajab", "Sha'ban",
         "Ramadan", "Shawwal", "Dhu al-Qa'dah", "Dhu al-Hijjah",
     ),
+    bajramNamazLabel = "Eid prayer",
+    bajramGreeting = "Eid Mubarak!",
+    bajramCountdownName = "the Eid prayer",
+    bajramMinutesLabel = "Eid prayer (min after sunrise)",
+    eventToday = "today",
+    eventTomorrow = "tomorrow",
+    eventInDays = "in %d days",
     eventNames = mapOf(
         "ramadan_start" to "Start of Ramadan",
         "laylat_al_qadr" to "Laylat al-Qadr",
@@ -2407,6 +2502,42 @@ private val TR = Strings(
             "Beyaz Günler",
             "Yarın hicri ayın %d. günü - oruç tutmak sünnettir.",
         ),
+        NoticeKey.SABAH_ENDING to NoticeText(
+            "Sabah vakti çıkıyor",
+            "Güneş %d dk sonra doğuyor — sabah namazını ondan önce kılın.",
+        ),
+        NoticeKey.BAJRAM_EVE to NoticeText(
+            "Yarın bayram",
+            "%s — bayram namazı yarın saat %s.",
+        ),
+        NoticeKey.DHUL_HIJJA_DAYS to NoticeText(
+            "Zilhicce'nin ilk on günü",
+            "Yılın en faziletli günleri — tekbir, tehlil ve salih amelleri çoğaltın.",
+        ),
+        NoticeKey.ARAFAH_DAY to NoticeText(
+            "Arefe günü",
+            "Bugün Arefe günü — duayı çoğaltın; bu günün orucu iki yılın günahlarına kefarettir.",
+        ),
+        NoticeKey.FAST_ARAFAH to NoticeText(
+            "Arefe orucu",
+            "Yarın Arefe günü — orucu geçmiş ve gelecek yılın günahlarına kefarettir.",
+        ),
+        NoticeKey.FAST_TASUA to NoticeText(
+            "Tasua orucu",
+            "Yarın Muharrem'in 9'u — Peygamber s.a.v.'in niyet ettiği gibi Aşure ile birlikte oruç tutun.",
+        ),
+        NoticeKey.FAST_ASHURA to NoticeText(
+            "Aşure orucu",
+            "Yarın Aşure günü — orucu geçmiş yılın günahlarına kefarettir.",
+        ),
+        NoticeKey.SHAWWAL_FAST to NoticeText(
+            "Şevval'in altı günü",
+            "Ramazan'ı tutup ardından Şevval'den altı gün oruç tutan, bütün yılı oruçlu geçirmiş gibidir.",
+        ),
+        NoticeKey.LAST_TEN_NIGHTS to NoticeText(
+            "Son on gece",
+            "Kadir Gecesi'ni Ramazan'ın son on gecesinin tek gecelerinde arayın.",
+        ),
         NoticeKey.CUSTOM to NoticeText("Duyuru", ""),
     ),
     settingsTitle = "Ayarlar",
@@ -2446,7 +2577,7 @@ private val TR = Strings(
     ),
     mosqueSectionLabel = "Cami",
     displaySectionLabel = "Ekran",
-    fridaySectionLabel = "Cuma",
+    fridaySectionLabel = "Cuma ve Bayram",
     lectureSectionLabel = "Haftalık ders",
     lectureTitleLabel = "Başlık",
     lectureDayLabel = "Gün",
@@ -3137,6 +3268,13 @@ private val TR = Strings(
         "Cemaziyelevvel", "Cemaziyelahir", "Recep", "Şaban",
         "Ramazan", "Şevval", "Zilkade", "Zilhicce",
     ),
+    bajramNamazLabel = "Bayram namazı",
+    bajramGreeting = "Bayramınız mübarek olsun!",
+    bajramCountdownName = "Bayram namazı",
+    bajramMinutesLabel = "Bayram namazı (güneş doğuşundan sonra dk)",
+    eventToday = "bugün",
+    eventTomorrow = "yarın",
+    eventInDays = "%d gün kaldı",
     eventNames = mapOf(
         "ramadan_start" to "Ramazan başlangıcı",
         "laylat_al_qadr" to "Kadir Gecesi",
@@ -3259,6 +3397,42 @@ private val BS = Strings(
             "Bijeli dani",
             "Sutra je %d. dan hidžretskog mjeseca - post je sunnet.",
         ),
+        NoticeKey.SABAH_ENDING to NoticeText(
+            "Vrijeme sabaha ističe",
+            "Izlazak sunca za %d min — klanjajte sabah prije njega.",
+        ),
+        NoticeKey.BAJRAM_EVE to NoticeText(
+            "Sutra je Bajram",
+            "%s — bajram-namaz je sutra u %s.",
+        ),
+        NoticeKey.DHUL_HIJJA_DAYS to NoticeText(
+            "Deset dana zul-hidždžeta",
+            "Najbolji dani u godini — povećajte tekbire, tehlile i dobra djela.",
+        ),
+        NoticeKey.ARAFAH_DAY to NoticeText(
+            "Dan Arefata",
+            "Danas je dan Arefata — povećajte dove; post ovog dana briše grijehe dvije godine.",
+        ),
+        NoticeKey.FAST_ARAFAH to NoticeText(
+            "Post na dan Arefata",
+            "Sutra je dan Arefata — njegov post briše grijehe prošle i naredne godine.",
+        ),
+        NoticeKey.FAST_TASUA to NoticeText(
+            "Post Tasua",
+            "Sutra je 9. muharrem — postite ga zajedno s Ašurom, kako je Poslanik, s.a.v.s., naumio.",
+        ),
+        NoticeKey.FAST_ASHURA to NoticeText(
+            "Post Ašure",
+            "Sutra je Ašura — njen post briše grijehe prošle godine.",
+        ),
+        NoticeKey.SHAWWAL_FAST to NoticeText(
+            "Šest dana ševvala",
+            "Ko isposti ramazan, a zatim šest dana ševvala, kao da je postio cijelu godinu.",
+        ),
+        NoticeKey.LAST_TEN_NIGHTS to NoticeText(
+            "Posljednjih deset noći",
+            "Tražite Lejletul-kadr u neparnim noćima posljednjih deset noći ramazana.",
+        ),
         NoticeKey.CUSTOM to NoticeText("Obavještenje", ""),
     ),
     settingsTitle = "Postavke",
@@ -3298,7 +3472,7 @@ private val BS = Strings(
     ),
     mosqueSectionLabel = "Džamija",
     displaySectionLabel = "Ekran",
-    fridaySectionLabel = "Džuma",
+    fridaySectionLabel = "Džuma i Bajram",
     lectureSectionLabel = "Sedmično predavanje",
     lectureTitleLabel = "Naslov",
     lectureDayLabel = "Dan",
@@ -3991,6 +4165,13 @@ private val BS = Strings(
         "Džumadel-ula", "Džumadel-uhra", "Redžeb", "Ša'ban",
         "Ramazan", "Ševval", "Zul-ka'de", "Zul-hidždže",
     ),
+    bajramNamazLabel = "Bajram-namaz",
+    bajramGreeting = "Bajram šerif mubarek olsun!",
+    bajramCountdownName = "bajram-namaza",
+    bajramMinutesLabel = "Bajram-namaz (min nakon izlaska sunca)",
+    eventToday = "danas",
+    eventTomorrow = "sutra",
+    eventInDays = "za %d dana",
     eventNames = mapOf(
         "ramadan_start" to "Početak ramazana",
         "laylat_al_qadr" to "Lejletul-kadr",

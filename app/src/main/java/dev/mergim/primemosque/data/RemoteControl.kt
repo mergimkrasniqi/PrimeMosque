@@ -210,7 +210,7 @@ object RemoteControl {
         "orientation", "theme", "themeRotation", "nightMode", "showDailyQuotes",
         "announcement1", "announcement2", "announcement1Until", "announcement2Until",
         "ramadanMode", "lectureTitle", "lectureDay", "lecturePrayer",
-        "jumuahMinutes", "khutbahMinutes", "hijriOffset", "adjustments",
+        "jumuahMinutes", "khutbahMinutes", "bajramMinutes", "hijriOffset", "adjustments",
         "adhanSequence", "preAdhanMinutes", "adhanDuaSeconds", "adhanSeconds",
         "dailyQuotes", "khutbahQuotes",
     )
@@ -240,6 +240,7 @@ object RemoteControl {
         "lecturePrayer" to s.lecturePrayer.name,
         "jumuahMinutes" to s.jumuahMinutes.toLong(),
         "khutbahMinutes" to s.khutbahMinutes.toLong(),
+        "bajramMinutes" to s.bajramMinutesAfterSunrise.toLong(),
         "hijriOffset" to s.hijriOffset.toLong(),
         "adjustments" to s.prayerAdjustments.entries.associate { it.key.name to it.value.toLong() },
         "adhanSequence" to s.adhanSequence,
@@ -318,6 +319,13 @@ object RemoteControl {
         field {
             doc.getLong("khutbahMinutes")
                 ?.let { repository.setKhutbahMinutes(it.toInt().coerceIn(5, 45)) }
+        }
+        field {
+            doc.getLong("bajramMinutes")?.let {
+                repository.setBajramMinutes(
+                    it.toInt().coerceIn(BAJRAM_MINUTES_RANGE.first, BAJRAM_MINUTES_RANGE.last)
+                )
+            }
         }
         field { doc.getLong("hijriOffset")?.let { repository.setHijriOffset(it.toInt().coerceIn(-2, 2)) } }
         field {

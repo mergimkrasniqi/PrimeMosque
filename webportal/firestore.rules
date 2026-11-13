@@ -43,6 +43,7 @@ service cloud.firestore {
         && (!('jumuahMinutes' in d) || d.jumuahMinutes == -1
             || (d.jumuahMinutes is int && d.jumuahMinutes >= 0 && d.jumuahMinutes < 1440))
         && num(d, 'khutbahMinutes', 1, 120) && num(d, 'hijriOffset', -5, 5)
+        && num(d, 'bajramMinutes', 0, 180)
         && num(d, 'preAdhanMinutes', 0, 30) && num(d, 'adhanDuaSeconds', 0, 600)
         && (!('boardTimeEpochMs' in d) || d.boardTimeEpochMs is int)
         && (!('rev' in d) || d.rev is int)
@@ -66,7 +67,7 @@ service cloud.firestore {
              'announcement1', 'announcement2',
              'announcement1Until', 'announcement2Until',
              'lectureTitle', 'lectureDay', 'lecturePrayer',
-             'jumuahMinutes', 'khutbahMinutes', 'hijriOffset',
+             'jumuahMinutes', 'khutbahMinutes', 'bajramMinutes', 'hijriOffset',
              'adhanSequence', 'preAdhanMinutes', 'adhanDuaSeconds',
              'adhanSeconds',
              'adjustments', 'dailyQuotes', 'khutbahQuotes',
